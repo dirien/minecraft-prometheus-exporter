@@ -11,21 +11,12 @@ import (
 	"github.com/prometheus/common/promlog/flag"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
-	webflag "github.com/prometheus/exporter-toolkit/web/kingpinflag"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	"os"
 )
 
 func Run() {
-
-	var (
-		webConfig     = webflag.AddFlags(kingpin.CommandLine)
-		listenAddress = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9150").String()
-		worldPath     = kingpin.Flag("mc.world", "").Default("/Users/dirien/Tools/repos/minectl/tmp/world").String()
-		rconAddress   = kingpin.Flag("mc.rcon-address", "Address of the Minecraft rcon.").Default(":25575").String()
-		rconPassword  = kingpin.Flag("mc.rcon-password", "Password of the Minecraft rcon.").Required().String()
-	)
 
 	config := config.NewConfg()
 	promlogConfig := &promlog.Config{
@@ -41,17 +32,17 @@ func Run() {
 	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())
 
 	prometheus.MustRegister(version.NewCollector("minecraft_prometheus_exporter"))
-	prometheus.MustRegister(exporter.New(*rconAddress, *rconPassword, *worldPath, logger))
+	prometheus.MustRegister(exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, logger))
 
 	http.Handle(*config.MetricsPath, promhttp.Handler())
-	temp := template.NewIndexTemplate()
+	template := template.NewIndexTemplate()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		temp.Execute(w, config)
+		template.Execute(w, config)
 	})
 
-	level.Info(logger).Log("msg", "Listening on address", "address", *listenAddress)
-	srv := &http.Server{Addr: *listenAddress}
-	if err := web.ListenAndServe(srv, *webConfig, logger); err != nil {
+	level.Info(logger).Log("msg", "Listening on address", "address", *config.ListenAddress)
+	srv := &http.Server{Addr: *config.ListenAddress}
+	if err := web.ListenAndServe(srv, *config.WebConfig, logger); err != nil {
 		level.Error(logger).Log("msg", "Error running HTTP server", "err", err)
 		os.Exit(1)
 	}

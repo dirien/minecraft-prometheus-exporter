@@ -908,28 +908,31 @@ func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 }
 
 func (e *Exporter) Collect(metrics chan<- prometheus.Metric) {
-	conn, err := rcon.Dial(e.address, e.password)
-	if err != nil {
-		metrics <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 0)
-		return
-	}
-	defer conn.Close()
+	if len(e.password) > 0 {
+		conn, err := rcon.Dial(e.address, e.password)
+		if err != nil {
+			level.Error(e.logger).Log("msg", "Failed to connect to dial rcon endpoint", "err", err)
+			metrics <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 0, "")
+		} else {
+			defer conn.Close()
 
-	response, err := conn.Execute("list")
-	if err != nil {
-		level.Error(e.logger).Log("msg", "Failed to connect to rcon endpoint", "err", err)
-	}
+			response, err := conn.Execute("list")
+			if err != nil {
+				level.Error(e.logger).Log("msg", "Failed to connect to rcon endpoint", "err", err)
+			}
 
-	r, _ := regexp.Compile("players online:(.*)")
-	playersraw := r.FindStringSubmatch(response)[1]
-	playersraw = strings.TrimSpace(playersraw)
-	if len(playersraw) > 0 {
-		players := strings.Split(strings.TrimSpace(playersraw), ",")
-		for _, player := range players {
-			metrics <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
+			r, _ := regexp.Compile("players online:(.*)")
+			playersraw := r.FindStringSubmatch(response)[1]
+			playersraw = strings.TrimSpace(playersraw)
+			if len(playersraw) > 0 {
+				players := strings.Split(strings.TrimSpace(playersraw), ",")
+				for _, player := range players {
+					metrics <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
+				}
+			}
 		}
 	}
-	err = e.getPlayerStats(metrics)
+	err := e.getPlayerStats(metrics)
 	if err != nil {
 		level.Error(e.logger).Log("msg", "Failed to get player stats", "err", err)
 	}
