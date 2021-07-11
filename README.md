@@ -19,16 +19,19 @@ It collects metrics from different sources of the game
 
 RCON is a protocol that can be used to remotely execute commands to your Minecraft server.
 
-To enable rcon on your minecraft server add the following to the `properties` field in your `minectl` manifest:
+To enable rcon on your minecraft server add the following to the `java` field in your `minectl` manifest:
 
 ```yaml
     ...
+    java:
+      xmx: 2G
+      xms: 2G
+      rcon:
+        password: test
+        port: 25575
+        enabled: true
+        broadcast: true
     edition: java
-    properties: |
-      broadcast-rcon-to-ops=false
-      rcon.port=25575
-      rcon.password=<your password>
-      enable-rcon=true
     ...
 ```
 
@@ -358,7 +361,6 @@ The exporter collects a number of statistics from the server:
 ### Libraries & Tools 🔥
 
 - https://github.com/Jeffail/gabs
-- https://github.com/gorcon/rcon
 - https://github.com/alecthomas/kingpin
 - https://github.com/Tnze/go-mc
 - https://github.com/prometheus/exporter-toolkit
