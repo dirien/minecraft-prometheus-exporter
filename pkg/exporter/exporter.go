@@ -3,18 +3,19 @@ package exporter
 import (
 	"compress/gzip"
 	"encoding/json"
-	"github.com/Jeffail/gabs/v2"
-	"github.com/Tnze/go-mc/nbt"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
-	"github.com/gorcon/rcon"
-	"github.com/prometheus/client_golang/prometheus"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/Jeffail/gabs/v2"
+	"github.com/Tnze/go-mc/nbt"
+	mcnet "github.com/Tnze/go-mc/net"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -779,31 +780,22 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 	if err != nil {
 		return err
 	}
-	var payload interface{}
-	byteValue, _ := ioutil.ReadAll(advancements)
+	var payload map[string]interface{}
+	byteValue, err := ioutil.ReadAll(advancements)
+	if err != nil {
+		return err
+	}
 	err = json.Unmarshal(byteValue, &payload)
 	if err != nil {
 		return err
 	}
-	m := payload.(map[string]interface{})
-	completed, failure := 0, 0
-	for _, i := range m {
-		s := reflect.ValueOf(i)
-		if s.Kind() == reflect.Float64 {
-			continue
-		} else {
-			for _, k := range s.MapKeys() {
-				val, kind := s.MapIndex(k), s.MapIndex(k).Kind()
-				if kind == reflect.Interface {
-					switch val.Interface().(type) {
-					case bool:
-						if val.Interface().(bool) {
-							completed += 1
-						} else {
-							failure += 1
-						}
-					}
-
+	m := payload
+	var completed int
+	for _, v := range m {
+		if advancement, ok := v.(map[string]interface{}); ok {
+			if done, ok := advancement["done"]; ok {
+				if done, ok := done.(bool); ok && done {
+					completed++
 				}
 			}
 		}
@@ -907,33 +899,51 @@ func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 	descs <- e.waterTakenFromCauldron
 }
 
-func (e *Exporter) Collect(metrics chan<- prometheus.Metric) {
-	if len(e.password) > 0 {
-		conn, err := rcon.Dial(e.address, e.password)
+func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
+	conn, err := mcnet.DialRCON(e.address, e.password)
+	if err != nil {
+		return fmt.Errorf("connect rcon error: %w", err)
+
+	}
+
+	defer func() {
+		err := conn.Close()
 		if err != nil {
-			level.Error(e.logger).Log("msg", "Failed to connect to dial rcon endpoint", "err", err)
-			metrics <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 0, "")
-		} else {
-			defer conn.Close()
-
-			response, err := conn.Execute("list")
-			if err != nil {
-				level.Error(e.logger).Log("msg", "Failed to connect to rcon endpoint", "err", err)
-			}
-
-			r, _ := regexp.Compile("players online:(.*)")
-			playersraw := r.FindStringSubmatch(response)[1]
-			playersraw = strings.TrimSpace(playersraw)
-			if len(playersraw) > 0 {
-				players := strings.Split(strings.TrimSpace(playersraw), ",")
-				for _, player := range players {
-					metrics <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
-				}
+			level.Error(e.logger).Log("msg", "Failed to close rcon endpoint", "err", err)
+			if retErr == nil {
+				retErr = err
 			}
 		}
-	}
-	err := e.getPlayerStats(metrics)
+	}()
+
+	err = conn.Cmd("list")
 	if err != nil {
+		return fmt.Errorf("send rcon command error: %w", err)
+	}
+
+	resp, err := conn.Resp()
+	if err != nil {
+		return fmt.Errorf("receive rcon command error: %w", err)
+	}
+
+	r := regexp.MustCompile("players online:(.*)")
+	playersraw := r.FindStringSubmatch(resp)[1]
+	for _, player := range strings.Fields(strings.ReplaceAll(playersraw, ",", " ")) {
+		ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
+	}
+	return nil
+}
+
+func (e *Exporter) Collect(metrics chan<- prometheus.Metric) {
+	if len(e.password) > 0 {
+		err := e.getPlayerList(metrics)
+		if err != nil {
+			metrics <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 0, "")
+			level.Error(e.logger).Log("msg", "Failed to get player online list", "err", err)
+		}
+	}
+
+	if err := e.getPlayerStats(metrics); err != nil {
 		level.Error(e.logger).Log("msg", "Failed to get player stats", "err", err)
 	}
 }
