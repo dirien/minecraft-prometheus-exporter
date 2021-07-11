@@ -3,6 +3,7 @@ package exporter
 import (
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -612,6 +613,10 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		resp, err := http.Get(URL)
 		if err != nil {
 			level.Error(e.logger).Log("msg", "Failed to connect to api.mojang.com", "err", err)
+		}
+
+		if resp.StatusCode != 200 {
+			return fmt.Errorf("error retrieving player info from api.mojang.com: %w", errors.New(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
 		}
 
 		var cResp []Player
