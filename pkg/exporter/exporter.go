@@ -26,11 +26,12 @@ const (
 //See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
 
 type Exporter struct {
-	address  string
-	password string
-	logger   log.Logger
-	world    string
-	source   string
+	address         string
+	password        string
+	logger          log.Logger
+	world           string
+	source          string
+	disabledMetrics map[string]bool
 	//via advancements
 	playerAdvancements *prometheus.Desc
 
@@ -129,13 +130,14 @@ type Exporter struct {
 	waterTakenFromCauldron       *prometheus.Desc
 }
 
-func New(server, password, world, source string, logger log.Logger) *Exporter {
+func New(server, password, world, source string, disabledMetrics map[string]bool, logger log.Logger) *Exporter {
 	return &Exporter{
-		address:  server,
-		password: password,
-		logger:   logger,
-		world:    world,
-		source:   source,
+		address:         server,
+		password:        password,
+		logger:          logger,
+		world:           world,
+		source:          source,
+		disabledMetrics: disabledMetrics,
 		playerOnline: prometheus.NewDesc(
 			prometheus.BuildFQName(Namespace, "", "player_online_total"),
 			"is 1 if player is online",
@@ -790,13 +792,33 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
+func (e *Exporter) isEnabled(field string) bool {
+	for _, group := range strings.Split(field, ".") {
+		if value, ok := e.disabledMetrics[group]; ok && value {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (e *Exporter) playerStatsCustom(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName string) {
-	value, _ := jsonParsed.Path(field).Data().(float64)
-	ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, value, playerName)
+	if e.isEnabled(field) {
+		value, _ := jsonParsed.Path(field).Data().(float64)
+		ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, value, playerName)
+	}
 }
 
 func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName string) {
+	if !e.isEnabled(field) {
+		return
+	}
+
 	for key, val := range jsonParsed.S("stats", field).ChildrenMap() {
+		if !e.isEnabled(key) {
+			continue
+		}
+
 		val := val.Data().(float64)
 		entity := strings.Split(key, ":")[1]
 		ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, entity)
