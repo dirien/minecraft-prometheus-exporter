@@ -11,7 +11,7 @@ import (
 )
 
 type Config struct {
-	ConfigPath      *string         `yaml:"config-path"`
+	ConfigPath      *string
 	MetricsPath     *string         `yaml:"metrics-path"`
 	WebConfig       *string         `yaml:"web-config"`
 	ListenAddress   *string         `yaml:"listen-address"`
