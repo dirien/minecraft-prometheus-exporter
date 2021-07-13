@@ -63,23 +63,54 @@ Details for the specific stats can be found here -> https://minecraft.fandom.com
 usage: minecraft-prometheus-exporter [<flags>]
 
 Flags:
-  -h, --help                Show context-sensitive help (also try --help-long and --help-man).
-      --web.config.file=""  [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication.
+  -h, --help                     Show context-sensitive help (also try --help-long and --help-man).
+      --web.config.file=""       [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication.
+      --config-path="config.yml"
+                                 Path to YAML file with config.
       --web.listen-address=":9150"
-                            Address to listen on for web interface and telemetry.
+                                 Address to listen on for web interface and telemetry.
       --mc.world="/minecraft/world"
-                            Path the to world folder
+                                 Path the to world folder
       --mc.rcon-address=":25575"
-                            Address of the Minecraft rcon.
+                                 Address of the Minecraft rcon.
       --mc.rcon-password=MC.RCON-PASSWORD
-                            Password of the Minecraft rcon.
-      --mc.name-source=MC.NAME-SOURCE
-                            How to retrieve names of players: offline, bukkit, mojang
+                                 Password of the Minecraft rcon.
+      --mc.name-source="mojang"  How to retrieve names of players: offline, bukkit, mojang.
       --web.telemetry-path="/metrics"
-                            Path under which to expose metrics.
-      --log.level=info      Only log messages with the given severity or above. One of: [debug, info, warn, error]
-      --log.format=logfmt   Output format of log messages. One of: [logfmt, json]
-      --version             Show application version.
+                                 Path under which to expose metrics.
+      --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
+      --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
+      --version                  Show application version.
+```
+
+### Config 🔧
+You can override CLI flags using config file. By default, `config.yml` located in the current directory is used.
+Path to config file can be changed using `--config-path` CLI flag.
+
+| Key in config file | Equivalent CLI flag    | Description                                                                      |
+| ---                | ---                    | ---                                                                              |
+| `metrics-path`     | `--web.telemetry-path` | Path under which to expose metrics.                                              |
+| `web-config`       | `--web.config.file`    | **[EXPERIMENTAL]** Path to configuration file that can enable TLS or authentication. |
+| `listen-address`   | `--web.listen-address` | Address to listen on for web interface and telemetry.                            |
+| `world-path`       | `--mc.world`           | Path the to world folder.                                                        |
+| `rcon-address`     | `--mc.rcon-address`    | Address of the Minecraft rcon.                                                   |
+| `rcon-password`    | `--mc.rcon-password`   | Password of the Minecraft rcon.                                                  |
+| `name-source`      | `--mc.name-source`     | How to retrieve names of players: offline, bukkit, mojang.                       |
+| `disabled-metrics` | -                      | Namespaced keys that used by metrics that should be disabled.                    |
+
+#### Disabling metrics
+
+To disable certain metrics, just add corresponding key to `disabled-metrics` section with `true` value in your config file.
+You should use keys that used by Minecraft to store players' stats.
+
+#### Example config
+
+```yaml
+disabled-metrics:
+  minecraft:mined: true # Disable "minecraft_prometheus_exporter_blocks_mined_total" metric
+  minecraft:creeper: true # Disable all metrics related with creepers
+  minecraft:custom: false # "false" values will be ignored, so this line does nothing
+listen-address: ':9151' # Change address of web server. "--web.listen-address" will be ignored if this line is present here
 ```
 
 ### Collectors 📊
