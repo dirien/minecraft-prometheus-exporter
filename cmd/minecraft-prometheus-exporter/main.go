@@ -32,7 +32,7 @@ func Run() {
 	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())
 
 	prometheus.MustRegister(version.NewCollector("minecraft_prometheus_exporter"))
-	prometheus.MustRegister(exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, logger))
+	prometheus.MustRegister(exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, logger))
 
 	http.Handle(*config.MetricsPath, promhttp.Handler())
 	template := template.NewIndexTemplate()

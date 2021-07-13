@@ -12,6 +12,7 @@ type Config struct {
 	WorldPath     *string
 	RconAddress   *string
 	RconPassword  *string
+	NameSource    *string
 }
 
 func NewConfg() *Config {
@@ -21,6 +22,7 @@ func NewConfg() *Config {
 		worldPath     = kingpin.Flag("mc.world", "Path the to world folder").Default("/minecraft/world").String()
 		rconAddress   = kingpin.Flag("mc.rcon-address", "Address of the Minecraft rcon.").Default(":25575").String()
 		rconPassword  = kingpin.Flag("mc.rcon-password", "Password of the Minecraft rcon.").String()
+		nameSource    = kingpin.Flag("mc.name-source", "How to retrieve names of players: offline, bukkit, mojang").Default("mojang").String()
 		metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
 	)
 	return &Config{
@@ -30,5 +32,6 @@ func NewConfg() *Config {
 		RconAddress:   rconAddress,
 		RconPassword:  rconPassword,
 		WorldPath:     worldPath,
+		NameSource:    nameSource,
 	}
 }
