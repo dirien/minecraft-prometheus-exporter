@@ -65,15 +65,17 @@ usage: minecraft-prometheus-exporter [<flags>]
 Flags:
   -h, --help                Show context-sensitive help (also try --help-long and --help-man).
       --web.config.file=""  [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication.
-      --web.listen-address=":9150"  
+      --web.listen-address=":9150"
                             Address to listen on for web interface and telemetry.
-      --mc.world="/minecraft/world"  
+      --mc.world="/minecraft/world"
                             Path the to world folder
-      --mc.rcon-address=":25575"  
+      --mc.rcon-address=":25575"
                             Address of the Minecraft rcon.
-      --mc.rcon-password=MC.RCON-PASSWORD  
+      --mc.rcon-password=MC.RCON-PASSWORD
                             Password of the Minecraft rcon.
-      --web.telemetry-path="/metrics"  
+      --mc.name-source=MC.NAME-SOURCE
+                            How to retrieve names of players: offline, bukkit, mojang
+      --web.telemetry-path="/metrics"
                             Path under which to expose metrics.
       --log.level=info      Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt   Output format of log messages. One of: [logfmt, json]
