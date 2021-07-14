@@ -594,8 +594,8 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 }
 
 type Player struct {
-	ID   string
-	Name string `json:"name"`
+	ID   string `json:"uuid"`
+	Name string `json:"username"`
 }
 
 type PlayerData struct {
@@ -641,22 +641,19 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 			return err
 		}
 
-		var cResp []Player
+		var player Player
 		switch e.source {
 		case "mojang":
-			URL := "https://api.mojang.com/user/profiles/" + id + "/names"
+			URL := "https://api.ashcon.app/mojang/v2/user/" + id
 			resp, err := http.Get(URL)
 			if err != nil {
 				level.Error(e.logger).Log("msg", "Failed to connect to api.mojang.com", "err", err)
 			}
 
 			if resp.StatusCode == 200 {
-				if err := json.NewDecoder(resp.Body).Decode(&cResp); err != nil {
+				if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
 					level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err)
 				}
-
-				cResp[0].ID = id
-				cResp[0].Name = strings.TrimSpace(cResp[0].Name)
 			} else {
 				return fmt.Errorf("error retrieving player info from api.mojang.com: %w", errors.New(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
 			}
@@ -670,24 +667,24 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 				return fmt.Errorf("error retrieving player info from nbt: bukkit name is unknown")
 			}
 
-			cResp = append(cResp, Player{
+			player = Player{
 				ID:   id,
 				Name: data.Bukkit.LastKnownName,
-			})
+			}
 		default:
-			cResp = append(cResp, Player{
+			player = Player{
 				ID:   id,
 				Name: id,
-			})
+			}
 		}
 
-		ch <- prometheus.MustNewConstMetric(e.playerXpTotal, prometheus.CounterValue, float64(data.XpTotal), cResp[0].Name)
-		ch <- prometheus.MustNewConstMetric(e.playerCurrentXp, prometheus.CounterValue, float64(data.XpLevel), cResp[0].Name)
-		ch <- prometheus.MustNewConstMetric(e.playerScore, prometheus.CounterValue, float64(data.Score), cResp[0].Name)
-		ch <- prometheus.MustNewConstMetric(e.playerFoodLevel, prometheus.CounterValue, float64(data.FoodLevel), cResp[0].Name)
-		ch <- prometheus.MustNewConstMetric(e.playerHealth, prometheus.CounterValue, float64(data.Health), cResp[0].Name)
+		ch <- prometheus.MustNewConstMetric(e.playerXpTotal, prometheus.CounterValue, float64(data.XpTotal), player.Name)
+		ch <- prometheus.MustNewConstMetric(e.playerCurrentXp, prometheus.CounterValue, float64(data.XpLevel), player.Name)
+		ch <- prometheus.MustNewConstMetric(e.playerScore, prometheus.CounterValue, float64(data.Score), player.Name)
+		ch <- prometheus.MustNewConstMetric(e.playerFoodLevel, prometheus.CounterValue, float64(data.FoodLevel), player.Name)
+		ch <- prometheus.MustNewConstMetric(e.playerHealth, prometheus.CounterValue, float64(data.Health), player.Name)
 
-		err2 := e.advancements(id, ch, cResp[0].Name)
+		err2 := e.advancements(id, ch, player.Name)
 		if err2 != nil {
 			return err2
 		}
@@ -703,91 +700,91 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 			return err
 		}
 
-		e.playerStats(jsonParsed, e.itemCrafted, "minecraft:crafted", ch, cResp[0].Name)
-		e.playerStats(jsonParsed, e.blocksMined, "minecraft:mined", ch, cResp[0].Name)
-		e.playerStats(jsonParsed, e.entitiesKilled, "minecraft:killed", ch, cResp[0].Name)
-		e.playerStats(jsonParsed, e.playerKilledBy, "minecraft:killed_by", ch, cResp[0].Name)
-		e.playerStats(jsonParsed, e.itemUsed, "minecraft:used", ch, cResp[0].Name)
-		e.playerStats(jsonParsed, e.itemPickedUp, "minecraft:picked_up", ch, cResp[0].Name)
-		e.playerStats(jsonParsed, e.itemDropped, "minecraft:dropped", ch, cResp[0].Name)
-		e.playerStats(jsonParsed, e.itemBroken, "minecraft:broken", ch, cResp[0].Name)
+		e.playerStats(jsonParsed, e.itemCrafted, "minecraft:crafted", ch, player.Name)
+		e.playerStats(jsonParsed, e.blocksMined, "minecraft:mined", ch, player.Name)
+		e.playerStats(jsonParsed, e.entitiesKilled, "minecraft:killed", ch, player.Name)
+		e.playerStats(jsonParsed, e.playerKilledBy, "minecraft:killed_by", ch, player.Name)
+		e.playerStats(jsonParsed, e.itemUsed, "minecraft:used", ch, player.Name)
+		e.playerStats(jsonParsed, e.itemPickedUp, "minecraft:picked_up", ch, player.Name)
+		e.playerStats(jsonParsed, e.itemDropped, "minecraft:dropped", ch, player.Name)
+		e.playerStats(jsonParsed, e.itemBroken, "minecraft:broken", ch, player.Name)
 
-		e.playerStatsCustom(jsonParsed, e.animalsBred, "stats.minecraft:custom.minecraft:animals_bred", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.cleanArmor, "stats.minecraft:custom.minecraft:clean_armor", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.cleanBanner, "stats.minecraft:custom.minecraft:clean_armor", ch, cResp[0].Name)
+		e.playerStatsCustom(jsonParsed, e.animalsBred, "stats.minecraft:custom.minecraft:animals_bred", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.cleanArmor, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.cleanBanner, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Name)
 
-		e.playerStatsCustom(jsonParsed, e.openBarrel, "stats.minecraft:custom.minecraft:open_barrel", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.bellRing, "stats.minecraft:custom.minecraft:bell_ring", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.eatCakeSlice, "stats.minecraft:custom.minecraft:eat_cake_slice", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.fillCauldron, "stats.minecraft:custom.minecraft:fill_cauldron", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.openChest, "stats.minecraft:custom.minecraft:open_chest", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.damageAbsorbed, "stats.minecraft:custom.minecraft:damage_absorbed", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.damageBlockedByShield, "stats.minecraft:custom.minecraft:damage_blocked_by_shield", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.damageDealt, "stats.minecraft:custom.minecraft:damage_dealt", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.damageDealtAbsorbed, "stats.minecraft:custom.minecraft:damage_dealt_absorbed", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.damageDealtResisted, "stats.minecraft:custom.minecraft:damage_dealt_resisted", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.damageResisted, "stats.minecraft:custom.minecraft:damage_resisted", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.damageTaken, "stats.minecraft:custom.minecraft:damage_taken", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.inspectDispenser, "stats.minecraft:custom.minecraft:inspect_dispenserr", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.climbOneCm, "stats.minecraft:custom.minecraft:climb_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.crouchOneCm, "stats.minecraft:custom.minecraft:crouch_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.fallOneCm, "stats.minecraft:custom.minecraft:fall_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.flyOneCm, "stats.minecraft:custom.minecraft:fly_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.sprintOneCm, "stats.minecraft:custom.minecraft:sprint_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.swimOneCm, "stats.minecraft:custom.minecraft:swim_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.walkOneCm, "stats.minecraft:custom.minecraft:walk_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.walkOnWaterOneCm, "stats.minecraft:custom.minecraft:walk_on_water_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.walkUnderWaterOneCm, "stats.minecraft:custom.minecraft:walk_under_water_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.boatOneCm, "stats.minecraft:custom.minecraft:boat_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.aviateOneCm, "stats.minecraft:custom.minecraft:aviate_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.horseOneCm, "stats.minecraft:custom.minecraft:horse_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.minecartOneCm, "stats.minecraft:custom.minecraft:minecart_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.pigOneCm, "stats.minecraft:custom.minecraft:pig_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.striderOneCm, "stats.minecraft:custom.minecraft:strider_one_cm", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.inspectDropper, "stats.minecraft:custom.minecraft:inspect_dropper", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.openEnderChest, "stats.minecraft:custom.minecraft:open_enderchest", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.fishCaught, "stats.minecraft:custom.minecraft:fish_caught", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.leaveGame, "stats.minecraft:custom.minecraft:leave_game", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.inspectHopper, "stats.minecraft:custom.minecraft:inspect_hopper", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithAnvil, "stats.minecraft:custom.minecraft:interact_with_anvil", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithBeacon, "stats.minecraft:custom.minecraft:interact_with_beacon", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithBlastFurnace, "stats.minecraft:custom.minecraft:interact_with_blast_furnace", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithBrewingStand, "stats.minecraft:custom.minecraft:interact_with_brewingstand", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithCampfire, "stats.minecraft:custom.minecraft:interact_with_campfire", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithCartographyTable, "stats.minecraft:custom.minecraft:interact_with_cartography_table", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithCraftingTable, "stats.minecraft:custom.minecraft:interact_with_crafting_table", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithFurnaces, "stats.minecraft:custom.minecraft:interact_with_furnace", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithGrindstone, "stats.minecraft:custom.minecraft:interact_with_grindstone", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithLectern, "stats.minecraft:custom.minecraft:interact_with_lectern", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithLoom, "stats.minecraft:custom.minecraft:interact_with_loom", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithSmithingTable, "stats.minecraft:custom.minecraft:interact_with_smithing_table", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithSmoker, "stats.minecraft:custom.minecraft:interact_with_smoker", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithStonecutter, "stats.minecraft:custom.minecraft:interact_with_stonecutter", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.itemsDropped, "stats.minecraft:custom.minecraft:drop", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.itemsEntchanted, "stats.minecraft:custom.minecraft:enchant_item", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.jump, "stats.minecraft:custom.minecraft:jump", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.mobKills, "stats.minecraft:custom.minecraft:mob_kills", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.musicDiscsPlayed, "stats.minecraft:custom.minecraft:play_record", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.noteBlocksPlayed, "stats.minecraft:custom.minecraft:play_noteblockr", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.noteBlocksTuned, "stats.minecraft:custom.minecraft:tune_noteblock", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.numberOfDeaths, "stats.minecraft:custom.minecraft:deaths", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.plantsPotted, "stats.minecraft:custom.minecraft:pot_flower", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.playerKills, "stats.minecraft:custom.minecraft:player_kills", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.raidsTriggered, "stats.minecraft:custom.minecraft:raid_trigger", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.raidsWon, "stats.minecraft:custom.minecraft:raid_win", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.shulkerBoxCleaned, "stats.minecraft:custom.minecraft:clean_shulker_box", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.shulkerBoxesOpened, "stats.minecraft:custom.minecraft:open_shulker_box", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.sneakTime, "stats.minecraft:custom.minecraft:sneak_time", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.talkedToVillager, "stats.minecraft:custom.minecraft:talked_to_villager", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.targetsHit, "stats.minecraft:custom.minecraft:target_hit", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_timer", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.timeSinceDeath, "stats.minecraft:custom.minecraft:time_since_death", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.timeSinceLastRest, "stats.minecraft:custom.minecraft:time_since_rest", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.timesWorldOpen, "stats.minecraft:custom.minecraft:total_world_time", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.timesSleptInBed, "stats.minecraft:custom.minecraft:sleep_in_bed", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.tradedWithVillagers, "stats.minecraft:custom.minecraft:traded_with_villager", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.trappedChestsTriggered, "stats.minecraft:custom.minecraft:trigger_trapped_chest", ch, cResp[0].Name)
-		e.playerStatsCustom(jsonParsed, e.waterTakenFromCauldron, "stats.minecraft:custom.minecraft:use_cauldron", ch, cResp[0].Name)
+		e.playerStatsCustom(jsonParsed, e.openBarrel, "stats.minecraft:custom.minecraft:open_barrel", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.bellRing, "stats.minecraft:custom.minecraft:bell_ring", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.eatCakeSlice, "stats.minecraft:custom.minecraft:eat_cake_slice", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.fillCauldron, "stats.minecraft:custom.minecraft:fill_cauldron", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.openChest, "stats.minecraft:custom.minecraft:open_chest", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.damageAbsorbed, "stats.minecraft:custom.minecraft:damage_absorbed", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.damageBlockedByShield, "stats.minecraft:custom.minecraft:damage_blocked_by_shield", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.damageDealt, "stats.minecraft:custom.minecraft:damage_dealt", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.damageDealtAbsorbed, "stats.minecraft:custom.minecraft:damage_dealt_absorbed", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.damageDealtResisted, "stats.minecraft:custom.minecraft:damage_dealt_resisted", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.damageResisted, "stats.minecraft:custom.minecraft:damage_resisted", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.damageTaken, "stats.minecraft:custom.minecraft:damage_taken", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.inspectDispenser, "stats.minecraft:custom.minecraft:inspect_dispenserr", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.climbOneCm, "stats.minecraft:custom.minecraft:climb_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.crouchOneCm, "stats.minecraft:custom.minecraft:crouch_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.fallOneCm, "stats.minecraft:custom.minecraft:fall_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.flyOneCm, "stats.minecraft:custom.minecraft:fly_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.sprintOneCm, "stats.minecraft:custom.minecraft:sprint_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.swimOneCm, "stats.minecraft:custom.minecraft:swim_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.walkOneCm, "stats.minecraft:custom.minecraft:walk_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.walkOnWaterOneCm, "stats.minecraft:custom.minecraft:walk_on_water_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.walkUnderWaterOneCm, "stats.minecraft:custom.minecraft:walk_under_water_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.boatOneCm, "stats.minecraft:custom.minecraft:boat_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.aviateOneCm, "stats.minecraft:custom.minecraft:aviate_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.horseOneCm, "stats.minecraft:custom.minecraft:horse_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.minecartOneCm, "stats.minecraft:custom.minecraft:minecart_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.pigOneCm, "stats.minecraft:custom.minecraft:pig_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.striderOneCm, "stats.minecraft:custom.minecraft:strider_one_cm", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.inspectDropper, "stats.minecraft:custom.minecraft:inspect_dropper", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.openEnderChest, "stats.minecraft:custom.minecraft:open_enderchest", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.fishCaught, "stats.minecraft:custom.minecraft:fish_caught", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.leaveGame, "stats.minecraft:custom.minecraft:leave_game", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.inspectHopper, "stats.minecraft:custom.minecraft:inspect_hopper", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithAnvil, "stats.minecraft:custom.minecraft:interact_with_anvil", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithBeacon, "stats.minecraft:custom.minecraft:interact_with_beacon", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithBlastFurnace, "stats.minecraft:custom.minecraft:interact_with_blast_furnace", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithBrewingStand, "stats.minecraft:custom.minecraft:interact_with_brewingstand", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithCampfire, "stats.minecraft:custom.minecraft:interact_with_campfire", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithCartographyTable, "stats.minecraft:custom.minecraft:interact_with_cartography_table", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithCraftingTable, "stats.minecraft:custom.minecraft:interact_with_crafting_table", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithFurnaces, "stats.minecraft:custom.minecraft:interact_with_furnace", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithGrindstone, "stats.minecraft:custom.minecraft:interact_with_grindstone", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithLectern, "stats.minecraft:custom.minecraft:interact_with_lectern", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithLoom, "stats.minecraft:custom.minecraft:interact_with_loom", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithSmithingTable, "stats.minecraft:custom.minecraft:interact_with_smithing_table", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithSmoker, "stats.minecraft:custom.minecraft:interact_with_smoker", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.interactWithStonecutter, "stats.minecraft:custom.minecraft:interact_with_stonecutter", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.itemsDropped, "stats.minecraft:custom.minecraft:drop", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.itemsEntchanted, "stats.minecraft:custom.minecraft:enchant_item", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.jump, "stats.minecraft:custom.minecraft:jump", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.mobKills, "stats.minecraft:custom.minecraft:mob_kills", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.musicDiscsPlayed, "stats.minecraft:custom.minecraft:play_record", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.noteBlocksPlayed, "stats.minecraft:custom.minecraft:play_noteblockr", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.noteBlocksTuned, "stats.minecraft:custom.minecraft:tune_noteblock", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.numberOfDeaths, "stats.minecraft:custom.minecraft:deaths", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.plantsPotted, "stats.minecraft:custom.minecraft:pot_flower", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.playerKills, "stats.minecraft:custom.minecraft:player_kills", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.raidsTriggered, "stats.minecraft:custom.minecraft:raid_trigger", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.raidsWon, "stats.minecraft:custom.minecraft:raid_win", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.shulkerBoxCleaned, "stats.minecraft:custom.minecraft:clean_shulker_box", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.shulkerBoxesOpened, "stats.minecraft:custom.minecraft:open_shulker_box", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.sneakTime, "stats.minecraft:custom.minecraft:sneak_time", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.talkedToVillager, "stats.minecraft:custom.minecraft:talked_to_villager", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.targetsHit, "stats.minecraft:custom.minecraft:target_hit", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_timer", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.timeSinceDeath, "stats.minecraft:custom.minecraft:time_since_death", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.timeSinceLastRest, "stats.minecraft:custom.minecraft:time_since_rest", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.timesWorldOpen, "stats.minecraft:custom.minecraft:total_world_time", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.timesSleptInBed, "stats.minecraft:custom.minecraft:sleep_in_bed", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.tradedWithVillagers, "stats.minecraft:custom.minecraft:traded_with_villager", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.trappedChestsTriggered, "stats.minecraft:custom.minecraft:trigger_trapped_chest", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.waterTakenFromCauldron, "stats.minecraft:custom.minecraft:use_cauldron", ch, player.Name)
 	}
 	return nil
 }
