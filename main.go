@@ -1,7 +1,7 @@
 package main
 
-import minecraftprometheusexporter "github.com/minecraft-prometheus-exporter/cmd/minecraft-prometheus-exporter"
+import minecrafexporter "github.com/minecraft-exporter/cmd/minecraft-exporter"
 
 func main() {
-	minecraftprometheusexporter.Run()
+	minecrafexporter.Run()
 }

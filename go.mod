@@ -1,4 +1,4 @@
-module github.com/minecraft-prometheus-exporter
+module github.com/minecraft-exporter
 
 go 1.16
 

@@ -1,10 +1,10 @@
-package minecraft_prometheus_exporter
+package minecraft_exporter
 
 import (
 	"github.com/go-kit/kit/log/level"
-	"github.com/minecraft-prometheus-exporter/pkg/config"
-	"github.com/minecraft-prometheus-exporter/pkg/exporter"
-	"github.com/minecraft-prometheus-exporter/pkg/template"
+	"github.com/minecraft-exporter/pkg/config"
+	"github.com/minecraft-exporter/pkg/exporter"
+	"github.com/minecraft-exporter/pkg/template"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promlog"
@@ -23,17 +23,17 @@ func Run() {
 		Level: &promlog.AllowedLevel{},
 	}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
-	kingpin.Version(version.Print("minecraft_prometheus_exporter"))
+	kingpin.Version(version.Print("minecraft_exporter"))
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 	logger := promlog.New(promlogConfig)
 
 	config.LoadFile()
 
-	level.Info(logger).Log("msg", "Starting minecraft_prometheus_exporter", "version", version.Info())
+	level.Info(logger).Log("msg", "Starting minecraft_exporter", "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())
 
-	prometheus.MustRegister(version.NewCollector("minecraft_prometheus_exporter"))
+	prometheus.MustRegister(version.NewCollector("minecraft_exporter"))
 	prometheus.MustRegister(exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, config.DisabledMetrics, logger))
 
 	http.Handle(*config.MetricsPath, promhttp.Handler())

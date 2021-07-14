@@ -1,11 +1,9 @@
-project_name: minecraft-prometheus-exporter
+project_name: minecraft-exporter
 before:
   hooks:
     - go mod tidy
 archives:
-  -
-    name_template: "{{ .ProjectName }}_{{ .Version }}.{{ .Os }}-{{ .Arch }}"
-
+  - name_template: "{{ .ProjectName }}_{{ .Version }}.{{ .Os }}-{{ .Arch }}"
 builds:
   - env:
       - CGO_ENABLED=0
