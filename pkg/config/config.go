@@ -25,8 +25,8 @@ type Config struct {
 func NewConfg() *Config {
 	var (
 		webConfig     = webflag.AddFlags(kingpin.CommandLine)
-		configPath    = kingpin.Flag("config-path", "Path to YAML file with config.").Default("config.yml").String()
 		listenAddress = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9150").String()
+		configPath    = kingpin.Flag("mc.config-path", "Path to YAML file with config.").Default("config.yml").String()
 		worldPath     = kingpin.Flag("mc.world", "Path the to world folder").Default("/minecraft/world").String()
 		rconAddress   = kingpin.Flag("mc.rcon-address", "Address of the Minecraft rcon.").Default(":25575").String()
 		rconPassword  = kingpin.Flag("mc.rcon-password", "Password of the Minecraft rcon.").String()

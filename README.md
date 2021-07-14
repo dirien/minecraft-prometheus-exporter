@@ -65,10 +65,10 @@ usage: minecraft-prometheus-exporter [<flags>]
 Flags:
   -h, --help                     Show context-sensitive help (also try --help-long and --help-man).
       --web.config.file=""       [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication.
-      --config-path="config.yml"
-                                 Path to YAML file with config.
       --web.listen-address=":9150"
                                  Address to listen on for web interface and telemetry.
+      --mc.config-path="config.yml"
+                                 Path to YAML file with config.
       --mc.world="/minecraft/world"
                                  Path the to world folder
       --mc.rcon-address=":25575"
@@ -80,7 +80,6 @@ Flags:
                                  Path under which to expose metrics.
       --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
-      --version                  Show application version.
 ```
 
 ### Config 🔧
