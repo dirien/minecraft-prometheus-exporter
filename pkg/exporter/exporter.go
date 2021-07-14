@@ -26,10 +26,12 @@ const (
 //See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
 
 type Exporter struct {
-	address  string
-	password string
-	logger   log.Logger
-	world    string
+	address         string
+	password        string
+	logger          log.Logger
+	world           string
+	source          string
+	disabledMetrics map[string]bool
 	//via advancements
 	playerAdvancements *prometheus.Desc
 
@@ -128,12 +130,14 @@ type Exporter struct {
 	waterTakenFromCauldron       *prometheus.Desc
 }
 
-func New(server, password, world string, logger log.Logger) *Exporter {
+func New(server, password, world, source string, disabledMetrics map[string]bool, logger log.Logger) *Exporter {
 	return &Exporter{
-		address:  server,
-		password: password,
-		logger:   logger,
-		world:    world,
+		address:         server,
+		password:        password,
+		logger:          logger,
+		world:           world,
+		source:          source,
+		disabledMetrics: disabledMetrics,
 		playerOnline: prometheus.NewDesc(
 			prometheus.BuildFQName(Namespace, "", "player_online_total"),
 			"is 1 if player is online",
@@ -600,6 +604,9 @@ type PlayerData struct {
 	Score     int32
 	Health    float32
 	FoodLevel int32 `nbt:"foodLevel"`
+	Bukkit    struct {
+		LastKnownName string `nbt:"lastKnownName"`
+	} `nbt:"bukkit"`
 }
 
 func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
@@ -609,23 +616,6 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 	}
 	for _, file := range files {
 		id := strings.TrimSuffix(file.Name(), ".json")
-		URL := "https://api.mojang.com/user/profiles/" + id + "/names"
-		resp, err := http.Get(URL)
-		if err != nil {
-			level.Error(e.logger).Log("msg", "Failed to connect to api.mojang.com", "err", err)
-		}
-
-		if resp.StatusCode != 200 {
-			return fmt.Errorf("error retrieving player info from api.mojang.com: %w", errors.New(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
-		}
-
-		var cResp []Player
-
-		if err := json.NewDecoder(resp.Body).Decode(&cResp); err != nil {
-			level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err)
-		}
-		cResp[0].ID = id
-		cResp[0].Name = strings.TrimSpace(cResp[0].Name)
 
 		f, err := os.Open(e.world + "/playerdata/" + id + ".dat")
 		if err != nil {
@@ -651,16 +641,51 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 			return err
 		}
 
+		var cResp []Player
+		switch e.source {
+		case "mojang":
+			URL := "https://api.mojang.com/user/profiles/" + id + "/names"
+			resp, err := http.Get(URL)
+			if err != nil {
+				level.Error(e.logger).Log("msg", "Failed to connect to api.mojang.com", "err", err)
+			}
+
+			if resp.StatusCode == 200 {
+				if err := json.NewDecoder(resp.Body).Decode(&cResp); err != nil {
+					level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err)
+				}
+
+				cResp[0].ID = id
+				cResp[0].Name = strings.TrimSpace(cResp[0].Name)
+			} else {
+				return fmt.Errorf("error retrieving player info from api.mojang.com: %w", errors.New(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
+			}
+
+			err = resp.Body.Close()
+			if err != nil {
+				return err
+			}
+		case "bukkit":
+			if data.Bukkit.LastKnownName == "" {
+				return fmt.Errorf("error retrieving player info from nbt: bukkit name is unknown")
+			}
+
+			cResp = append(cResp, Player{
+				ID:   id,
+				Name: data.Bukkit.LastKnownName,
+			})
+		default:
+			cResp = append(cResp, Player{
+				ID:   id,
+				Name: id,
+			})
+		}
+
 		ch <- prometheus.MustNewConstMetric(e.playerXpTotal, prometheus.CounterValue, float64(data.XpTotal), cResp[0].Name)
 		ch <- prometheus.MustNewConstMetric(e.playerCurrentXp, prometheus.CounterValue, float64(data.XpLevel), cResp[0].Name)
 		ch <- prometheus.MustNewConstMetric(e.playerScore, prometheus.CounterValue, float64(data.Score), cResp[0].Name)
 		ch <- prometheus.MustNewConstMetric(e.playerFoodLevel, prometheus.CounterValue, float64(data.FoodLevel), cResp[0].Name)
 		ch <- prometheus.MustNewConstMetric(e.playerHealth, prometheus.CounterValue, float64(data.Health), cResp[0].Name)
-
-		err = resp.Body.Close()
-		if err != nil {
-			return err
-		}
 
 		err2 := e.advancements(id, ch, cResp[0].Name)
 		if err2 != nil {
@@ -767,13 +792,33 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
+func (e *Exporter) isEnabled(field string) bool {
+	for _, group := range strings.Split(field, ".") {
+		if value, ok := e.disabledMetrics[group]; ok && value {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (e *Exporter) playerStatsCustom(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName string) {
-	value, _ := jsonParsed.Path(field).Data().(float64)
-	ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, value, playerName)
+	if e.isEnabled(field) {
+		value, _ := jsonParsed.Path(field).Data().(float64)
+		ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, value, playerName)
+	}
 }
 
 func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName string) {
+	if !e.isEnabled(field) {
+		return
+	}
+
 	for key, val := range jsonParsed.S("stats", field).ChildrenMap() {
+		if !e.isEnabled(key) {
+			continue
+		}
+
 		val := val.Data().(float64)
 		entity := strings.Split(key, ":")[1]
 		ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, entity)
