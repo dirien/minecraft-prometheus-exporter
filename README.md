@@ -32,7 +32,7 @@ To enable rcon on your minecraft server add the following to the `java` field in
         enabled: true
         broadcast: true
     edition: java
-    ...
+      ...
 ```
 
 See [server config examples](https://github.com/dirien/minectl#server-config-) for details and usage of the minectl 🗺
@@ -56,6 +56,16 @@ Details for the specific stats can be found here -> https://minecraft.fandom.com
 ```bash
 --mc.world=path/to/world
 ```
+
+#### API
+
+Due to restrictions of the API from mojang `https://api.mojang.com/user/profiles/[uuid]/names` we switched to the
+project of [Electroid](https://github.com/Electroid/mojang-api)
+
+Mojang, the developers of Minecraft, provides multiple APIs for websites and servers to fetch identity information about
+users. Requests do not accept authentication tokens, however they are heavily rate limited and fragmented among several
+endpoints. The purpose of this project is to package several of the most commonly used APIs into a single GET request
+with no rate limiting and no need for client-side caching.
 
 ### Usage ⚙
 
@@ -84,8 +94,9 @@ Flags:
 ```
 
 ### Config 🔧
-You can override CLI flags using config file. By default, `config.yml` located in the current directory is used.
-Path to config file can be changed using `--config-path` CLI flag.
+
+You can override CLI flags using config file. By default, `config.yml` located in the current directory is used. Path to
+config file can be changed using `--config-path` CLI flag.
 
 | Key in config file | Equivalent CLI flag    | Description                                                                      |
 | ---                | ---                    | ---                                                                              |
@@ -100,8 +111,8 @@ Path to config file can be changed using `--config-path` CLI flag.
 
 #### Disabling metrics
 
-To disable certain metrics, just add corresponding key to `disabled-metrics` section with `true` value in your config file.
-You should use keys that used by Minecraft to store players' stats.
+To disable certain metrics, just add corresponding key to `disabled-metrics` section with `true` value in your config
+file. You should use keys that used by Minecraft to store players' stats.
 
 #### Example config
 
@@ -114,6 +125,7 @@ listen-address: ':9151' # Change address of web server. "--web.listen-address" w
 ```
 
 ### Collectors 📊
+
 The exporter collects a number of statistics from the server:
 
 ```
@@ -398,6 +410,7 @@ The exporter collects a number of statistics from the server:
 - https://github.com/Tnze/go-mc
 - https://github.com/prometheus/exporter-toolkit
 - https://github.com/goreleaser
+- https://github.com/Electroid/mojang-api
 
 ### Legal Disclaimer 👮
 
