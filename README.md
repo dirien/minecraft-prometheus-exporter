@@ -80,6 +80,7 @@ Flags:
                                  Path under which to expose metrics.
       --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
+      --version                  Show application version.
 ```
 
 ### Config 🔧
