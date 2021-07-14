@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	Namespace = "minecraft_prometheus_exporter"
+	Namespace = "minecraft"
 )
 
 //See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
