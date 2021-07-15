@@ -53,7 +53,8 @@ type Exporter struct {
 	eatCakeSlice           *prometheus.Desc
 	fillCauldron           *prometheus.Desc
 	openChest              *prometheus.Desc
-	damage                 *prometheus.Desc
+	damageDealt            *prometheus.Desc
+	damageReceived         *prometheus.Desc
 	inspected              *prometheus.Desc
 	minecraftMovement      *prometheus.Desc
 	openEnderChest         *prometheus.Desc
@@ -126,54 +127,60 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 			[]string{"player", "entity", "action"},
 			nil,
 		),
-		animalsBred: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "animals_bred_total"),
+		animalsBred: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "animals_breded_total"),
 			"The number of times the player bred two mobs.",
 			[]string{"player"},
 			nil,
 		),
-		cleanArmor: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "clean_armor_total"),
+		cleanArmor: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "cleaned_armors_total"),
 			"The number of dyed leather armors washed with a cauldron.",
 			[]string{"player"},
 			nil,
 		),
 		//------
-		cleanBanner: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "clean_banner_total"),
+		cleanBanner: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "cleaned_banner_total"),
 			"The number of banner patterns washed with a cauldron.",
 			[]string{"player"},
 			nil,
 		),
-		openBarrel: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "open_barrel_total"),
+		openBarrel: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "opened_barrels_total"),
 			"The number of times the player has opened a Barrel.",
 			[]string{"player"},
 			nil,
 		),
-		bellRing: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "bell_ring_total"),
+		bellRing: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "bells_ringed_total"),
 			"The number of times the player has rung a Bell.",
 			[]string{"player"},
 			nil,
 		),
-		eatCakeSlice: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "eat_cake_slice_total"),
+		eatCakeSlice: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "cake_slices_eaten_total"),
 			"The number of cake slices eaten.",
 			[]string{"player"},
 			nil,
 		),
-		fillCauldron: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "fill_cauldron_total"),
+		fillCauldron: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "filled_cauldrons_total"),
 			"The number of times the player filled cauldrons with water buckets.",
 			[]string{"player"},
 			nil,
 		),
-		openChest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "open_chest_total"),
+		openChest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "opened_chests_total"),
 			"The number of times the player opened chests.",
 			[]string{"player"},
 			nil,
 		),
-		damage: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_total"),
-			"The amount of damage the player has handled from different types in tenths of 1♥.",
+		damageDealt: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_dealt_total"),
+			"The amount of damage the player has dealt from different types in tenths of 1♥.",
 			[]string{"player", "type"},
 			nil,
 		),
 
-		minecraftMovement: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "movement_meter_total"),
+		damageReceived: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_received_total"),
+			"The amount of damage the player has received from different types in tenths of 1♥.",
+			[]string{"player", "type"},
+			nil,
+		),
+
+		minecraftMovement: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "movement_meters_total"),
 			"The total distance traveled with different entities (ladders, boats, etc.)",
 			[]string{"player", "means"},
 			nil,
@@ -183,17 +190,17 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 			[]string{"player", "entity"},
 			nil,
 		),
-		openEnderChest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "open_enderchest_total"),
+		openEnderChest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "opened_enderchests_total"),
 			"The number of times the player opened ender chests.",
 			[]string{"player"},
 			nil,
 		),
-		fishCaught: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "fish_caught_total"),
+		fishCaught: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "fishs_caught_total"),
 			"The number of fish caught.",
 			[]string{"player"},
 			nil,
 		),
-		leaveGame: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "leave_game_total"),
+		leaveGame: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "games_left_total"),
 			"The number of times \"Save and quit to title\" has been clicked.",
 			[]string{"player"},
 			nil,
@@ -203,37 +210,37 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 			[]string{"player", "entity"},
 			nil,
 		),
-		itemsDropped: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "items_drop_total"),
+		itemsDropped: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "items_dropped_total"),
 			"The number of items dropped.",
 			[]string{"player"},
 			nil,
 		),
-		itemsEntchanted: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "enchant_item_total"),
+		itemsEntchanted: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "items_enchanted_total"),
 			"The number of items enchanted.",
 			[]string{"player"},
 			nil,
 		),
-		jump: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "jump_total"),
+		jump: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "jumps_total"),
 			"\tThe total number of jumps performed.",
 			[]string{"player"},
 			nil,
 		),
-		mobKills: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "mob_kills_total"),
+		mobKills: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "mobs_killed_total"),
 			"The number of mobs the player killed.",
 			[]string{"player"},
 			nil,
 		),
-		musicDiscsPlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "play_record_total"),
+		musicDiscsPlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "records_played_total"),
 			"The number of music discs played on a jukebox.",
 			[]string{"player"},
 			nil,
 		),
-		noteBlocksPlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "play_noteblock_total"),
+		noteBlocksPlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "noteblocks_played_total"),
 			"The number of note blocks hit.",
 			[]string{"player"},
 			nil,
 		),
-		noteBlocksTuned: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tune_noteblock_total"),
+		noteBlocksTuned: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "noteblocks_tuned_total"),
 			"The number of times interacted with note blocks.",
 			[]string{"player"},
 			nil,
@@ -243,87 +250,87 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 			[]string{"player"},
 			nil,
 		),
-		plantsPotted: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "pot_flower_total"),
+		plantsPotted: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "pots_flowered_total"),
 			"The number of plants potted onto flower pots.",
 			[]string{"player"},
 			nil,
 		),
-		playerKills: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_kills_total"),
+		playerKills: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "players_killed_total"),
 			"The number of players the player killed",
 			[]string{"player"},
 			nil,
 		),
-		raidsTriggered: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "raid_trigger_total"),
+		raidsTriggered: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "triggered_raids_total"),
 			"The number of times the player has triggered a Raid.",
 			[]string{"player"},
 			nil,
 		),
-		raidsWon: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "raid_win_total"),
+		raidsWon: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "won_raids_total"),
 			"The number of times the player has won a Raid.",
 			[]string{"player"},
 			nil,
 		),
-		shulkerBoxCleaned: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "clean_shulker_box_total"),
+		shulkerBoxCleaned: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "shulker_boxes_cleaned_total"),
 			"The number of times the player has washed a Shulker Box with a cauldron.",
 			[]string{"player"},
 			nil,
 		),
-		shulkerBoxesOpened: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "open_shulker_box_total"),
+		shulkerBoxesOpened: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "shulker_boxes_opened_total"),
 			"The number of times the player has opened a Shulker Box.",
 			[]string{"player"},
 			nil,
 		),
-		sneakTime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sneak_time_total"),
+		sneakTime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sneak_time_ticks_total"),
 			"The time the player has held down the sneak button.",
 			[]string{"player"},
 			nil,
 		),
-		talkedToVillager: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "talked_to_villager_total"),
+		talkedToVillager: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "talked_to_villagers_total"),
 			"The number of times interacted with villagers (opened the trading GUI).",
 			[]string{"player"},
 			nil,
 		),
-		targetsHit: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "target_hit_total"),
+		targetsHit: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "targets_hit_total"),
 			"The number of times the player has shot a target block.",
 			[]string{"player"},
 			nil,
 		),
-		timePlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "play_time_total"),
+		timePlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "play_time_ticks_total"),
 			"The total amount of time played. ",
 			[]string{"player"},
 			nil,
 		),
-		timeSinceDeath: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "time_since_death_total"),
+		timeSinceDeath: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "time_since_death_ticks_total"),
 			"The time since the player's last death.",
 			[]string{"player"},
 			nil,
 		),
-		timeSinceLastRest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "time_since_rest_total"),
+		timeSinceLastRest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "time_since_rest_ticks_total"),
 			"The time since the player's last rest. This is used to spawn phantoms.",
 			[]string{"player"},
 			nil,
 		),
-		timesWorldOpen: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "total_world_time_total"),
+		timesWorldOpen: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "total_world_time_ticks_total"),
 			"The total amount of time the world was opened.n.",
 			[]string{"player"},
 			nil,
 		),
-		timesSleptInBed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sleep_in_bed_total"),
+		timesSleptInBed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sleep_in_bed_ticks_total"),
 			"The number of times the player has slept in a bed..",
 			[]string{"player"},
 			nil,
 		),
-		tradedWithVillagers: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "traded_with_villager_total"),
+		tradedWithVillagers: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "traded_with_villagers_total"),
 			"The number of times traded with villagers.",
 			[]string{"player"},
 			nil,
 		),
-		trappedChestsTriggered: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "trigger_trapped_chest_total"),
+		trappedChestsTriggered: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "triggered_trapped_chests_total"),
 			"The number of times the player opened trapped chests.",
 			[]string{"player"},
 			nil,
 		),
-		waterTakenFromCauldron: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "use_cauldron_total"),
+		waterTakenFromCauldron: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "used_cauldrons_total"),
 			"The number of times the player took water from cauldrons with glass bottles.",
 			[]string{"player"},
 			nil,
@@ -416,11 +423,11 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 			}
 		}
 
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.XpTotal), player.Name, "xp")
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.XpLevel), player.Name, "current_xp")
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.Score), player.Name, "score")
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.FoodLevel), player.Name, "food_level")
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.Health), player.Name, "health")
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpTotal), player.Name, "xp")
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpLevel), player.Name, "current_xp")
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.Score), player.Name, "score")
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.FoodLevel), player.Name, "food_level")
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.Health), player.Name, "health")
 
 		err2 := e.advancements(id, ch, player.Name)
 		if err2 != nil {
@@ -458,10 +465,16 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		e.playerStatsCustom(jsonParsed, e.fillCauldron, "stats.minecraft:custom.minecraft:fill_cauldron", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.openChest, "stats.minecraft:custom.minecraft:open_chest", ch, player.Name)
 
-		damageTypes := []string{"absorbed", "blocked_by_shield", "dealt", "dealt_absorbed", "dealt_resisted", "resisted", "taken"}
-		for _, damageType := range damageTypes {
-			field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", damageType)
-			e.playerStatsCustomWithType(jsonParsed, e.damage, field, ch, player.Name, damageType)
+		damageReceivedTypes := []string{"absorbed", "blocked_by_shield", "resisted", "taken"}
+		for _, damageReceivedType := range damageReceivedTypes {
+			field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", damageReceivedType)
+			e.playerStatsCustomWithType(jsonParsed, e.damageReceived, field, ch, player.Name, damageReceivedType)
+		}
+
+		damageDealtTypes := map[string]string{"dealt": "hit", "dealt_absorbed": "absorbed", "dealt_resisted": "resisted"}
+		for key, damageDealtType := range damageDealtTypes {
+			field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", key)
+			e.playerStatsCustomWithType(jsonParsed, e.damageDealt, field, ch, player.Name, damageDealtType)
 		}
 
 		movementTypes := []string{"climb", "crouch", "fall", "fly", "sprint", "swim", "walk", "walk_on_water", "walk_under_water",
@@ -595,7 +608,7 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 			}
 		}
 	}
-	ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(completed), playerName, "advancements")
+	ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(completed), playerName, "advancements")
 
 	return nil
 }
@@ -650,7 +663,8 @@ func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 	descs <- e.eatCakeSlice
 	descs <- e.fillCauldron
 	descs <- e.openChest
-	descs <- e.damage
+	descs <- e.damageDealt
+	descs <- e.damageReceived
 	descs <- e.inspected
 	descs <- e.minecraftMovement
 	descs <- e.openEnderChest
