@@ -33,101 +33,67 @@ type Exporter struct {
 	source          string
 	disabledMetrics map[string]bool
 	//via advancements
-	playerAdvancements *prometheus.Desc
+	//playerAdvancements *prometheus.Desc
 
 	//via RCON
 	playerOnline *prometheus.Desc
 
 	//via stats
-	playerXpTotal   *prometheus.Desc
-	playerCurrentXp *prometheus.Desc
-	playerFoodLevel *prometheus.Desc
-	playerScore     *prometheus.Desc
-	playerHealth    *prometheus.Desc
-	itemCrafted     *prometheus.Desc
-	blocksMined     *prometheus.Desc
-	entitiesKilled  *prometheus.Desc
-	playerKilledBy  *prometheus.Desc
-	itemUsed        *prometheus.Desc
-	itemPickedUp    *prometheus.Desc
-	itemDropped     *prometheus.Desc
-	itemBroken      *prometheus.Desc
+	playerStat *prometheus.Desc
 
-	animalsBred                  *prometheus.Desc
-	cleanArmor                   *prometheus.Desc
-	cleanBanner                  *prometheus.Desc
-	openBarrel                   *prometheus.Desc
-	bellRing                     *prometheus.Desc
-	eatCakeSlice                 *prometheus.Desc
-	fillCauldron                 *prometheus.Desc
-	openChest                    *prometheus.Desc
-	damageAbsorbed               *prometheus.Desc
-	damageBlockedByShield        *prometheus.Desc
-	damageDealt                  *prometheus.Desc
-	damageDealtAbsorbed          *prometheus.Desc
-	damageDealtResisted          *prometheus.Desc
-	damageResisted               *prometheus.Desc
-	damageTaken                  *prometheus.Desc
-	inspectDispenser             *prometheus.Desc
-	climbOneCm                   *prometheus.Desc
-	crouchOneCm                  *prometheus.Desc
-	fallOneCm                    *prometheus.Desc
-	flyOneCm                     *prometheus.Desc
-	sprintOneCm                  *prometheus.Desc
-	swimOneCm                    *prometheus.Desc
-	walkOneCm                    *prometheus.Desc
-	walkOnWaterOneCm             *prometheus.Desc
-	walkUnderWaterOneCm          *prometheus.Desc
-	boatOneCm                    *prometheus.Desc
-	aviateOneCm                  *prometheus.Desc
-	horseOneCm                   *prometheus.Desc
-	minecartOneCm                *prometheus.Desc
-	pigOneCm                     *prometheus.Desc
-	striderOneCm                 *prometheus.Desc
-	inspectDropper               *prometheus.Desc
-	openEnderChest               *prometheus.Desc
-	fishCaught                   *prometheus.Desc
-	leaveGame                    *prometheus.Desc
-	inspectHopper                *prometheus.Desc
-	interactWithAnvil            *prometheus.Desc
-	interactWithBeacon           *prometheus.Desc
-	interactWithBlastFurnace     *prometheus.Desc
-	interactWithBrewingStand     *prometheus.Desc
-	interactWithCampfire         *prometheus.Desc
-	interactWithCartographyTable *prometheus.Desc
-	interactWithCraftingTable    *prometheus.Desc
-	interactWithFurnaces         *prometheus.Desc
-	interactWithGrindstone       *prometheus.Desc
-	interactWithLectern          *prometheus.Desc
-	interactWithLoom             *prometheus.Desc
-	interactWithSmithingTable    *prometheus.Desc
-	interactWithSmoker           *prometheus.Desc
-	interactWithStonecutter      *prometheus.Desc
-	itemsDropped                 *prometheus.Desc
-	itemsEntchanted              *prometheus.Desc
-	jump                         *prometheus.Desc
-	mobKills                     *prometheus.Desc
-	musicDiscsPlayed             *prometheus.Desc
-	noteBlocksPlayed             *prometheus.Desc
-	noteBlocksTuned              *prometheus.Desc
-	numberOfDeaths               *prometheus.Desc
-	plantsPotted                 *prometheus.Desc
-	playerKills                  *prometheus.Desc
-	raidsTriggered               *prometheus.Desc
-	raidsWon                     *prometheus.Desc
-	shulkerBoxCleaned            *prometheus.Desc
-	shulkerBoxesOpened           *prometheus.Desc
-	sneakTime                    *prometheus.Desc
-	talkedToVillager             *prometheus.Desc
-	targetsHit                   *prometheus.Desc
-	timePlayed                   *prometheus.Desc
-	timeSinceDeath               *prometheus.Desc
-	timeSinceLastRest            *prometheus.Desc
-	timesWorldOpen               *prometheus.Desc
-	timesSleptInBed              *prometheus.Desc
-	tradedWithVillagers          *prometheus.Desc
-	trappedChestsTriggered       *prometheus.Desc
-	waterTakenFromCauldron       *prometheus.Desc
+	blocksMined    *prometheus.Desc
+	entitiesKilled *prometheus.Desc
+	playerKilledBy *prometheus.Desc
+
+	item *prometheus.Desc
+
+	animalsBred  *prometheus.Desc
+	cleanArmor   *prometheus.Desc
+	cleanBanner  *prometheus.Desc
+	openBarrel   *prometheus.Desc
+	bellRing     *prometheus.Desc
+	eatCakeSlice *prometheus.Desc
+	fillCauldron *prometheus.Desc
+	openChest    *prometheus.Desc
+
+	damage    *prometheus.Desc
+	inspected *prometheus.Desc
+
+	minecraftMovement *prometheus.Desc
+	openEnderChest    *prometheus.Desc
+	fishCaught        *prometheus.Desc
+	leaveGame         *prometheus.Desc
+
+	interaction *prometheus.Desc
+
+	itemsDropped    *prometheus.Desc
+	itemsEntchanted *prometheus.Desc
+
+	jump               *prometheus.Desc
+	mobKills           *prometheus.Desc
+	musicDiscsPlayed   *prometheus.Desc
+	noteBlocksPlayed   *prometheus.Desc
+	noteBlocksTuned    *prometheus.Desc
+	numberOfDeaths     *prometheus.Desc
+	plantsPotted       *prometheus.Desc
+	playerKills        *prometheus.Desc
+	raidsTriggered     *prometheus.Desc
+	raidsWon           *prometheus.Desc
+	shulkerBoxCleaned  *prometheus.Desc
+	shulkerBoxesOpened *prometheus.Desc
+	sneakTime          *prometheus.Desc
+	talkedToVillager   *prometheus.Desc
+	targetsHit         *prometheus.Desc
+
+	timePlayed        *prometheus.Desc
+	timeSinceDeath    *prometheus.Desc
+	timeSinceLastRest *prometheus.Desc
+	timesWorldOpen    *prometheus.Desc
+	timesSleptInBed   *prometheus.Desc
+
+	tradedWithVillagers    *prometheus.Desc
+	trappedChestsTriggered *prometheus.Desc
+	waterTakenFromCauldron *prometheus.Desc
 }
 
 func New(server, password, world, source string, disabledMetrics map[string]bool, logger log.Logger) *Exporter {
@@ -144,39 +110,9 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 			[]string{"player"},
 			nil,
 		),
-		playerXpTotal: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_xp_total"),
-			"How much total XP a player has",
-			[]string{"player"},
-			nil,
-		),
-		playerCurrentXp: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_current_xp_total"),
-			"How much current XP a player has",
-			[]string{"player"},
-			nil,
-		),
-		playerFoodLevel: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_food_level_total"),
-			"How much food the player currently has",
-			[]string{"player"},
-			nil,
-		),
-		playerHealth: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_health_total"),
-			"How much Health the player currently has",
-			[]string{"player"},
-			nil,
-		),
-		playerScore: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_score_total"),
-			"The Score of the player",
-			[]string{"player"},
-			nil,
-		),
-		playerAdvancements: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_advancements_total"),
-			"Number of completed advances of a player",
-			[]string{"player"},
-			nil,
-		),
-		itemCrafted: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "item_crafted_total"),
-			"Statistics related to the number of items crafted, smelted, etc.",
-			[]string{"player", "block"},
+		playerStat: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_stat_total"),
+			"Different stats of the player: xp, current_xp, food_level, health, score, advancements",
+			[]string{"player", "stat"},
 			nil,
 		),
 		blocksMined: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "blocks_mined_total"),
@@ -194,24 +130,9 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 			[]string{"player", "entity"},
 			nil,
 		),
-		itemUsed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "item_used_total"),
-			"Statistics related to the number of block or item used",
-			[]string{"player", "entity"},
-			nil,
-		),
-		itemPickedUp: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "item_picked_up_total"),
-			"Statistics related to the number of dropped items a player picked up",
-			[]string{"player", "entity"},
-			nil,
-		),
-		itemDropped: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "item_dropped_total"),
-			"Statistics related to the number of items that droped.",
-			[]string{"player", "entity"},
-			nil,
-		),
-		itemBroken: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "item_broken_total"),
-			"Statistics related to the number of items a player ran their durability negative",
-			[]string{"player", "entity"},
+		item: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "item_actions_total"),
+			"Statistics related to the number of items and their actions: used, picked up, dropped, broken",
+			[]string{"player", "entity", "action"},
 			nil,
 		),
 		animalsBred: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "animals_bred_total"),
@@ -255,124 +176,20 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 			[]string{"player"},
 			nil,
 		),
-		damageAbsorbed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_absorbed_total"),
-			"The amount of damage the player has absorbed in tenths of 1♥.",
-			[]string{"player"},
+		damage: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_total"),
+			"The amount of damage the player has handled from different types in tenths of 1♥.",
+			[]string{"player", "type"},
 			nil,
 		),
-		damageBlockedByShield: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_blocked_by_shield_total"),
-			"The amount of damage the player has blocked with a shield in tenths of 1♥.",
-			[]string{"player"},
+
+		minecraftMovement: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "movement_meter_total"),
+			"The total distance traveled with different entities (ladders, boats, etc.)",
+			[]string{"player", "means"},
 			nil,
 		),
-		damageDealt: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_dealt_total"),
-			"The amount of damage the player has dealt in tenths 1♥. Includes only melee attacks.",
-			[]string{"player"},
-			nil,
-		),
-		damageDealtAbsorbed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_dealt_absorbed_total"),
-			"The amount of damage the player has dealt that were absorbed, in tenths of 1♥.",
-			[]string{"player"},
-			nil,
-		),
-		damageDealtResisted: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_dealt_resisted_total"),
-			"The amount of damage the player has dealt that were resisted, in tenths of 1♥.",
-			[]string{"player"},
-			nil,
-		),
-		damageResisted: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_resisted_total"),
-			"The amount of damage the player has resisted in tenths of 1♥.",
-			[]string{"player"},
-			nil,
-		),
-		damageTaken: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_taken_total"),
-			"The amount of damage the player has taken in tenths of 1♥.",
-			[]string{"player"},
-			nil,
-		),
-		inspectDispenser: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "inspect_dispenser_total"),
-			"The number of times interacted with dispensers.",
-			[]string{"player"},
-			nil,
-		),
-		climbOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "climb_one_cm_total"),
-			"The total distance traveled up ladders or vines.",
-			[]string{"player"},
-			nil,
-		),
-		crouchOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "crouch_one_cm_total"),
-			"The total distance walked while sneaking.",
-			[]string{"player"},
-			nil,
-		),
-		fallOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "fall_one_cm_total"),
-			"The total distance fallen, excluding jumping. ",
-			[]string{"player"},
-			nil,
-		),
-		flyOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "fly_one_cm_total"),
-			"Distance traveled upwards and forwards at the same time, while more than one block above the ground.",
-			[]string{"player"},
-			nil,
-		),
-		sprintOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sprint_one_cm_total"),
-			"The total distance sprinted.",
-			[]string{"player"},
-			nil,
-		),
-		swimOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "swim_one_cm_total"),
-			"The total distance covered with sprint-swimming..",
-			[]string{"player"},
-			nil,
-		),
-		walkOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "walk_one_cm_total"),
-			"The total distance walked.",
-			[]string{"player"},
-			nil,
-		),
-		walkOnWaterOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "walk_on_water_one_cm_total"),
-			"The distance covered while bobbing up and down over water.",
-			[]string{"player"},
-			nil,
-		),
-		walkUnderWaterOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "walk_under_water_one_cm_total"),
-			"The total distance you have walked underwater.",
-			[]string{"player"},
-			nil,
-		),
-		boatOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "boat_one_cm_total"),
-			"The total distance traveled by boats.",
-			[]string{"player"},
-			nil,
-		),
-		aviateOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "aviate_one_cm_total"),
-			"The total distance traveled by elytra.",
-			[]string{"player"},
-			nil,
-		),
-		horseOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "horse_one_cm_total"),
-			"The total distance traveled by horses..",
-			[]string{"player"},
-			nil,
-		),
-		minecartOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "minecart_one_cm_total"),
-			"The total distance traveled by minecarts.",
-			[]string{"player"},
-			nil,
-		),
-		pigOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "pig_one_cm_total"),
-			"The total distance traveled by pigs via saddles.",
-			[]string{"player"},
-			nil,
-		),
-		striderOneCm: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "strider_one_cm_total"),
-			"The total distance traveled by striders via saddles.",
-			[]string{"player"},
-			nil,
-		),
-		inspectDropper: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "inspect_dropper_total"),
-			"The number of times interacted with droppers.",
-			[]string{"player"},
+		inspected: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "inspected_total"),
+			"The number of times inspected a dispenser, hopper or dropper.",
+			[]string{"player", "entity"},
 			nil,
 		),
 		openEnderChest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "open_enderchest_total"),
@@ -390,79 +207,9 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 			[]string{"player"},
 			nil,
 		),
-		inspectHopper: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "inspect_hopper_total"),
-			"The number of times interacted with hoppers.",
-			[]string{"player"},
-			nil,
-		),
-		interactWithAnvil: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_anvil_total"),
-			"The number of times interacted with anvils.",
-			[]string{"player"},
-			nil,
-		),
-		interactWithBeacon: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_beacon_total"),
-			"The number of times interacted with beacons.",
-			[]string{"player"},
-			nil,
-		),
-		interactWithBlastFurnace: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_blast_furnace_total"),
-			"The number of times interacted with blast furnaces",
-			[]string{"player"},
-			nil,
-		),
-		interactWithBrewingStand: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_brewingstand_total"),
-			"The number of times interacted with brewing stands",
-			[]string{"player"},
-			nil,
-		),
-		interactWithCampfire: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_campfire_total"),
-			"The number of times interacted with campfires",
-			[]string{"player"},
-			nil,
-		),
-		interactWithCartographyTable: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_cartography_table_total"),
-			"The number of times interacted with cartography tables",
-			[]string{"player"},
-			nil,
-		),
-		interactWithCraftingTable: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_crafting_table_total"),
-			"The number of times interacted with crafting tables",
-			[]string{"player"},
-			nil,
-		),
-		interactWithFurnaces: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_furnace_total"),
-			"The number of times interacted with furnaces",
-			[]string{"player"},
-			nil,
-		),
-		interactWithGrindstone: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_grindstone_total"),
-			"The number of times interacted with grindstones",
-			[]string{"player"},
-			nil,
-		),
-		interactWithLectern: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_lectern_total"),
-			"The number of times interacted with lecterns",
-			[]string{"player"},
-			nil,
-		),
-		interactWithLoom: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_loom_total"),
-			"The number of times interacted with looms",
-			[]string{"player"},
-			nil,
-		),
-		interactWithSmithingTable: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_smithing_table_total"),
-			"The number of times interacted with smithing tables.",
-			[]string{"player"},
-			nil,
-		),
-		interactWithSmoker: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_smoker_total"),
-			"The number of times interacted with smokers.",
-			[]string{"player"},
-			nil,
-		),
-		interactWithStonecutter: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interact_with_stonecutter_total"),
-			"The number of times interacted with stonecutters.",
-			[]string{"player"},
+		interaction: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interactions_total"),
+			"The number of times interacted with different entities",
+			[]string{"player", "entity"},
 			nil,
 		),
 		itemsDropped: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "items_drop_total"),
@@ -678,11 +425,11 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 			}
 		}
 
-		ch <- prometheus.MustNewConstMetric(e.playerXpTotal, prometheus.CounterValue, float64(data.XpTotal), player.Name)
-		ch <- prometheus.MustNewConstMetric(e.playerCurrentXp, prometheus.CounterValue, float64(data.XpLevel), player.Name)
-		ch <- prometheus.MustNewConstMetric(e.playerScore, prometheus.CounterValue, float64(data.Score), player.Name)
-		ch <- prometheus.MustNewConstMetric(e.playerFoodLevel, prometheus.CounterValue, float64(data.FoodLevel), player.Name)
-		ch <- prometheus.MustNewConstMetric(e.playerHealth, prometheus.CounterValue, float64(data.Health), player.Name)
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.XpTotal), player.Name, "xp")
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.XpLevel), player.Name, "current_xp")
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.Score), player.Name, "score")
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.FoodLevel), player.Name, "food_level")
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(data.Health), player.Name, "health")
 
 		err2 := e.advancements(id, ch, player.Name)
 		if err2 != nil {
@@ -700,14 +447,15 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 			return err
 		}
 
-		e.playerStats(jsonParsed, e.itemCrafted, "minecraft:crafted", ch, player.Name)
-		e.playerStats(jsonParsed, e.blocksMined, "minecraft:mined", ch, player.Name)
-		e.playerStats(jsonParsed, e.entitiesKilled, "minecraft:killed", ch, player.Name)
-		e.playerStats(jsonParsed, e.playerKilledBy, "minecraft:killed_by", ch, player.Name)
-		e.playerStats(jsonParsed, e.itemUsed, "minecraft:used", ch, player.Name)
-		e.playerStats(jsonParsed, e.itemPickedUp, "minecraft:picked_up", ch, player.Name)
-		e.playerStats(jsonParsed, e.itemDropped, "minecraft:dropped", ch, player.Name)
-		e.playerStats(jsonParsed, e.itemBroken, "minecraft:broken", ch, player.Name)
+		e.playerStats(jsonParsed, e.blocksMined, "minecraft:mined", ch, player.Name, "")
+		e.playerStats(jsonParsed, e.entitiesKilled, "minecraft:killed", ch, player.Name, "")
+		e.playerStats(jsonParsed, e.playerKilledBy, "minecraft:killed_by", ch, player.Name, "")
+
+		actionTypes := []string{"crafted", "used", "picked_up", "dropped", "broken"}
+		for _, actionType := range actionTypes {
+			field := fmt.Sprintf("minecraft:%s", actionType)
+			e.playerStats(jsonParsed, e.item, field, ch, player.Name, actionType)
+		}
 
 		e.playerStatsCustom(jsonParsed, e.animalsBred, "stats.minecraft:custom.minecraft:animals_bred", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.cleanArmor, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Name)
@@ -718,48 +466,37 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		e.playerStatsCustom(jsonParsed, e.eatCakeSlice, "stats.minecraft:custom.minecraft:eat_cake_slice", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.fillCauldron, "stats.minecraft:custom.minecraft:fill_cauldron", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.openChest, "stats.minecraft:custom.minecraft:open_chest", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.damageAbsorbed, "stats.minecraft:custom.minecraft:damage_absorbed", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.damageBlockedByShield, "stats.minecraft:custom.minecraft:damage_blocked_by_shield", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.damageDealt, "stats.minecraft:custom.minecraft:damage_dealt", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.damageDealtAbsorbed, "stats.minecraft:custom.minecraft:damage_dealt_absorbed", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.damageDealtResisted, "stats.minecraft:custom.minecraft:damage_dealt_resisted", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.damageResisted, "stats.minecraft:custom.minecraft:damage_resisted", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.damageTaken, "stats.minecraft:custom.minecraft:damage_taken", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.inspectDispenser, "stats.minecraft:custom.minecraft:inspect_dispenserr", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.climbOneCm, "stats.minecraft:custom.minecraft:climb_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.crouchOneCm, "stats.minecraft:custom.minecraft:crouch_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.fallOneCm, "stats.minecraft:custom.minecraft:fall_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.flyOneCm, "stats.minecraft:custom.minecraft:fly_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.sprintOneCm, "stats.minecraft:custom.minecraft:sprint_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.swimOneCm, "stats.minecraft:custom.minecraft:swim_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.walkOneCm, "stats.minecraft:custom.minecraft:walk_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.walkOnWaterOneCm, "stats.minecraft:custom.minecraft:walk_on_water_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.walkUnderWaterOneCm, "stats.minecraft:custom.minecraft:walk_under_water_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.boatOneCm, "stats.minecraft:custom.minecraft:boat_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.aviateOneCm, "stats.minecraft:custom.minecraft:aviate_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.horseOneCm, "stats.minecraft:custom.minecraft:horse_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.minecartOneCm, "stats.minecraft:custom.minecraft:minecart_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.pigOneCm, "stats.minecraft:custom.minecraft:pig_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.striderOneCm, "stats.minecraft:custom.minecraft:strider_one_cm", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.inspectDropper, "stats.minecraft:custom.minecraft:inspect_dropper", ch, player.Name)
+
+		damageTypes := []string{"absorbed", "blocked_by_shield", "dealt", "dealt_absorbed", "dealt_resisted", "resisted", "taken"}
+		for _, damageType := range damageTypes {
+			field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", damageType)
+			e.playerStatsCustomWithType(jsonParsed, e.damage, field, ch, player.Name, damageType)
+		}
+
+		movementTypes := []string{"climb", "crouch", "fall", "fly", "sprint", "swim", "walk", "walk_on_water", "walk_under_water",
+			"boat", "aviate", "horse", "minecart", "pig", "strider"}
+		for _, movementType := range movementTypes {
+			field := fmt.Sprintf("stats.minecraft:custom.minecraft:%s_one_cm", movementType)
+			e.playerStatsCustomMovement(jsonParsed, e.minecraftMovement, field, ch, player.Name, movementType)
+		}
+
+		inspectionTypes := []string{"dispenser", "dropper", "hopper"}
+		for _, inspectionType := range inspectionTypes {
+			field := fmt.Sprintf("stats.minecraft:custom.minecraft:inspect_%s", inspectionType)
+			e.playerStatsCustomWithType(jsonParsed, e.inspected, field, ch, player.Name, inspectionType)
+		}
+
 		e.playerStatsCustom(jsonParsed, e.openEnderChest, "stats.minecraft:custom.minecraft:open_enderchest", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.fishCaught, "stats.minecraft:custom.minecraft:fish_caught", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.leaveGame, "stats.minecraft:custom.minecraft:leave_game", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.inspectHopper, "stats.minecraft:custom.minecraft:inspect_hopper", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithAnvil, "stats.minecraft:custom.minecraft:interact_with_anvil", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithBeacon, "stats.minecraft:custom.minecraft:interact_with_beacon", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithBlastFurnace, "stats.minecraft:custom.minecraft:interact_with_blast_furnace", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithBrewingStand, "stats.minecraft:custom.minecraft:interact_with_brewingstand", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithCampfire, "stats.minecraft:custom.minecraft:interact_with_campfire", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithCartographyTable, "stats.minecraft:custom.minecraft:interact_with_cartography_table", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithCraftingTable, "stats.minecraft:custom.minecraft:interact_with_crafting_table", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithFurnaces, "stats.minecraft:custom.minecraft:interact_with_furnace", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithGrindstone, "stats.minecraft:custom.minecraft:interact_with_grindstone", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithLectern, "stats.minecraft:custom.minecraft:interact_with_lectern", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithLoom, "stats.minecraft:custom.minecraft:interact_with_loom", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithSmithingTable, "stats.minecraft:custom.minecraft:interact_with_smithing_table", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithSmoker, "stats.minecraft:custom.minecraft:interact_with_smoker", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.interactWithStonecutter, "stats.minecraft:custom.minecraft:interact_with_stonecutter", ch, player.Name)
+
+		interactionTypes := []string{"anvil", "beacon", "blast_furnace", "brewingstand", "campfire", "cartography_table",
+			"crafting_table", "furnace", "grindston", "lectern", "loom", "smithing_table", "smoker", "stonecutter"}
+		for _, interactionType := range interactionTypes {
+			field := fmt.Sprintf("stats.minecraft:custom.minecraft:interact_with_%s", interactionType)
+			e.playerStatsCustomWithType(jsonParsed, e.interaction, field, ch, player.Name, interactionType)
+		}
+
 		e.playerStatsCustom(jsonParsed, e.itemsDropped, "stats.minecraft:custom.minecraft:drop", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.itemsEntchanted, "stats.minecraft:custom.minecraft:enchant_item", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.jump, "stats.minecraft:custom.minecraft:jump", ch, player.Name)
@@ -799,6 +536,21 @@ func (e *Exporter) isEnabled(field string) bool {
 	return true
 }
 
+func (e *Exporter) playerStatsCustomWithType(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName, entityType string) {
+	if e.isEnabled(field) {
+		value, _ := jsonParsed.Path(field).Data().(float64)
+		ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, value, playerName, entityType)
+	}
+}
+
+func (e *Exporter) playerStatsCustomMovement(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName, movementType string) {
+	if e.isEnabled(field) {
+		value, _ := jsonParsed.Path(field).Data().(float64)
+		value = value / 100
+		ch <- prometheus.MustNewConstMetric(desc, prometheus.UntypedValue, value, playerName, movementType)
+	}
+}
+
 func (e *Exporter) playerStatsCustom(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName string) {
 	if e.isEnabled(field) {
 		value, _ := jsonParsed.Path(field).Data().(float64)
@@ -806,7 +558,7 @@ func (e *Exporter) playerStatsCustom(jsonParsed *gabs.Container, desc *prometheu
 	}
 }
 
-func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName string) {
+func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName, actionType string) {
 	if !e.isEnabled(field) {
 		return
 	}
@@ -818,7 +570,12 @@ func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc
 
 		val := val.Data().(float64)
 		entity := strings.Split(key, ":")[1]
-		ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, entity)
+		if len(actionType) > 0 {
+			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, entity, actionType)
+		} else {
+			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, entity)
+		}
+
 	}
 }
 
@@ -847,27 +604,18 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 			}
 		}
 	}
-	ch <- prometheus.MustNewConstMetric(e.playerAdvancements, prometheus.CounterValue, float64(completed), playerName)
+	ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.CounterValue, float64(completed), playerName, "advancements")
 
 	return nil
 }
 
 func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
-	descs <- e.playerAdvancements
 	descs <- e.playerOnline
-	descs <- e.playerXpTotal
-	descs <- e.playerCurrentXp
-	descs <- e.playerFoodLevel
-	descs <- e.playerScore
-	descs <- e.playerHealth
-	descs <- e.itemCrafted
+	descs <- e.playerStat
+	descs <- e.item
 	descs <- e.blocksMined
 	descs <- e.entitiesKilled
 	descs <- e.playerKilledBy
-	descs <- e.itemUsed
-	descs <- e.itemPickedUp
-	descs <- e.itemDropped
-	descs <- e.itemBroken
 
 	descs <- e.animalsBred
 	descs <- e.cleanArmor
@@ -877,48 +625,13 @@ func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 	descs <- e.eatCakeSlice
 	descs <- e.fillCauldron
 	descs <- e.openChest
-	descs <- e.damageAbsorbed
-	descs <- e.damageBlockedByShield
-	descs <- e.damageDealt
-	descs <- e.damageDealtAbsorbed
-	descs <- e.damageDealtResisted
-	descs <- e.damageResisted
-	descs <- e.damageTaken
-	descs <- e.inspectDispenser
-	descs <- e.climbOneCm
-	descs <- e.crouchOneCm
-	descs <- e.fallOneCm
-	descs <- e.flyOneCm
-	descs <- e.sprintOneCm
-	descs <- e.swimOneCm
-	descs <- e.walkOneCm
-	descs <- e.walkOnWaterOneCm
-	descs <- e.walkUnderWaterOneCm
-	descs <- e.boatOneCm
-	descs <- e.aviateOneCm
-	descs <- e.horseOneCm
-	descs <- e.minecartOneCm
-	descs <- e.pigOneCm
-	descs <- e.striderOneCm
-	descs <- e.inspectDropper
+	descs <- e.damage
+	descs <- e.inspected
+	descs <- e.minecraftMovement
 	descs <- e.openEnderChest
 	descs <- e.fishCaught
 	descs <- e.leaveGame
-	descs <- e.inspectHopper
-	descs <- e.interactWithAnvil
-	descs <- e.interactWithBeacon
-	descs <- e.interactWithBlastFurnace
-	descs <- e.interactWithBrewingStand
-	descs <- e.interactWithCampfire
-	descs <- e.interactWithCartographyTable
-	descs <- e.interactWithCraftingTable
-	descs <- e.interactWithFurnaces
-	descs <- e.interactWithGrindstone
-	descs <- e.interactWithLectern
-	descs <- e.interactWithLoom
-	descs <- e.interactWithSmithingTable
-	descs <- e.interactWithSmoker
-	descs <- e.interactWithStonecutter
+	descs <- e.interaction
 	descs <- e.itemsDropped
 	descs <- e.itemsEntchanted
 	descs <- e.jump

@@ -126,281 +126,234 @@ listen-address: ':9151' # Change address of web server. "--web.listen-address" w
 
 ### Collectors 📊
 
-The exporter collects a number of statistics from the server:
+The exporter collects a number of statistics from the server (with example of the labels):
 
-```
-# HELP minecraft_animals_bred The number of times the player bred two mobs.
+```bash
+# HELP minecraft_animals_bred_total The number of times the player bred two mobs.
 # TYPE minecraft_animals_bred_total counter
-
-# HELP minecraft_aviate_one_cm The total distance traveled by elytra.
-# TYPE minecraft_aviate_one_cm_total counter
-
-# HELP minecraft_bell_ring The number of times the player has rung a Bell.
+minecraft_animals_bred_total{player="ediri"} 0
+# HELP minecraft_bell_ring_total The number of times the player has rung a Bell.
 # TYPE minecraft_bell_ring_total counter
-
-# HELP minecraft_blocks_mined Statistic related to the number of blocks a player mined
+minecraft_bell_ring_total{player="ediri"} 0
+# HELP minecraft_blocks_mined_total Statistic related to the number of blocks a player mined
 # TYPE minecraft_blocks_mined_total counter
-
-# HELP minecraft_boat_one_cm The total distance traveled by boats.
-# TYPE minecraft_boat_one_cm_total counter
-
-# HELP minecraft_build_info A metric with a constant '1' value labeled by version, revision, branch, and goversion from which minecraft was built.
-# TYPE minecraft_build_info gauge
-
-# HELP minecraft_clean_armor The number of dyed leather armors washed with a cauldron.
+minecraft_blocks_mined_total{block="birch_log",player="ediri"} 2
+minecraft_blocks_mined_total{block="clay",player="ediri"} 1
+minecraft_blocks_mined_total{block="coal_ore",player="ediri"} 16
+minecraft_blocks_mined_total{block="crafting_table",player="ediri"} 2
+minecraft_blocks_mined_total{block="dirt",player="ediri"} 19
+minecraft_blocks_mined_total{block="grass",player="ediri"} 38
+minecraft_blocks_mined_total{block="grass_block",player="ediri"} 18
+minecraft_blocks_mined_total{block="oak_leaves",player="ediri"} 5
+minecraft_blocks_mined_total{block="oak_log",player="ediri"} 11
+minecraft_blocks_mined_total{block="oak_planks",player="ediri"} 1
+minecraft_blocks_mined_total{block="oxeye_daisy",player="ediri"} 1
+minecraft_blocks_mined_total{block="seagrass",player="ediri"} 5
+minecraft_blocks_mined_total{block="spruce_leaves",player="ediri"} 11
+minecraft_blocks_mined_total{block="spruce_log",player="ediri"} 13
+minecraft_blocks_mined_total{block="stone",player="ediri"} 2
+minecraft_blocks_mined_total{block="tall_grass",player="ediri"} 1
+minecraft_blocks_mined_total{block="tall_seagrass",player="ediri"} 5
+minecraft_blocks_mined_total{block="vine",player="ediri"} 2
+minecraft_blocks_mined_total{block="wall_torch",player="ediri"} 1
+# HELP minecraft_clean_armor_total The number of dyed leather armors washed with a cauldron.
 # TYPE minecraft_clean_armor_total counter
-
-# HELP minecraft_clean_banner The number of banner patterns washed with a cauldron.
+minecraft_clean_armor_total{player="ediri"} 0
+# HELP minecraft_clean_banner_total The number of banner patterns washed with a cauldron.
 # TYPE minecraft_clean_banner_total counter
-
-# HELP minecraft_clean_shulker_box The number of times the player has washed a Shulker Box with a cauldron.
+minecraft_clean_banner_total{player="ediri"} 0
+# HELP minecraft_clean_shulker_box_total The number of times the player has washed a Shulker Box with a cauldron.
 # TYPE minecraft_clean_shulker_box_total counter
-
-# HELP minecraft_climb_one_cm The total distance traveled up ladders or vines.
-# TYPE minecraft_climb_one_cm_total counter
-
-# HELP minecraft_crouch_one_cm The total distance walked while sneaking.
-# TYPE minecraft_crouch_one_cm_total counter
-
-# HELP minecraft_damage_absorbed The amount of damage the player has absorbed in tenths of 1♥.
-# TYPE minecraft_damage_absorbed_total counter
-
-# HELP minecraft_damage_blocked_by_shield The amount of damage the player has blocked with a shield in tenths of 1♥.
-# TYPE minecraft_damage_blocked_by_shield_total counter
-
-# HELP minecraft_damage_dealt The amount of damage the player has dealt in tenths 1♥. Includes only melee attacks.
-# TYPE minecraft_damage_dealt_total counter
-
-# HELP minecraft_damage_dealt_absorbed The amount of damage the player has dealt that were absorbed, in tenths of 1♥.
-# TYPE minecraft_damage_dealt_absorbed_total counter
-
-# HELP minecraft_damage_dealt_resisted The amount of damage the player has dealt that were resisted, in tenths of 1♥.
-# TYPE minecraft_damage_dealt_resisted_total counter
-
-# HELP minecraft_damage_resisted The amount of damage the player has resisted in tenths of 1♥.
-# TYPE minecraft_damage_resisted_total counter
-
-# HELP minecraft_damage_taken The amount of damage the player has taken in tenths of 1♥.
-# TYPE minecraft_damage_taken_total counter
-
-# HELP minecraft_deaths The number of times the player died.
+minecraft_clean_shulker_box_total{player="ediri"} 0
+# HELP minecraft_damage_total The amount of damage the player has handled from different types in tenths of 1♥.
+# TYPE minecraft_damage_total counter
+minecraft_damage_total{player="ediri",type="absorbed"} 0
+minecraft_damage_total{player="ediri",type="blocked_by_shield"} 0
+minecraft_damage_total{player="ediri",type="dealt"} 610
+minecraft_damage_total{player="ediri",type="dealt_absorbed"} 0
+minecraft_damage_total{player="ediri",type="dealt_resisted"} 0
+minecraft_damage_total{player="ediri",type="resisted"} 0
+minecraft_damage_total{player="ediri",type="taken"} 2295
+# HELP minecraft_deaths_total The number of times the player died.
 # TYPE minecraft_deaths_total counter
-
-# HELP minecraft_eat_cake_slice The number of cake slices eaten.
+minecraft_deaths_total{player="ediri"} 9
+# HELP minecraft_eat_cake_slice_total The number of cake slices eaten.
 # TYPE minecraft_eat_cake_slice_total counter
-
-# HELP minecraft_enchant_item The number of items enchanted.
+minecraft_eat_cake_slice_total{player="ediri"} 0
+# HELP minecraft_enchant_item_total The number of items enchanted.
 # TYPE minecraft_enchant_item_total counter
-
-# HELP minecraft_entities_killed Statistics related to the number of entities a player killed
+minecraft_enchant_item_total{player="ediri"} 0
+# HELP minecraft_entities_killed_total Statistics related to the number of entities a player killed
 # TYPE minecraft_entities_killed_total counter
-
-# HELP minecraft_fall_one_cm The total distance fallen, excluding jumping. 
-# TYPE minecraft_fall_one_cm_total counter
-
-# HELP minecraft_fill_cauldron The number of times the player filled cauldrons with water buckets.
+minecraft_entities_killed_total{entity="pig",player="ediri"} 2
+# HELP minecraft_exporter_build_info A metric with a constant '1' value labeled by version, revision, branch, and goversion from which minecraft_exporter was built.
+# TYPE minecraft_exporter_build_info gauge
+minecraft_exporter_build_info{branch="",goversion="go1.16.5",revision="",version=""} 1
+# HELP minecraft_fill_cauldron_total The number of times the player filled cauldrons with water buckets.
 # TYPE minecraft_fill_cauldron_total counter
-
-# HELP minecraft_fish_caught The number of fish caught.
+minecraft_fill_cauldron_total{player="ediri"} 0
+# HELP minecraft_fish_caught_total The number of fish caught.
 # TYPE minecraft_fish_caught_total counter
-
-# HELP minecraft_fly_one_cm Distance traveled upwards and forwards at the same time, while more than one block above the ground.
-# TYPE minecraft_fly_one_cm_total counter
-
-# HELP minecraft_horse_one_cm The total distance traveled by horses..
-# TYPE minecraft_horse_one_cm_total counter
-
-# HELP minecraft_inspect_dispenser The number of times interacted with dispensers.
-# TYPE minecraft_inspect_dispenser_total counter
-
-# HELP minecraft_inspect_dropper The number of times interacted with droppers.
-# TYPE minecraft_inspect_dropper_total counter
-
-# HELP minecraft_inspect_hopper The number of times interacted with hoppers.
-# TYPE minecraft_inspect_hopper_total counter
-
-# HELP minecraft_interact_with_anvil The number of times interacted with anvils.
-# TYPE minecraft_interact_with_anvil_total counter
-
-# HELP minecraft_interact_with_beacon The number of times interacted with beacons.
-# TYPE minecraft_interact_with_beacon_total counter
-
-# HELP minecraft_interact_with_blast_furnace The number of times interacted with blast furnaces
-# TYPE minecraft_interact_with_blast_furnace_total counter
-
-# HELP minecraft_interact_with_brewingstand The number of times interacted with brewing stands
-# TYPE minecraft_interact_with_brewingstand_total counter
-
-# HELP minecraft_interact_with_campfire The number of times interacted with campfires
-# TYPE minecraft_interact_with_campfire_total counter
-
-# HELP minecraft_interact_with_cartography_table The number of times interacted with cartography tables
-# TYPE minecraft_interact_with_cartography_table_total counter
-
-# HELP minecraft_interact_with_crafting_table The number of times interacted with crafting tables
-# TYPE minecraft_interact_with_crafting_table_total counter
-
-# HELP minecraft_interact_with_furnace The number of times interacted with furnaces
-# TYPE minecraft_interact_with_furnace_total counter
-
-# HELP minecraft_interact_with_grindstone The number of times interacted with grindstones
-# TYPE minecraft_interact_with_grindstone_total counter
-
-# HELP minecraft_interact_with_lectern The number of times interacted with lecterns
-# TYPE minecraft_interact_with_lectern_total counter
-
-# HELP minecraft_interact_with_loom The number of times interacted with looms
-# TYPE minecraft_interact_with_loom_total counter
-
-# HELP minecraft_interact_with_smithing_table The number of times interacted with smithing tables.
-# TYPE minecraft_interact_with_smithing_table_total counter
-
-# HELP minecraft_interact_with_smoker The number of times interacted with smokers.
-# TYPE minecraft_interact_with_smoker_total counter
-
-# HELP minecraft_interact_with_stonecutter The number of times interacted with stonecutters.
-# TYPE minecraft_interact_with_stonecutter_total counter
-
-# HELP minecraft_item_broken Statistics related to the number of items a player ran their durability negative
-# TYPE minecraft_item_broken_total counter
-
-# HELP minecraft_item_crafted Statistics related to the number of items crafted, smelted, etc.
-# TYPE minecraft_item_crafted_total counter
-
-# HELP minecraft_item_dropped Statistics related to the number of items that droped.
-# TYPE minecraft_item_dropped_total counter
-
-# HELP minecraft_item_picked_up Statistics related to the number of dropped items a player picked up
-# TYPE minecraft_item_picked_up_total counter
-
-# HELP minecraft_item_used Statistics related to the number of block or item used
-# TYPE minecraft_item_used_total counter
-
-# HELP minecraft_items_drop The number of items dropped.
+minecraft_fish_caught_total{player="ediri"} 0
+# HELP minecraft_inspected_total The number of times inspected a dispenser, hopper or dropper.
+# TYPE minecraft_inspected_total counter
+minecraft_inspected_total{entity="dispenser",player="ediri"} 0
+minecraft_inspected_total{entity="dropper",player="ediri"} 0
+minecraft_inspected_total{entity="hopper",player="ediri"} 0
+# HELP minecraft_interactions_total The number of times interacted with different entities
+# TYPE minecraft_interactions_total counter
+minecraft_interactions_total{entity="anvil",player="ediri"} 0
+minecraft_interactions_total{entity="beacon",player="ediri"} 0
+minecraft_interactions_total{entity="blast_furnace",player="ediri"} 0
+minecraft_interactions_total{entity="brewingstand",player="ediri"} 0
+minecraft_interactions_total{entity="campfire",player="ediri"} 0
+minecraft_interactions_total{entity="cartography_table",player="ediri"} 0
+minecraft_interactions_total{entity="crafting_table",player="ediri"} 10
+minecraft_interactions_total{entity="furnace",player="ediri"} 0
+minecraft_interactions_total{entity="grindston",player="ediri"} 0
+minecraft_interactions_total{entity="lectern",player="ediri"} 0
+minecraft_interactions_total{entity="loom",player="ediri"} 0
+minecraft_interactions_total{entity="smithing_table",player="ediri"} 0
+minecraft_interactions_total{entity="smoker",player="ediri"} 0
+minecraft_interactions_total{entity="stonecutter",player="ediri"} 0
+# HELP minecraft_item_actions_total Statistics related to the number of items and their actions: used, picked up, dropped, broken
+# TYPE minecraft_item_actions_total counter
+minecraft_item_actions_total{action="broken",entity="wooden_axe",player="ediri"} 1
+minecraft_item_actions_total{action="crafted",entity="crafting_table",player="ediri"} 3
+minecraft_item_actions_total{action="crafted",entity="oak_planks",player="ediri"} 32
+minecraft_item_actions_total{action="crafted",entity="oak_wood",player="ediri"} 6
+minecraft_item_actions_total{action="crafted",entity="spruce_planks",player="ediri"} 28
+minecraft_item_actions_total{action="crafted",entity="stick",player="ediri"} 32
+minecraft_item_actions_total{action="crafted",entity="torch",player="ediri"} 8
+minecraft_item_actions_total{action="crafted",entity="wooden_axe",player="ediri"} 1
+minecraft_item_actions_total{action="crafted",entity="wooden_pickaxe",player="ediri"} 3
+minecraft_item_actions_total{action="crafted",entity="wooden_shovel",player="ediri"} 1
+minecraft_item_actions_total{action="dropped",entity="porkchop",player="ediri"} 4
+minecraft_item_actions_total{action="picked_up",entity="birch_log",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",entity="coal",player="ediri"} 15
+minecraft_item_actions_total{action="picked_up",entity="crafting_table",player="ediri"} 2
+minecraft_item_actions_total{action="picked_up",entity="dirt",player="ediri"} 33
+minecraft_item_actions_total{action="picked_up",entity="oak_log",player="ediri"} 11
+minecraft_item_actions_total{action="picked_up",entity="oak_planks",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",entity="oak_sapling",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",entity="oxeye_daisy",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",entity="porkchop",player="ediri"} 4
+minecraft_item_actions_total{action="picked_up",entity="spruce_log",player="ediri"} 13
+minecraft_item_actions_total{action="picked_up",entity="torch",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",entity="wheat_seeds",player="ediri"} 6
+minecraft_item_actions_total{action="used",entity="crafting_table",player="ediri"} 3
+minecraft_item_actions_total{action="used",entity="oak_planks",player="ediri"} 1
+minecraft_item_actions_total{action="used",entity="oxeye_daisy",player="ediri"} 1
+minecraft_item_actions_total{action="used",entity="torch",player="ediri"} 2
+minecraft_item_actions_total{action="used",entity="wooden_axe",player="ediri"} 52
+minecraft_item_actions_total{action="used",entity="wooden_pickaxe",player="ediri"} 26
+# HELP minecraft_items_drop_total The number of items dropped.
 # TYPE minecraft_items_drop_total counter
-
-# HELP minecraft_jump       The total number of jumps performed.
+minecraft_items_drop_total{player="ediri"} 1
+# HELP minecraft_jump_total     The total number of jumps performed.
 # TYPE minecraft_jump_total counter
-
-# HELP minecraft_killed_by Statistics related to the times of a player being killed by entities.
+minecraft_jump_total{player="ediri"} 406
+# HELP minecraft_killed_by_total Statistics related to the times of a player being killed by entities.
 # TYPE minecraft_killed_by_total counter
-
-# HELP minecraft_leave_game The number of times "Save and quit to title" has been clicked.
+minecraft_killed_by_total{entity="skeleton",player="ediri"} 1
+minecraft_killed_by_total{entity="zombie",player="ediri"} 7
+# HELP minecraft_leave_game_total The number of times "Save and quit to title" has been clicked.
 # TYPE minecraft_leave_game_total counter
-
-# HELP minecraft_minecart_one_cm The total distance traveled by minecarts.
-# TYPE minecraft_minecart_one_cm_total counter
-
-# HELP minecraft_mob_kills The number of mobs the player killed.
+minecraft_leave_game_total{player="ediri"} 11
+# HELP minecraft_mob_kills_total The number of mobs the player killed.
 # TYPE minecraft_mob_kills_total counter
-
-# HELP minecraft_open_barrel The number of times the player has opened a Barrel.
+minecraft_mob_kills_total{player="ediri"} 2
+# HELP minecraft_movement_meter_total The total distance traveled with different entities (ladders, boats, etc.)
+# TYPE minecraft_movement_meter_total untyped
+minecraft_movement_meter_total{means="aviate",player="ediri"} 0
+minecraft_movement_meter_total{means="boat",player="ediri"} 0
+minecraft_movement_meter_total{means="climb",player="ediri"} 0.16
+minecraft_movement_meter_total{means="crouch",player="ediri"} 0
+minecraft_movement_meter_total{means="fall",player="ediri"} 58.49
+minecraft_movement_meter_total{means="fly",player="ediri"} 55.14
+minecraft_movement_meter_total{means="horse",player="ediri"} 0
+minecraft_movement_meter_total{means="minecart",player="ediri"} 0
+minecraft_movement_meter_total{means="pig",player="ediri"} 0
+minecraft_movement_meter_total{means="sprint",player="ediri"} 0.17
+minecraft_movement_meter_total{means="strider",player="ediri"} 0
+minecraft_movement_meter_total{means="swim",player="ediri"} 0
+minecraft_movement_meter_total{means="walk",player="ediri"} 1411.7
+minecraft_movement_meter_total{means="walk_on_water",player="ediri"} 168.45
+minecraft_movement_meter_total{means="walk_under_water",player="ediri"} 156.92
+# HELP minecraft_open_barrel_total The number of times the player has opened a Barrel.
 # TYPE minecraft_open_barrel_total counter
-
-# HELP minecraft_open_chest The number of times the player opened chests.
+minecraft_open_barrel_total{player="ediri"} 0
+# HELP minecraft_open_chest_total The number of times the player opened chests.
 # TYPE minecraft_open_chest_total counter
-
-# HELP minecraft_open_enderchest The number of times the player opened ender chests.
+minecraft_open_chest_total{player="ediri"} 0
+# HELP minecraft_open_enderchest_total The number of times the player opened ender chests.
 # TYPE minecraft_open_enderchest_total counter
-
-# HELP minecraft_open_shulker_box The number of times the player has opened a Shulker Box.
+minecraft_open_enderchest_total{player="ediri"} 0
+# HELP minecraft_open_shulker_box_total The number of times the player has opened a Shulker Box.
 # TYPE minecraft_open_shulker_box_total counter
-
-# HELP minecraft_pig_one_cm The total distance traveled by pigs via saddles.
-# TYPE minecraft_pig_one_cm_total counter
-
-# HELP minecraft_play_noteblock The number of note blocks hit.
+minecraft_open_shulker_box_total{player="ediri"} 0
+# HELP minecraft_play_noteblock_total The number of note blocks hit.
 # TYPE minecraft_play_noteblock_total counter
-
-# HELP minecraft_play_record The number of music discs played on a jukebox.
+minecraft_play_noteblock_total{player="ediri"} 0
+# HELP minecraft_play_record_total The number of music discs played on a jukebox.
 # TYPE minecraft_play_record_total counter
-
-# HELP minecraft_play_time The total amount of time played. 
+minecraft_play_record_total{player="ediri"} 0
+# HELP minecraft_play_time_total The total amount of time played.
 # TYPE minecraft_play_time_total counter
-
-# HELP minecraft_player_advancements Number of completed advances of a player
-# TYPE minecraft_player_advancements_total counter
-
-# HELP minecraft_player_current_xp How much current XP a player has
-# TYPE minecraft_player_current_xp_total counter
-
-# HELP minecraft_player_food_level How much food the player currently has
-# TYPE minecraft_player_food_level_total counter
-
-# HELP minecraft_player_health How much Health the player currently has
-# TYPE minecraft_player_health_total counter
-
-# HELP minecraft_player_kills The number of players the player killed
+minecraft_play_time_total{player="ediri"} 0
+# HELP minecraft_player_kills_total The number of players the player killed
 # TYPE minecraft_player_kills_total counter
-
-# HELP minecraft_player_online is 1 if player is online
-# TYPE minecraft_player_online_total counter
-
-# HELP minecraft_player_score The Score of the player
-# TYPE minecraft_player_score_total counter
-
-# HELP minecraft_player_xp_total How much total XP a player has
-# TYPE minecraft_player_xp_total_total counter
-
-# HELP minecraft_pot_flower The number of plants potted onto flower pots.
+minecraft_player_kills_total{player="ediri"} 0
+# HELP minecraft_player_stat_total Different stats of the player: xp, current_xp, food_level, health, score, advancements
+# TYPE minecraft_player_stat_total counter
+minecraft_player_stat_total{player="ediri",stat="advancements"} 53
+minecraft_player_stat_total{player="ediri",stat="current_xp"} 0
+minecraft_player_stat_total{player="ediri",stat="food_level"} 20
+minecraft_player_stat_total{player="ediri",stat="health"} 20
+minecraft_player_stat_total{player="ediri",stat="score"} 1
+minecraft_player_stat_total{player="ediri",stat="xp"} 1
+# HELP minecraft_pot_flower_total The number of plants potted onto flower pots.
 # TYPE minecraft_pot_flower_total counter
-
-# HELP minecraft_raid_trigger The number of times the player has triggered a Raid.
+minecraft_pot_flower_total{player="ediri"} 0
+# HELP minecraft_raid_trigger_total The number of times the player has triggered a Raid.
 # TYPE minecraft_raid_trigger_total counter
-
-# HELP minecraft_raid_win The number of times the player has won a Raid.
+minecraft_raid_trigger_total{player="ediri"} 0
+# HELP minecraft_raid_win_total The number of times the player has won a Raid.
 # TYPE minecraft_raid_win_total counter
-
-# HELP minecraft_sleep_in_bed The number of times the player has slept in a bed..
+minecraft_raid_win_total{player="ediri"} 0
+# HELP minecraft_sleep_in_bed_total The number of times the player has slept in a bed..
 # TYPE minecraft_sleep_in_bed_total counter
-
-# HELP minecraft_sneak_time The time the player has held down the sneak button.
+minecraft_sleep_in_bed_total{player="ediri"} 0
+# HELP minecraft_sneak_time_total The time the player has held down the sneak button.
 # TYPE minecraft_sneak_time_total counter
-
-# HELP minecraft_sprint_one_cm The total distance sprinted.
-# TYPE minecraft_sprint_one_cm_total counter
-
-# HELP minecraft_strider_one_cm The total distance traveled by striders via saddles.
-# TYPE minecraft_strider_one_cm_total counter
-
-# HELP minecraft_swim_one_cm The total distance covered with sprint-swimming..
-# TYPE minecraft_swim_one_cm_total counter
-
-# HELP minecraft_talked_to_villager The number of times interacted with villagers (opened the trading GUI).
+minecraft_sneak_time_total{player="ediri"} 0
+# HELP minecraft_talked_to_villager_total The number of times interacted with villagers (opened the trading GUI).
 # TYPE minecraft_talked_to_villager_total counter
-
-# HELP minecraft_target_hit The number of times the player has shot a target block.
+minecraft_talked_to_villager_total{player="ediri"} 0
+# HELP minecraft_target_hit_total The number of times the player has shot a target block.
 # TYPE minecraft_target_hit_total counter
-
-# HELP minecraft_time_since_death The time since the player's last death.
+minecraft_target_hit_total{player="ediri"} 0
+# HELP minecraft_time_since_death_total The time since the player's last death.
 # TYPE minecraft_time_since_death_total counter
-
-# HELP minecraft_time_since_rest The time since the player's last rest. This is used to spawn phantoms.
+minecraft_time_since_death_total{player="ediri"} 3373
+# HELP minecraft_time_since_rest_total The time since the player's last rest. This is used to spawn phantoms.
 # TYPE minecraft_time_since_rest_total counter
-
-# HELP minecraft_total_world_time The total amount of time the world was opened.n.
+minecraft_time_since_rest_total{player="ediri"} 3394
+# HELP minecraft_total_world_time_total The total amount of time the world was opened.n.
 # TYPE minecraft_total_world_time_total counter
-
-# HELP minecraft_traded_with_villager The number of times traded with villagers.
+minecraft_total_world_time_total{player="ediri"} 138851
+# HELP minecraft_traded_with_villager_total The number of times traded with villagers.
 # TYPE minecraft_traded_with_villager_total counter
-
-# HELP minecraft_trigger_trapped_chest The number of times the player opened trapped chests.
+minecraft_traded_with_villager_total{player="ediri"} 0
+# HELP minecraft_trigger_trapped_chest_total The number of times the player opened trapped chests.
 # TYPE minecraft_trigger_trapped_chest_total counter
-
-# HELP minecraft_tune_noteblock The number of times interacted with note blocks.
+minecraft_trigger_trapped_chest_total{player="ediri"} 0
+# HELP minecraft_tune_noteblock_total The number of times interacted with note blocks.
 # TYPE minecraft_tune_noteblock_total counter
-
-# HELP minecraft_use_cauldron The number of times the player took water from cauldrons with glass bottles.
+minecraft_tune_noteblock_total{player="ediri"} 0
+# HELP minecraft_use_cauldron_total The number of times the player took water from cauldrons with glass bottles.
 # TYPE minecraft_use_cauldron_total counter
-
-# HELP minecraft_walk_on_water_one_cm The distance covered while bobbing up and down over water.
-# TYPE minecraft_walk_on_water_one_cm_total counter
-
-# HELP minecraft_walk_one_cm The total distance walked.
-# TYPE minecraft_walk_one_cm_total counter
-
-# HELP minecraft_walk_under_water_one_cm The total distance you have walked underwater.
-# TYPE minecraft_walk_under_water_one_cm_total counter
+minecraft_use_cauldron_total{player="ediri"} 0
 ```
 
 ### Libraries & Tools 🔥
