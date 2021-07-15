@@ -41,56 +41,47 @@ type Exporter struct {
 	//via stats
 	playerStat *prometheus.Desc
 
-	blocksMined    *prometheus.Desc
-	entitiesKilled *prometheus.Desc
-	playerKilledBy *prometheus.Desc
-
-	item *prometheus.Desc
-
-	animalsBred  *prometheus.Desc
-	cleanArmor   *prometheus.Desc
-	cleanBanner  *prometheus.Desc
-	openBarrel   *prometheus.Desc
-	bellRing     *prometheus.Desc
-	eatCakeSlice *prometheus.Desc
-	fillCauldron *prometheus.Desc
-	openChest    *prometheus.Desc
-
-	damage    *prometheus.Desc
-	inspected *prometheus.Desc
-
-	minecraftMovement *prometheus.Desc
-	openEnderChest    *prometheus.Desc
-	fishCaught        *prometheus.Desc
-	leaveGame         *prometheus.Desc
-
-	interaction *prometheus.Desc
-
-	itemsDropped    *prometheus.Desc
-	itemsEntchanted *prometheus.Desc
-
-	jump               *prometheus.Desc
-	mobKills           *prometheus.Desc
-	musicDiscsPlayed   *prometheus.Desc
-	noteBlocksPlayed   *prometheus.Desc
-	noteBlocksTuned    *prometheus.Desc
-	numberOfDeaths     *prometheus.Desc
-	plantsPotted       *prometheus.Desc
-	playerKills        *prometheus.Desc
-	raidsTriggered     *prometheus.Desc
-	raidsWon           *prometheus.Desc
-	shulkerBoxCleaned  *prometheus.Desc
-	shulkerBoxesOpened *prometheus.Desc
-	sneakTime          *prometheus.Desc
-	talkedToVillager   *prometheus.Desc
-	targetsHit         *prometheus.Desc
-
-	timePlayed        *prometheus.Desc
-	timeSinceDeath    *prometheus.Desc
-	timeSinceLastRest *prometheus.Desc
-	timesWorldOpen    *prometheus.Desc
-	timesSleptInBed   *prometheus.Desc
-
+	blocksMined            *prometheus.Desc
+	entitiesKilled         *prometheus.Desc
+	playerKilledBy         *prometheus.Desc
+	item                   *prometheus.Desc
+	animalsBred            *prometheus.Desc
+	cleanArmor             *prometheus.Desc
+	cleanBanner            *prometheus.Desc
+	openBarrel             *prometheus.Desc
+	bellRing               *prometheus.Desc
+	eatCakeSlice           *prometheus.Desc
+	fillCauldron           *prometheus.Desc
+	openChest              *prometheus.Desc
+	damage                 *prometheus.Desc
+	inspected              *prometheus.Desc
+	minecraftMovement      *prometheus.Desc
+	openEnderChest         *prometheus.Desc
+	fishCaught             *prometheus.Desc
+	leaveGame              *prometheus.Desc
+	interaction            *prometheus.Desc
+	itemsDropped           *prometheus.Desc
+	itemsEntchanted        *prometheus.Desc
+	jump                   *prometheus.Desc
+	mobKills               *prometheus.Desc
+	musicDiscsPlayed       *prometheus.Desc
+	noteBlocksPlayed       *prometheus.Desc
+	noteBlocksTuned        *prometheus.Desc
+	numberOfDeaths         *prometheus.Desc
+	plantsPotted           *prometheus.Desc
+	playerKills            *prometheus.Desc
+	raidsTriggered         *prometheus.Desc
+	raidsWon               *prometheus.Desc
+	shulkerBoxCleaned      *prometheus.Desc
+	shulkerBoxesOpened     *prometheus.Desc
+	sneakTime              *prometheus.Desc
+	talkedToVillager       *prometheus.Desc
+	targetsHit             *prometheus.Desc
+	timePlayed             *prometheus.Desc
+	timeSinceDeath         *prometheus.Desc
+	timeSinceLastRest      *prometheus.Desc
+	timesWorldOpen         *prometheus.Desc
+	timesSleptInBed        *prometheus.Desc
 	tradedWithVillagers    *prometheus.Desc
 	trappedChestsTriggered *prometheus.Desc
 	waterTakenFromCauldron *prometheus.Desc
@@ -394,7 +385,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 			URL := "https://api.ashcon.app/mojang/v2/user/" + id
 			resp, err := http.Get(URL)
 			if err != nil {
-				level.Error(e.logger).Log("msg", "Failed to connect to api.mojang.com", "err", err)
+				level.Error(e.logger).Log("msg", "Failed to connect to api.ashcon.app", "err", err)
 			}
 
 			if resp.StatusCode == 200 {
@@ -402,7 +393,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 					level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err)
 				}
 			} else {
-				return fmt.Errorf("error retrieving player info from api.mojang.com: %w", errors.New(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
+				return fmt.Errorf("error retrieving player info from api.ashcon.app: %w", errors.New(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
 			}
 
 			err = resp.Body.Close()
@@ -609,6 +600,41 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 	return nil
 }
 
+func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
+	conn, err := mcnet.DialRCON(e.address, e.password)
+	if err != nil {
+		return fmt.Errorf("connect rcon error: %w", err)
+
+	}
+
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			level.Error(e.logger).Log("msg", "Failed to close rcon endpoint", "err", err)
+			if retErr == nil {
+				retErr = err
+			}
+		}
+	}()
+
+	err = conn.Cmd("list")
+	if err != nil {
+		return fmt.Errorf("send rcon command error: %w", err)
+	}
+
+	resp, err := conn.Resp()
+	if err != nil {
+		return fmt.Errorf("receive rcon command error: %w", err)
+	}
+
+	r := regexp.MustCompile("players online:(.*)")
+	playersraw := r.FindStringSubmatch(resp)[1]
+	for _, player := range strings.Fields(strings.ReplaceAll(playersraw, ",", " ")) {
+		ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
+	}
+	return nil
+}
+
 func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 	descs <- e.playerOnline
 	descs <- e.playerStat
@@ -616,7 +642,6 @@ func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 	descs <- e.blocksMined
 	descs <- e.entitiesKilled
 	descs <- e.playerKilledBy
-
 	descs <- e.animalsBred
 	descs <- e.cleanArmor
 	descs <- e.cleanBanner
@@ -657,41 +682,6 @@ func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 	descs <- e.tradedWithVillagers
 	descs <- e.trappedChestsTriggered
 	descs <- e.waterTakenFromCauldron
-}
-
-func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
-	conn, err := mcnet.DialRCON(e.address, e.password)
-	if err != nil {
-		return fmt.Errorf("connect rcon error: %w", err)
-
-	}
-
-	defer func() {
-		err := conn.Close()
-		if err != nil {
-			level.Error(e.logger).Log("msg", "Failed to close rcon endpoint", "err", err)
-			if retErr == nil {
-				retErr = err
-			}
-		}
-	}()
-
-	err = conn.Cmd("list")
-	if err != nil {
-		return fmt.Errorf("send rcon command error: %w", err)
-	}
-
-	resp, err := conn.Resp()
-	if err != nil {
-		return fmt.Errorf("receive rcon command error: %w", err)
-	}
-
-	r := regexp.MustCompile("players online:(.*)")
-	playersraw := r.FindStringSubmatch(resp)[1]
-	for _, player := range strings.Fields(strings.ReplaceAll(playersraw, ",", " ")) {
-		ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
-	}
-	return nil
 }
 
 func (e *Exporter) Collect(metrics chan<- prometheus.Metric) {
