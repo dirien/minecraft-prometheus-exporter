@@ -20,6 +20,9 @@ builds:
       - -s -w -X github.com/prometheus/common/version.Branch={{.Branch}}
       - -s -w -X github.com/prometheus/common/version.BuildUser=goreleaser
       - -s -w -X github.com/prometheus/common/version.BuildDate={{.Date}}
+    hooks:
+      post:
+        - sh -c "cosign sign-blob -key $COSIGN_KEY_LOCATION {{ .Path }} > dist/{{ .ProjectName }}_{{ .Version }}_{{ .Target }}.sig"
 dockers:
   - image_templates: [ "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64" ]
     dockerfile: Dockerfile
@@ -40,3 +43,6 @@ dockers:
       - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
+release:
+  extra_files:
+    - glob: dist/*.sig

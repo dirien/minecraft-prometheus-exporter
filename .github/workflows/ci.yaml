@@ -11,8 +11,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Tests the build
+        run: |
+          go build .
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: success() && startsWith(github.ref, 'refs/tags/')
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
+      COSIGN_KEY_LOCATION: "/tmp/cosign.key"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -30,11 +47,27 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
+      - uses: sigstore/cosign-installer@main
+        with:
+          cosign-release: 'v1.0.0'
+      - name: install cosign private key
+        run: 'echo "$COSIGN_KEY" > $COSIGN_KEY_LOCATION'
+        shell: bash
+        env:
+          COSIGN_KEY: ${{secrets.COSIGN_KEY}}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
-        if: success() && startsWith(github.ref, 'refs/tags/')
         with:
           version: latest
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      - name: set version as env
+        run: |
+          tag=$(git describe --tags --abbrev=0 | tr --delete v)
+          echo "version=$tag" >> $GITHUB_ENV
+      - name: Sign the image
+        run: |
+          echo -n "${{secrets.COSIGN_PASSWORD}}" | cosign sign -key $COSIGN_KEY_LOCATION ghcr.io/dirien/minecraft-exporter:${{ env.version }}-arm64
+          echo -n "${{secrets.COSIGN_PASSWORD}}" | cosign sign -key $COSIGN_KEY_LOCATION ghcr.io/dirien/minecraft-exporter:${{ env.version }}-amd64
