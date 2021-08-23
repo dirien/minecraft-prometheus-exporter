@@ -11,6 +11,7 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
     ldflags:
       - -s -w -X github.com/prometheus/common/version.Version={{.Version}}
       - -s -w -X github.com/prometheus/common/version.Revision={{.Commit}}
