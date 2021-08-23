@@ -20,3 +20,23 @@ builds:
       - -s -w -X github.com/prometheus/common/version.Branch={{.Branch}}
       - -s -w -X github.com/prometheus/common/version.BuildUser=goreleaser
       - -s -w -X github.com/prometheus/common/version.BuildDate={{.Date}}
+dockers:
+  - image_templates: [ "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64" ]
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.licenses=Apache-2.0
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
+  - image_templates: [ "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64" ]
+    goarch: arm64
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/arm64/v8
+      - --label=org.opencontainers.image.licenses=Apache-2.0
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
