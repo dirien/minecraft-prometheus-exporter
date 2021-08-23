@@ -16,3 +16,5 @@
 .idea
 **/minecraft-exporter
 **/dist
+**/password
+**/cosign.key
