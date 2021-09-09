@@ -21,3 +21,4 @@
 **/cosign-*
 **/cosign-*.sig
 **/*-cosign.pub
+**/cosign.pub
