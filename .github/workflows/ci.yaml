@@ -49,7 +49,7 @@ jobs:
           go-version: 1.17
       - uses: sigstore/cosign-installer@main
         with:
-          cosign-release: 'v1.1.0'
+          cosign-release: 'v1.2.0'
       - name: install cosign private key
         run: 'echo "$COSIGN_KEY" > $COSIGN_KEY_LOCATION'
         shell: bash
