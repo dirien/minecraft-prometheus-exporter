@@ -1,6 +1,7 @@
 {
   "extends": [
-    "config:base"
+    "config:base",
+    ":semanticCommitTypeAll(chore)"
   ],
   "postUpdateOptions": [
     "gomodTidy"
@@ -8,5 +9,6 @@
   "dependencyDashboard": false,
   "labels": [
     "dependencies"
-  ]
+  ],
+  "semanticCommits": "enabled"
 }
