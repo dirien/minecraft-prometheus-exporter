@@ -6,7 +6,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-62B47A?style=for-the-badge&logo=Minecraft&logoColor=white)
 ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=Grafana&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Alpine Linux 3.14.1](https://img.shields.io/badge/alpine_linux_3.14.1-0D597F?style=for-the-badge&logo=alpine-linux&logoColor=white)
+![Alpine Linux 3.14.3](https://img.shields.io/badge/alpine_linux_3.14.3-0D597F?style=for-the-badge&logo=alpine-linux&logoColor=white)
 
 ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/dirien/minecraft-prometheus-exporter/Build%20Binary/main?logo=github&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/dirien/minecraft-prometheus-exporter?style=for-the-badge)
@@ -21,6 +21,41 @@ It collects metrics from different sources of the game
 - NBT Files
 - Advancement file
 - Player stats file
+
+#### Getting started
+
+Short getting started guide with systemd unit file on ubuntu linux
+
+##### Create Systemd unit file
+
+```bash
+tee /etc/systemd/system/minecraft-exporter.service <<EOF
+[Unit]
+Description=Minecraft Exporter
+Wants=network-online.target
+After=network-online.target
+[Service]
+User=minecraft_exporter
+Group=minecraft_exporter
+Type=simple
+ExecStart=/usr/local/bin/minecraft-exporter \
+  --mc.rcon-password=<rcon password if needed>
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+#### Install Minecraft Exporter
+
+```
+MINECRAFT_EXPORTER_VERSION=0.6.1
+curl -sSL https://github.com/dirien/minecraft-prometheus-exporter/releases/download/v$MINECRAFT_EXPORTER_VERSION/minecraft-exporter_$MINECRAFT_EXPORTER_VERSION.linux-$ARCH.tar.gz | tar -xz
+cp minecraft-exporter /usr/local/bin
+chown minecraft_exporter:minecraft_exporter /usr/local/bin/minecraft-exporter
+systemctl start minecraft-exporter.service
+systemctl enable minecraft-exporter.service
+```
+
 
 #### RCON
 
@@ -110,9 +145,9 @@ config file can be changed using `--config-path` CLI flag.
 | `metrics-path`     | `--web.telemetry-path` | Path under which to expose metrics.                                              |
 | `web-config`       | `--web.config.file`    | **[EXPERIMENTAL]** Path to configuration file that can enable TLS or authentication. |
 | `listen-address`   | `--web.listen-address` | Address to listen on for web interface and telemetry.                            |
-| `world-path`       | `--mc.world`           | Path the to world folder.                                                        |
-| `rcon-address`     | `--mc.rcon-address`    | Address of the Minecraft rcon.                                                   |
-| `rcon-password`    | `--mc.rcon-password`   | Password of the Minecraft rcon.                                                  |
+| `world-path`       | `--mc.world`           | Path to the world folder.                                                        |
+| `rcon-address`     | `--mc.rcon-address`    | Address for the Minecraft RCON.                                                   |
+| `rcon-password`    | `--mc.rcon-password`   | Password for the Minecraft RCON.                                                  |
 | `name-source`      | `--mc.name-source`     | How to retrieve names of players: offline, bukkit, mojang.                       |
 | `disabled-metrics` | -                      | Namespaced keys that used by metrics that should be disabled.                    |
 
