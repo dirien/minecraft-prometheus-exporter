@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Jeffail/gabs/v2 v2.6.1
-	github.com/Tnze/go-mc v1.17.0
+	github.com/Tnze/go-mc v1.17.1
 	github.com/go-kit/kit v0.12.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.32.1
