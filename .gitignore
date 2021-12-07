@@ -14,10 +14,9 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 .idea
-**/minecraft-exporter
+cmd/exporter
 **/dist
 **/password
-**/cosign.key
 **/cosign-*
 **/cosign-*.sig
 **/*-cosign.pub
