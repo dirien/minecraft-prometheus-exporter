@@ -41,14 +41,14 @@ func Run() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := template.Execute(w, config)
 		if err != nil {
-			level.Error(logger).Log("msg", "Error executing template", "err", err)
+			level.Error(logger).Log("msg", "Error executing template", "err", err) //nolint: errcheck
 		}
 	})
 
-	level.Info(logger).Log("msg", "Listening on address", "address", *config.ListenAddress) //nolint:errcheck
+	level.Info(logger).Log("msg", "Listening on address", "address", *config.ListenAddress) //nolint: errcheck
 	srv := &http.Server{Addr: *config.ListenAddress}
 	if err := web.ListenAndServe(srv, *config.WebConfig, logger); err != nil {
-		level.Error(logger).Log("msg", "Error running HTTP server", "err", err)
+		level.Error(logger).Log("msg", "Error running HTTP server", "err", err) //nolint: errcheck
 		os.Exit(1)
 	}
 }
