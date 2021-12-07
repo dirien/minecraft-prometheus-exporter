@@ -3,19 +3,18 @@ package exporter
 import (
 	"compress/gzip"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
 
 	"github.com/Jeffail/gabs/v2"
+	"github.com/go-kit/log"
+
 	"github.com/Tnze/go-mc/nbt"
 	mcnet "github.com/Tnze/go-mc/net"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -23,7 +22,7 @@ const (
 	Namespace = "minecraft"
 )
 
-//See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
+// See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
 
 type Exporter struct {
 	address         string
@@ -32,13 +31,13 @@ type Exporter struct {
 	world           string
 	source          string
 	disabledMetrics map[string]bool
-	//via advancements
-	//playerAdvancements *prometheus.Desc
+	// via advancements
+	// playerAdvancements *prometheus.Desc
 
-	//via RCON
+	// via RCON
 	playerOnline *prometheus.Desc
 
-	//via stats
+	// via stats
 	playerStat *prometheus.Desc
 
 	blocksMined            *prometheus.Desc
@@ -355,7 +354,7 @@ type PlayerData struct {
 }
 
 func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
-	files, err := ioutil.ReadDir(e.world + "/stats")
+	files, err := os.ReadDir(e.world + "/stats")
 	if err != nil {
 		return err
 	}
@@ -389,18 +388,17 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		var player Player
 		switch e.source {
 		case "mojang":
-			URL := "https://api.ashcon.app/mojang/v2/user/" + id
-			resp, err := http.Get(URL)
+			resp, err := http.Get(fmt.Sprintf("https://api.ashcon.app/mojang/v2/user/%s", id))
 			if err != nil {
-				level.Error(e.logger).Log("msg", "Failed to connect to api.ashcon.app", "err", err)
+				level.Error(e.logger).Log("msg", "Failed to connect to api.ashcon.app", "err", err) // nolint: errcheck
 			}
 
 			if resp.StatusCode == 200 {
 				if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
-					level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err)
+					level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err) // nolint: errcheck
 				}
 			} else {
-				return fmt.Errorf("error retrieving player info from api.ashcon.app: %w", errors.New(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
+				return fmt.Errorf("error retrieving player info from api.ashcon.app: %w", fmt.Errorf(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
 			}
 
 			err = resp.Body.Close()
@@ -429,17 +427,15 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.FoodLevel), player.Name, "food_level")
 		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.Health), player.Name, "health")
 
-		err2 := e.advancements(id, ch, player.Name)
-		if err2 != nil {
-			return err2
-		}
-
-		stats, err := os.Open(e.world + "/stats/" + id + ".json")
+		err = e.advancements(id, ch, player.Name)
 		if err != nil {
 			return err
 		}
 
-		byteValue, _ := ioutil.ReadAll(stats)
+		byteValue, err := os.ReadFile(e.world + "/stats/" + id + ".json")
+		if err != nil {
+			return err
+		}
 		jsonParsed, err := gabs.ParseJSON(byteValue)
 		if err != nil {
 			return err
@@ -477,8 +473,10 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 			e.playerStatsCustomWithType(jsonParsed, e.damageDealt, field, ch, player.Name, damageDealtType)
 		}
 
-		movementTypes := []string{"climb", "crouch", "fall", "fly", "sprint", "swim", "walk", "walk_on_water", "walk_under_water",
-			"boat", "aviate", "horse", "minecart", "pig", "strider"}
+		movementTypes := []string{
+			"climb", "crouch", "fall", "fly", "sprint", "swim", "walk", "walk_on_water", "walk_under_water",
+			"boat", "aviate", "horse", "minecart", "pig", "strider",
+		}
 		for _, movementType := range movementTypes {
 			field := fmt.Sprintf("stats.minecraft:custom.minecraft:%s_one_cm", movementType)
 			e.playerStatsCustomMovement(jsonParsed, e.minecraftMovement, field, ch, player.Name, movementType)
@@ -494,8 +492,10 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		e.playerStatsCustom(jsonParsed, e.fishCaught, "stats.minecraft:custom.minecraft:fish_caught", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.leaveGame, "stats.minecraft:custom.minecraft:leave_game", ch, player.Name)
 
-		interactionTypes := []string{"anvil", "beacon", "blast_furnace", "brewingstand", "campfire", "cartography_table",
-			"crafting_table", "furnace", "grindston", "lectern", "loom", "smithing_table", "smoker", "stonecutter"}
+		interactionTypes := []string{
+			"anvil", "beacon", "blast_furnace", "brewingstand", "campfire", "cartography_table",
+			"crafting_table", "furnace", "grindston", "lectern", "loom", "smithing_table", "smoker", "stonecutter",
+		}
 		for _, interactionType := range interactionTypes {
 			field := fmt.Sprintf("stats.minecraft:custom.minecraft:interact_with_%s", interactionType)
 			e.playerStatsCustomWithType(jsonParsed, e.interaction, field, ch, player.Name, interactionType)
@@ -550,7 +550,7 @@ func (e *Exporter) playerStatsCustomWithType(jsonParsed *gabs.Container, desc *p
 func (e *Exporter) playerStatsCustomMovement(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName, movementType string) {
 	if e.isEnabled(field) {
 		value, _ := jsonParsed.Path(field).Data().(float64)
-		value = value / 100
+		value /= 100
 		ch <- prometheus.MustNewConstMetric(desc, prometheus.UntypedValue, value, playerName, movementType)
 	}
 }
@@ -584,12 +584,8 @@ func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc
 }
 
 func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerName string) error {
-	advancements, err := os.Open(e.world + "/advancements/" + id + ".json")
-	if err != nil {
-		return err
-	}
 	var payload map[string]interface{}
-	byteValue, err := ioutil.ReadAll(advancements)
+	byteValue, err := os.ReadFile(e.world + "/advancements/" + id + ".json")
 	if err != nil {
 		return err
 	}
@@ -617,13 +613,12 @@ func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
 	conn, err := mcnet.DialRCON(e.address, e.password)
 	if err != nil {
 		return fmt.Errorf("connect rcon error: %w", err)
-
 	}
 
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			level.Error(e.logger).Log("msg", "Failed to close rcon endpoint", "err", err)
+			level.Error(e.logger).Log("msg", "Failed to close rcon endpoint", "err", err) // nolint: errcheck
 			if retErr == nil {
 				retErr = err
 			}

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -51,14 +50,7 @@ func (c *Config) LoadFile() {
 		return
 	}
 
-	f, err := os.Open(path)
-	if err != nil {
-		return
-	}
-
-	defer f.Close()
-
-	bytes, err := ioutil.ReadAll(f)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return
 	}

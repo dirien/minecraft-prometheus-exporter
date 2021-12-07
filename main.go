@@ -1,7 +1,9 @@
 package main
 
-import minecrafexporter "github.com/minecraft-exporter/cmd/minecraft-exporter"
+import (
+	"github.com/minecraft-exporter/cmd/minecraftExporter"
+)
 
 func main() {
-	minecrafexporter.Run()
+	minecraftExporter.Run()
 }
