@@ -48,7 +48,7 @@ signs:
   - cmd: cosign
     stdin: '{{ .Env.COSIGN_PASSWORD }}'
     args: ["sign-blob", "-key=cosign.key", "-output=${signature}", "${artifact}"]
-    artifacts: archive
+    artifacts: checksum
 
 docker_signs:
   - artifacts: all
@@ -57,7 +57,7 @@ docker_signs:
 
 release:
   extra_files:
-    - glob: dist/*.sig
+    - glob: ./cosign.pub
 
 changelog:
   sort: asc
