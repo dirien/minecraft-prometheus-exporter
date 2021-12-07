@@ -698,11 +698,11 @@ func (e *Exporter) Collect(metrics chan<- prometheus.Metric) {
 		err := e.getPlayerList(metrics)
 		if err != nil {
 			metrics <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 0, "")
-			level.Error(e.logger).Log("msg", "Failed to get player online list", "err", err)
+			level.Error(e.logger).Log("msg", "Failed to get player online list", "err", err) // nolint: errcheck
 		}
 	}
 
 	if err := e.getPlayerStats(metrics); err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get player stats", "err", err)
+		level.Error(e.logger).Log("msg", "Failed to get player stats", "err", err) // nolint: errcheck
 	}
 }
