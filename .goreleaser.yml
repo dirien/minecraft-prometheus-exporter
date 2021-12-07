@@ -2,8 +2,10 @@ project_name: minecraft-exporter
 before:
   hooks:
     - go mod tidy
+
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}.{{ .Os }}-{{ .Arch }}"
+
 builds:
   - env:
       - CGO_ENABLED=0
@@ -20,9 +22,7 @@ builds:
       - -s -w -X github.com/prometheus/common/version.Branch={{.Branch}}
       - -s -w -X github.com/prometheus/common/version.BuildUser=goreleaser
       - -s -w -X github.com/prometheus/common/version.BuildDate={{.Date}}
-    hooks:
-      post:
-        - sh -c "cosign sign-blob -key $COSIGN_KEY_LOCATION {{ .Path }} > dist/{{ .ProjectName }}_{{ .Version }}_{{ .Target }}.sig"
+
 dockers:
   - image_templates: [ "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64" ]
     dockerfile: Dockerfile
@@ -43,10 +43,39 @@ dockers:
       - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
+
+signs:
+  - cmd: cosign
+    stdin: '{{ .Env.COSIGN_PASSWORD }}'
+    args: ["sign-blob", "-key=cosign.key", "-output=${signature}", "${artifact}"]
+    artifacts: checksum
+
 docker_signs:
   - artifacts: all
-    args: [ "sign", "-key=$COSIGN_KEY_LOCATION", "${artifact}" ]
+    args: [ "sign", "-key=cosign.key", "${artifact}" ]
     stdin: '{{ .Env.COSIGN_PASSWORD }}'
+
 release:
   extra_files:
     - glob: dist/*.sig
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^test:'
+      - '^chore'
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+      - go mod tidy
+  groups:
+    - title: 'New Features'
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 10
+    - title: Other work
+      order: 999
