@@ -44,20 +44,39 @@ dockers:
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
 
+source:
+  enabled: true
+
+sboms:
+  - artifacts: archive
+  - id: source
+    artifacts: source
+
+checksum:
+  name_template: 'checksums.txt'
+
 signs:
   - cmd: cosign
-    stdin: '{{ .Env.COSIGN_PASSWORD }}'
-    args: ["sign-blob", "-key=cosign.key", "-output=${signature}", "${artifact}"]
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    certificate: '${artifact}.pem'
+    args:
+      - sign-blob
+      - '--output-certificate=${certificate}'
+      - '--output-signature=${signature}'
+      - '${artifact}'
     artifacts: checksum
+    output: true
 
 docker_signs:
-  - artifacts: all
-    args: [ "sign", "-key=cosign.key", "${artifact}" ]
-    stdin: '{{ .Env.COSIGN_PASSWORD }}'
-
-release:
-  extra_files:
-    - glob: ./cosign.pub
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    artifacts: manifests
+    output: true
+    args:
+      - 'sign'
+      - '${artifact}'
 
 changelog:
   sort: asc
