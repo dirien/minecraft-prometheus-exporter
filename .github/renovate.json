@@ -1,15 +1,31 @@
 {
   "extends": [
     "config:base",
-    ":semanticCommitTypeAll(chore)"
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":gitSignOff"
   ],
   "postUpdateOptions": [
-    "gomodTidy"
+    "gomodTidy",
+    "gomodUpdateImportPaths"
   ],
-  "commitBody": "Signed-off-by: {{{gitAuthor}}}",
   "dependencyDashboard": false,
   "labels": [
     "dependencies"
   ],
-  "semanticCommits": "enabled"
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ]
+    }
+  ],
+  "assigneesFromCodeOwners": true,
+  "assignAutomerge": true,
+  "automerge": true,
+  "automergeStrategy": "squash",
+  "automergeType": "pr"
 }
