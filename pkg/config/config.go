@@ -24,13 +24,13 @@ type Config struct {
 func NewConfg() *Config {
 	var (
 		webConfig     = webflag.AddFlags(kingpin.CommandLine)
-		listenAddress = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9150").String()
-		configPath    = kingpin.Flag("mc.config-path", "Path to YAML file with config.").Default("config.yml").String()
-		worldPath     = kingpin.Flag("mc.world", "Path the to world folder").Default("/minecraft/world").String()
-		rconAddress   = kingpin.Flag("mc.rcon-address", "Address of the Minecraft rcon.").Default(":25575").String()
-		rconPassword  = kingpin.Flag("mc.rcon-password", "Password of the Minecraft rcon.").String()
-		nameSource    = kingpin.Flag("mc.name-source", "How to retrieve names of players: offline, bukkit, mojang.").Default("mojang").String()
-		metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
+		metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Envar("WEB_TELEMETRY_PATH").Default("/metrics").String()
+		listenAddress = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Envar("WEB_LISTEN_ADDRESS").Default(":9150").String()
+		configPath    = kingpin.Flag("mc.config-path", "Path to YAML file with config.").Envar("MC_CONFIG_PATH").Default("config.yml").String()
+		worldPath     = kingpin.Flag("mc.world", "Path the to world folder").Envar("MC_WORLD").Default("/minecraft/world").String()
+		rconAddress   = kingpin.Flag("mc.rcon-address", "Address of the Minecraft rcon.").Envar("MC_RCON_ADDRESS").Default(":25575").String()
+		rconPassword  = kingpin.Flag("mc.rcon-password", "Password of the Minecraft rcon.").Envar("MC_RCON_PASSWORD").String()
+		nameSource    = kingpin.Flag("mc.name-source", "How to retrieve names of players: offline, bukkit, mojang.").Envar("MC_NAME_SOURCE").Default("mojang").String()
 	)
 	return &Config{
 		ConfigPath:    configPath,
