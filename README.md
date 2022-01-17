@@ -56,7 +56,6 @@ systemctl start minecraft-exporter.service
 systemctl enable minecraft-exporter.service
 ```
 
-
 #### RCON
 
 RCON is a protocol that can be used to remotely execute commands to your Minecraft server.
@@ -89,6 +88,13 @@ Be sure that following flags are set for the `minecraft-exporter` binary:
 --mc.rcon-password=<rcon-password>
 ```
 
+or
+
+```bash
+export MC_RCON_ADDRESS=":25575"
+export MC_RCON_PASSWORD=<rcon-password>
+```
+
 #### Files
 
 To access the files, take care that the `minecraft-exporter` binary is started with the flag
@@ -97,6 +103,12 @@ Details for the specific stats can be found here -> https://minecraft.fandom.com
 
 ```bash
 --mc.world=path/to/world
+```
+
+or
+
+```bash
+export MC_WORLD=path/to/world
 ```
 
 #### API
@@ -125,7 +137,7 @@ Flags:
                                  Path the to world folder
       --mc.rcon-address=":25575"
                                  Address of the Minecraft rcon.
-      --mc.rcon-password=MC.RCON-PASSWORD
+      --mc.rcon-password=<password>
                                  Password of the Minecraft rcon.
       --mc.name-source="mojang"  How to retrieve names of players: offline, bukkit, mojang.
       --web.telemetry-path="/metrics"
@@ -140,23 +152,22 @@ Flags:
 You can override CLI flags using config file. By default, `config.yml` located in the current directory is used. Path to
 config file can be changed using `--config-path` CLI flag.
 
-| Key in config file | Equivalent CLI flag    | Description                                                                      |
-| ---                | ---                    | ---                                                                              |
-| `metrics-path`     | `--web.telemetry-path` | Path under which to expose metrics.                                              |
-| `web-config`       | `--web.config.file`    | **[EXPERIMENTAL]** Path to configuration file that can enable TLS or authentication. |
-| `listen-address`   | `--web.listen-address` | Address to listen on for web interface and telemetry.                            |
-| `world-path`       | `--mc.world`           | Path to the world folder.                                                        |
-| `rcon-address`     | `--mc.rcon-address`    | Address for the Minecraft RCON.                                                   |
-| `rcon-password`    | `--mc.rcon-password`   | Password for the Minecraft RCON.                                                  |
-| `name-source`      | `--mc.name-source`     | How to retrieve names of players: offline, bukkit, mojang.                       |
-| `disabled-metrics` | -                      | Namespaced keys that used by metrics that should be disabled.                    |
+| Key in config file | Equivalent CLI flag    | ENV variable       | Description                                                   |
+|--------------------|------------------------|--------------------|---------------------------------------------------------------|
+| `metrics-path`     | `--web.telemetry-path` | WEB_TELEMETRY_PATH | Path under which to expose metrics.                           |
+| `listen-address`   | `--web.listen-address` | WEB_LISTEN_ADDRESS | Address to listen on for web interface and telemetry.         |
+| `web-config`       | `--mc.config-path`     | MC_CONFIG_PATH     | Path to YAML file with config for the mc variables            |
+| `world-path`       | `--mc.world`           | MC_WORLD           | Path to the world folder.                                     |
+| `rcon-address`     | `--mc.rcon-address`    | MC_RCON_ADDRESS    | Address for the Minecraft RCON.                               |
+| `rcon-password`    | `--mc.rcon-password`   | MC_RCON_PASSWORD   | Password for the Minecraft RCON.                              |
+| `name-source`      | `--mc.name-source`     | MC_NAME_SOURCE     | How to retrieve names of players: offline, bukkit, mojang.    |
 
 #### Disabling metrics
 
 To disable certain metrics, just add corresponding key to `disabled-metrics` section with `true` value in your config
 file. You should use keys that used by Minecraft to store players' stats.
 
-#### Example config
+#### Example config (--mc.config-path/MC_CONFIG_PATH)
 
 ```yaml
 disabled-metrics:
