@@ -573,11 +573,10 @@ func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc
 		}
 
 		val := val.Data().(float64)
-		entity := strings.Split(key, ":")[1]
 		if len(actionType) > 0 {
-			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, entity, actionType)
+			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, key, actionType)
 		} else {
-			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, entity)
+			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, key)
 		}
 
 	}
