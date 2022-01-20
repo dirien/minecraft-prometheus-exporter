@@ -108,22 +108,22 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 		),
 		blocksMined: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "blocks_mined_total"),
 			"Statistic related to the number of blocks a player mined",
-			[]string{"player", "block"},
+			[]string{"player", "namespace", "block"},
 			nil,
 		),
 		entitiesKilled: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "entities_killed_total"),
 			"Statistics related to the number of entities a player killed",
-			[]string{"player", "entity"},
+			[]string{"player", "namespace", "entity"},
 			nil,
 		),
 		playerKilledBy: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "killed_by_total"),
 			"Statistics related to the times of a player being killed by entities.",
-			[]string{"player", "entity"},
+			[]string{"player", "namespace", "entity"},
 			nil,
 		),
 		item: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "item_actions_total"),
 			"Statistics related to the number of items and their actions: used, picked up, dropped, broken",
-			[]string{"player", "entity", "action"},
+			[]string{"player", "namespace", "entity", "action"},
 			nil,
 		),
 		animalsBred: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "animals_breded_total"),
@@ -573,11 +573,12 @@ func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc
 		}
 
 		val := val.Data().(float64)
+		namespace := strings.Split(key, ":")[0]
 		entity := strings.Split(key, ":")[1]
 		if len(actionType) > 0 {
-			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, entity, actionType)
+			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, namespace, entity, actionType)
 		} else {
-			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, entity)
+			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, val, playerName, namespace, entity)
 		}
 
 	}
