@@ -26,7 +26,6 @@ builds:
 dockers:
   - image_templates:
       - "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64"
-      - "dirien/{{ .ProjectName }}:{{ .Version }}-arm64"
     dockerfile: Dockerfile
     use: buildx
     build_flag_templates:
@@ -37,7 +36,6 @@ dockers:
       - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
   - image_templates:
       - "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64"
-      - "dirien/{{ .ProjectName }}:{{ .Version }}-amd64"
     goarch: arm64
     dockerfile: Dockerfile
     use: buildx
@@ -49,18 +47,10 @@ dockers:
       - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
 
 docker_manifests:
-  - name_template: 'dirien/{{ .ProjectName }}:{{ .Tag }}'
-    image_templates:
-      - 'dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
-      - 'dirien/{{ .ProjectName }}:{{ .Tag }}-arm64'
   - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}'
     image_templates:
       - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
       - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-arm64'
-  - name_template: 'dirien/{{ .ProjectName }}:latest'
-    image_templates:
-      - 'dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
-      - 'dirien/{{ .ProjectName }}:{{ .Tag }}-arm64'
   - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:latest'
     image_templates:
       - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
