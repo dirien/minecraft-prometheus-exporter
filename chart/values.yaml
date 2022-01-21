@@ -24,13 +24,8 @@ image:
 nameOverride: ""
 fullnameOverride: ""
 
-# Add your consul server details here
-consulServer: host:port
-
-# Flags - for a list visit https://github.com/prometheus/consul_exporter#flags
-options: {}
-  # no-consul.health-summary:
-  # kv.filter=foobar
+# Flags - for a list visit https://github.com/dirien/minecraft-prometheus-exporter#usage-
+options: []
 
 service:
   type: ClusterIP
@@ -98,12 +93,17 @@ initContainers: []
 extraContainers: []
 
 # Extra Volumes for the pod
-extraVolumes: []
+extraVolumes:
+# - name: mc-world
+#   persistentVolumeClaim:
+#     claimName: task-pv-volume
 # - name: example
 #   configMap:
 #     name: example
 
 # Extra Volume Mounts for the exporter container
-extraVolumeMounts: []
+extraVolumeMounts:
+# - name: mc-world
+#   mountPath: /minecraft
 # - name: example
 #   mountPath: /example

@@ -29,11 +29,11 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ template "minecraft-exporter.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            {{- range $key, $value := .Values.options }}
-            - "--{{ $key }}{{ if $value }}={{ $value }}{{ end }}"
+            {{- range .Values.options }}
+            - "{{ . }}"
             {{- end }}
           ports:
             - name: http

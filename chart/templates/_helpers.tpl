@@ -32,6 +32,13 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+The image to use
+*/}}
+{{- define "minecraft-exporter.image" -}}
+{{- printf "%s:%s" .Values.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.image.tag) }}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "minecraft-exporter.serviceAccountName" -}}
