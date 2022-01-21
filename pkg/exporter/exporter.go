@@ -295,7 +295,7 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 			nil,
 		),
 		timePlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "play_time_ticks_total"),
-			"The total amount of time played. ",
+			"The total amount of time played, in game ticks.",
 			[]string{"player"},
 			nil,
 		),
@@ -518,7 +518,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		e.playerStatsCustom(jsonParsed, e.sneakTime, "stats.minecraft:custom.minecraft:sneak_time", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.talkedToVillager, "stats.minecraft:custom.minecraft:talked_to_villager", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.targetsHit, "stats.minecraft:custom.minecraft:target_hit", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_timer", ch, player.Name)
+		e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_one_minute", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.timeSinceDeath, "stats.minecraft:custom.minecraft:time_since_death", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.timeSinceLastRest, "stats.minecraft:custom.minecraft:time_since_rest", ch, player.Name)
 		e.playerStatsCustom(jsonParsed, e.timesWorldOpen, "stats.minecraft:custom.minecraft:total_world_time", ch, player.Name)
