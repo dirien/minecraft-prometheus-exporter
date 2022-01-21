@@ -24,7 +24,9 @@ builds:
       - -s -w -X github.com/prometheus/common/version.BuildDate={{.Date}}
 
 dockers:
-  - image_templates: [ "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64" ]
+  - image_templates:
+      - "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64"
+      - "dirien/{{ .ProjectName }}:{{ .Version }}-arm64"
     dockerfile: Dockerfile
     use: buildx
     build_flag_templates:
@@ -33,7 +35,9 @@ dockers:
       - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
-  - image_templates: [ "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64" ]
+  - image_templates:
+      - "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64"
+      - "dirien/{{ .ProjectName }}:{{ .Version }}-amd64"
     goarch: arm64
     dockerfile: Dockerfile
     use: buildx
