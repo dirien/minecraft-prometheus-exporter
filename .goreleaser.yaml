@@ -49,12 +49,12 @@ dockers:
 docker_manifests:
   - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}'
     image_templates:
-      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
-      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-arm64'
+      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64'
+      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64'
   - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:latest'
     image_templates:
-      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
-      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-arm64'
+      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64'
+      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64'
 
 source:
   enabled: true
