@@ -1,0 +1,18 @@
+{{- if .Values.rbac.create }}
+apiVersion: {{ template "rbac.apiVersion" . }}
+kind: Role
+metadata:
+  name: {{ template "minecraft-exporter.fullname" . }}
+  labels:
+    app: {{ template "minecraft-exporter.name" . }}
+    chart: {{ template "minecraft-exporter.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+{{- if .Values.rbac.pspEnabled }}
+rules:
+- apiGroups:      ['extensions']
+  resources:      ['podsecuritypolicies']
+  verbs:          ['use']
+  resourceNames:  [{{ template "minecraft-exporter.fullname" . }}]
+{{- end }}
+{{- end }}
