@@ -24,7 +24,8 @@ builds:
       - -s -w -X github.com/prometheus/common/version.BuildDate={{.Date}}
 
 dockers:
-  - image_templates: [ "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64" ]
+  - image_templates:
+      - "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64"
     dockerfile: Dockerfile
     use: buildx
     build_flag_templates:
@@ -33,7 +34,8 @@ dockers:
       - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
-  - image_templates: [ "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64" ]
+  - image_templates:
+      - "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64"
     goarch: arm64
     dockerfile: Dockerfile
     use: buildx
@@ -45,22 +47,14 @@ dockers:
       - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
 
 docker_manifests:
-  - name_template: 'dirien/{{ .ProjectName }}:{{ .Tag }}'
+  - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}'
     image_templates:
-      - 'dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
-      - 'dirien/{{ .ProjectName }}:{{ .Tag }}-arm64'
-  - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}'
-    image_templates:
-      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
-      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-arm64'
-  - name_template: 'dirien/{{ .ProjectName }}:latest'
-    image_templates:
-      - 'dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
-      - 'dirien/{{ .ProjectName }}:{{ .Tag }}-arm64'
+      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64'
+      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64'
   - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:latest'
     image_templates:
-      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-amd64'
-      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}-arm64'
+      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64'
+      - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64'
 
 source:
   enabled: true
