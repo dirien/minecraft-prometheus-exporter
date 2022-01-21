@@ -20,3 +20,4 @@ cmd/exporter
 **/cosign-*
 **/cosign-*.sig
 **/*-cosign.pub
+**/minecraft-exporter
