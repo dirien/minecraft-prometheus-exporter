@@ -1,7 +1,6 @@
 package minecraftExporter
 
 import (
-	"github.com/prometheus/client_golang/prometheus/collectors"
 	"net/http"
 	"os"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/minecraft-exporter/pkg/exporter"
 	"github.com/minecraft-exporter/pkg/template"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
