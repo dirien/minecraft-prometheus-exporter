@@ -47,7 +47,7 @@ dockers:
       - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
 
 docker_manifests:
-  - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Tag }}'
+  - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}'
     image_templates:
       - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-amd64'
       - 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64'
