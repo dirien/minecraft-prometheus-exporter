@@ -1,5 +1,7 @@
 # Minecraft Exporter for Prometheus
 
+![minecraft-exporter](https://dirien.github.io/minecraft-prometheus-exporter/img/minecraft-exporter.jpg)
+
 ![Version: {{ .Version }}](https://img.shields.io/badge/Version-{{ .Version | replace "-" "--" }}-informational?style=for-the-badge)
 {{ if .Type }}![Type: {{ .Type }}](https://img.shields.io/badge/Type-{{ .Type }}-informational?style=for-the-badge) {{ end }}
 {{ if .AppVersion }}![AppVersion: {{ .AppVersion }}](https://img.shields.io/badge/AppVersion-{{ .AppVersion | replace "-" "--" }}-informational?style=for-the-badge) {{ end }}
@@ -14,7 +16,33 @@
 {{ template "chart.description" . }}
 
 ## Usage
-todo
+
+Please add the minecraft-exporter repository before installing any chart provided by this repository:
+
+```bash
+helm repo add minecraft-exporter https://dirien.github.io/minecraft-prometheus-exporter
+helm repo update
+```
+
+### Installing the Chart
+
+To install the chart with the release name minecraft-exporter run:
+
+```bash
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version {{ .Version }}
+```
+
+After a few seconds, minecraft-exporter should be running.
+
+To install the chart in a specific namespace use following commands:
+
+```bash
+kubectl create ns minecraft-exporter
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporte --version {{ .Version }}
+```
+
+> **Tip**: List all releases using `helm list`, a release is a name used to track a specific deployment
+
 
 {{ template "chart.valuesSection" . }}
 
