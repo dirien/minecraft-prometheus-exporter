@@ -1,6 +1,6 @@
 # Minecraft Exporter for Prometheus
 
-![minecraft-exporter](img/minecraft-exporter.jpg)
+![minecraft-exporter](https://dirien.github.io/minecraft-prometheus-exporter/img/minecraft-exporter.jpg)
 
 ![Version: 0.1.2](https://img.shields.io/badge/Version-0.1.2-informational?style=for-the-badge)
 ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge)
