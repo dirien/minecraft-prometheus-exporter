@@ -1,0 +1,20 @@
+<html>
+<head>
+    <title>Minecraft Exporter for Prometheus Charts Repository</title>
+</head>
+<body>
+<img style="text-align: center" src="img/minecraft-exporter.jpg" width="30%" height="30%">
+<h1>Minecraft Exporter for Prometheus Charts Repository</h1>
+<p>Please add the minecraft-exporter repository before installing any chart provided by this repository:</p>
+<pre>
+    helm repo add minecraft-exporter https://dirien.github.io/minecraft-prometheus-exporter
+    helm repo update
+</pre>
+<br>
+<br>
+<p>To install the chart with the release name minecraft-exporter run:</p>
+<pre>
+    helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.1.2
+</pre>
+</body>
+</html>
