@@ -9,6 +9,7 @@ import (
 	"github.com/minecraft-exporter/pkg/exporter"
 	"github.com/minecraft-exporter/pkg/template"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
@@ -31,24 +32,30 @@ func Run() {
 	config.LoadFile()
 
 	level.Info(logger).Log("msg", "Starting minecraft_exporter", "version", version.Info()) //nolint:errcheck
-	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())         //nolint: errcheck
+	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())         //nolint:errcheck
 
 	prometheus.MustRegister(version.NewCollector("minecraft_exporter"))
 	prometheus.MustRegister(exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, config.DisabledMetrics, logger))
+
+	level.Info(logger).Log("msg", "Disabling collection of exporter metrics (like go_*)", "value", config.DisableExporterMetrics) //nolint:errcheck
+	if *config.DisableExporterMetrics {
+		prometheus.Unregister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+		prometheus.Unregister(collectors.NewGoCollector())
+	}
 
 	http.Handle(*config.MetricsPath, promhttp.Handler())
 	template := template.NewIndexTemplate()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := template.Execute(w, config)
 		if err != nil {
-			level.Error(logger).Log("msg", "Error executing template", "err", err) //nolint: errcheck
+			level.Error(logger).Log("msg", "Error executing template", "err", err) //nolint:errcheck
 		}
 	})
 
-	level.Info(logger).Log("msg", "Listening on address", "address", *config.ListenAddress) //nolint: errcheck
+	level.Info(logger).Log("msg", "Listening on address", "address", *config.ListenAddress) //nolint:errcheck
 	srv := &http.Server{Addr: *config.ListenAddress}
 	if err := web.ListenAndServe(srv, *config.WebConfig, logger); err != nil {
-		level.Error(logger).Log("msg", "Error running HTTP server", "err", err) //nolint: errcheck
+		level.Error(logger).Log("msg", "Error running HTTP server", "err", err) //nolint:errcheck
 		os.Exit(1)
 	}
 }
