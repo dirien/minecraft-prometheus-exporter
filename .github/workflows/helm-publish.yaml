@@ -27,7 +27,7 @@ jobs:
         run: |
           cd /tmp
           wget https://github.com/norwoodj/helm-docs/releases/download/v${{env.HELM_DOCS_VERSION}}/helm-docs_${{env.HELM_DOCS_VERSION}}_Linux_x86_64.tar.gz
-          tar -xvf helm-docs_$HELM_DOCS_VERSION_Linux_x86_64.tar.gz
+          tar -xvf helm-docs_${{env.HELM_DOCS_VERSION}}_Linux_x86_64.tar.gz
           sudo mv helm-docs /usr/local/sbin
           helm-docs -t README.md.gotmpl -o README.md
           ls -la chart/
