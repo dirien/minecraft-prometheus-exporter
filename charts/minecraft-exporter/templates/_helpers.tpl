@@ -35,7 +35,7 @@ Create chart name and version as used by the chart label.
 The image to use
 */}}
 {{- define "minecraft-exporter.image" -}}
-{{- printf "%s:%s" .Values.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.image.tag) }}
+{{- printf "%s:%s" .Values.image.repository (default (printf "%s" .Chart.AppVersion) .Values.image.tag) }}
 {{- end }}
 
 {{/*

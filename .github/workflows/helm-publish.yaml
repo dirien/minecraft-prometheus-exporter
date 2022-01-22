@@ -1,9 +1,11 @@
 ---
-name: Chart Publish
+name: chart-publish
 on:
   push:
     branches:
       - main
+    paths:
+      - "charts/**"
 env:
   HELM_DOCS_VERSION: "1.7.0"
 jobs:
@@ -33,5 +35,5 @@ jobs:
       - name: run helm-docs
         run: |
           helm-docs -t README.md.gotmpl -o README.md
-          ls -la chart/
-          cat chart/README.md
+          ls -la charts/
+          cat charts/minecraft-exporter/README.md
