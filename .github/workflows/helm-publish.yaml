@@ -1,0 +1,34 @@
+---
+name: Chart Publish
+on:
+  push:
+    branches:
+      - main
+env:
+  HELM_DOCS_VERSION: "1.7.0"
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v1
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Run helm-docs
+        run: |
+          cd /tmp
+          wget https://github.com/norwoodj/helm-docs/releases/download/v$HELM_DOCS_VERSION/helm-docs_$HELM_DOCS_VERSION_Linux_x86_64.tar.gz
+          tar -xvf helm-docs_$HELM_DOCS_VERSION_Linux_x86_64.tar.gz
+          sudo mv helm-docs /usr/local/sbin
+          helm-docs -t README.md.gotmpl -o README.md
+          ls -la chart/
+          cat chart/README.md

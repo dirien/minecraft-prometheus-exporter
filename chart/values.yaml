@@ -2,49 +2,65 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- (int) Numbers of replicas
 replicaCount: 1
 
 rbac:
-  # Specifies whether RBAC resources should be created
+  # -- Specifies whether RBAC resources should be created
   create: true
+  # -- Specifies to enable pod security policy
   pspEnabled: true
+  # -- Specifies to enable use AppArmor
   pspUseAppArmor: true
 serviceAccount:
-  # Specifies whether a ServiceAccount should be created
+  # -- Specifies whether a ServiceAccount should be created
   create: true
-  # The name of the ServiceAccount to use.
+  # -- The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
 
 image:
+  # -- The docker image repository to use
   repository: ghcr.io/dirien/minecraft-exporter
+  # -- The docker image tag to use
+  # @default Chart version
   tag: ''
+  # -- The docker image pull policy
   pullPolicy: IfNotPresent
 
+# -- String to override the default generated name
 nameOverride: ""
+# -- String to override the default generated fullname
 fullnameOverride: ""
 
-# Flags - for a list visit https://github.com/dirien/minecraft-prometheus-exporter#usage-
+# -- Flags - for a list visit https://github.com/dirien/minecraft-prometheus-exporter#usage-
 options: []
 
 service:
+  # -- Specifies what type of Service should be created
   type: ClusterIP
+  # -- Default Service port
   port: 9150
+  # -- Additional annotations
   annotations: {}
 
 ingress:
+  # -- Specifies what type of Ingress should be created
   enabled: false
+  # -- Additional annotations
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+  # -- Ingress path
   path: /
+  # -- Ingress host
   hosts:
     - chart-example.local
+  # -- Ingress tls
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
 
+# -- Set the resources requests and limits
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -58,7 +74,7 @@ resources: {}
   #  memory: 128Mi
 
 serviceMonitor:
-  # When set true then use a ServiceMonitor to configure scraping
+  # -- When set true then use a ServiceMonitor to configure scraping
   enabled: false
   # Set the namespace the ServiceMonitor should be deployed
   # namespace: monitoring
@@ -74,25 +90,28 @@ serviceMonitor:
   # targetLabels: []
   # metricRelabelings: []
 
+# -- Set the node selector for the pod.
 nodeSelector: {}
 
+# -- Set the tolerations for the pod.
 tolerations: []
 
+# -- Set the affinity for the pod.
 affinity: {}
 
-# Extra environment variables
+# -- Extra environment variables
 extraEnv: []
 
-# Annotations for the pods
+# -- Annotations for the pods
 podAnnotations: {}
 
-# Init Containers for Exporter Pod
+# -- Init Containers for Exporter Pod
 initContainers: []
 
-# Extra containers for the exporter pod
+# -- Extra containers for the exporter pod
 extraContainers: []
 
-# Extra Volumes for the pod
+# -- Extra Volumes for the pod
 extraVolumes:
 # - name: mc-world
 #   persistentVolumeClaim:
@@ -101,7 +120,7 @@ extraVolumes:
 #   configMap:
 #     name: example
 
-# Extra Volume Mounts for the exporter container
+# -- Extra Volume Mounts for the exporter container
 extraVolumeMounts:
 # - name: mc-world
 #   mountPath: /minecraft
