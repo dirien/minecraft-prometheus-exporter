@@ -1,12 +1,13 @@
 apiVersion: v2
 name: minecraft-exporter
+icon: https://dirien.github.io/minecraft-prometheus-exporter/img/chart-logo.png
 description: A Helm chart for prometheus minecraft exporter
 keywords:
 - minecraft
 - prometheus
 - exporter
 type: application
-version: 0.1.2
+version: 0.1.3
 appVersion: 0.9.0
 home: https://github.com/dirien/minecraft-prometheus-exporter/
 sources:
