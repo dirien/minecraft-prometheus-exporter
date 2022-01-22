@@ -129,19 +129,21 @@ usage: minecraft-exporter [<flags>]
 Flags:
   -h, --help                     Show context-sensitive help (also try --help-long and --help-man).
       --web.config.file=""       [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication.
-      --web.listen-address=":9150"
+      --web.telemetry-path="/metrics"  
+                                 Path under which to expose metrics.
+      --web.listen-address=":9150"  
                                  Address to listen on for web interface and telemetry.
-      --mc.config-path="config.yml"
+      --web.disable-exporter-metrics  
+                                 Disabling collection of exporter metrics (like go_*)
+      --mc.config-path="config.yml"  
                                  Path to YAML file with config.
-      --mc.world="/minecraft/world"
+      --mc.world="/minecraft/world"  
                                  Path the to world folder
-      --mc.rcon-address=":25575"
+      --mc.rcon-address=":25575"  
                                  Address of the Minecraft rcon.
-      --mc.rcon-password=<password>
+      --mc.rcon-password=MC.RCON-PASSWORD  
                                  Password of the Minecraft rcon.
       --mc.name-source="mojang"  How to retrieve names of players: offline, bukkit, mojang.
-      --web.telemetry-path="/metrics"
-                                 Path under which to expose metrics.
       --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
       --version                  Show application version.
@@ -152,15 +154,21 @@ Flags:
 You can override CLI flags using config file. By default, `config.yml` located in the current directory is used. Path to
 config file can be changed using `--config-path` CLI flag.
 
-| Key in config file | Equivalent CLI flag    | ENV variable       | Description                                                   |
-|--------------------|------------------------|--------------------|---------------------------------------------------------------|
-| `metrics-path`     | `--web.telemetry-path` | WEB_TELEMETRY_PATH | Path under which to expose metrics.                           |
-| `listen-address`   | `--web.listen-address` | WEB_LISTEN_ADDRESS | Address to listen on for web interface and telemetry.         |
-| `web-config`       | `--mc.config-path`     | MC_CONFIG_PATH     | Path to YAML file with config for the mc variables            |
-| `world-path`       | `--mc.world`           | MC_WORLD           | Path to the world folder.                                     |
-| `rcon-address`     | `--mc.rcon-address`    | MC_RCON_ADDRESS    | Address for the Minecraft RCON.                               |
-| `rcon-password`    | `--mc.rcon-password`   | MC_RCON_PASSWORD   | Password for the Minecraft RCON.                              |
-| `name-source`      | `--mc.name-source`     | MC_NAME_SOURCE     | How to retrieve names of players: offline, bukkit, mojang.    |
+| Key in config file         | Equivalent CLI flag              | ENV variable                  | Description                                                |
+|----------------------------|----------------------------------|-------------------------------|------------------------------------------------------------|
+| `metrics-path`             | `--web.telemetry-path`           | WEB_TELEMETRY_PATH            | Path under which to expose metrics.                        |
+| `listen-address`           | `--web.listen-address`           | WEB_LISTEN_ADDRESS            | Address to listen on for web interface and telemetry.      |
+| `disable-exporter-metrics` | `--web.disable-exporter-metrics` | WEB_DISABLED_EXPORTER_METRICS | Disabling collection of exporter metrics (like go_*)       |
+| `web-config`               | `--mc.config-path`               | MC_CONFIG_PATH                | Path to YAML file with config for the mc variables         |
+| `world-path`               | `--mc.world`                     | MC_WORLD                      | Path to the world folder.                                  |
+| `rcon-address`             | `--mc.rcon-address`              | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                            |
+| `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                           |
+| `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang. |
+
+#### Disable exporter metrics
+
+With the flag `--web.disable-exporter-metrics` you can disable collection of exporter metrics (like go_*). This is
+useful if you want just see the minecraft metrics and not the exporter metrics.
 
 #### Disabling metrics
 
@@ -190,25 +198,25 @@ minecraft_animals_breded_total{player="ediri"} 0
 minecraft_bells_ringed_total{player="ediri"} 0
 # HELP minecraft_blocks_mined_total Statistic related to the number of blocks a player mined
 # TYPE minecraft_blocks_mined_total counter
-minecraft_blocks_mined_total{block="birch_log",player="ediri"} 2
-minecraft_blocks_mined_total{block="clay",player="ediri"} 1
-minecraft_blocks_mined_total{block="coal_ore",player="ediri"} 16
-minecraft_blocks_mined_total{block="crafting_table",player="ediri"} 2
-minecraft_blocks_mined_total{block="dirt",player="ediri"} 19
-minecraft_blocks_mined_total{block="grass",player="ediri"} 38
-minecraft_blocks_mined_total{block="grass_block",player="ediri"} 18
-minecraft_blocks_mined_total{block="oak_leaves",player="ediri"} 5
-minecraft_blocks_mined_total{block="oak_log",player="ediri"} 11
-minecraft_blocks_mined_total{block="oak_planks",player="ediri"} 1
-minecraft_blocks_mined_total{block="oxeye_daisy",player="ediri"} 1
-minecraft_blocks_mined_total{block="seagrass",player="ediri"} 5
-minecraft_blocks_mined_total{block="spruce_leaves",player="ediri"} 11
-minecraft_blocks_mined_total{block="spruce_log",player="ediri"} 13
-minecraft_blocks_mined_total{block="stone",player="ediri"} 2
-minecraft_blocks_mined_total{block="tall_grass",player="ediri"} 1
-minecraft_blocks_mined_total{block="tall_seagrass",player="ediri"} 5
-minecraft_blocks_mined_total{block="vine",player="ediri"} 2
-minecraft_blocks_mined_total{block="wall_torch",player="ediri"} 1
+minecraft_blocks_mined_total{block="birch_log",namespace="minecraft",player="ediri"} 2
+minecraft_blocks_mined_total{block="clay",namespace="minecraft",player="ediri"} 1
+minecraft_blocks_mined_total{block="coal_ore",namespace="minecraft",player="ediri"} 16
+minecraft_blocks_mined_total{block="crafting_table",namespace="minecraft",player="ediri"} 2
+minecraft_blocks_mined_total{block="dirt",namespace="minecraft",player="ediri"} 19
+minecraft_blocks_mined_total{block="grass",namespace="minecraft",player="ediri"} 38
+minecraft_blocks_mined_total{block="grass_block",namespace="minecraft",player="ediri"} 18
+minecraft_blocks_mined_total{block="oak_leaves",namespace="minecraft",player="ediri"} 5
+minecraft_blocks_mined_total{block="oak_log",namespace="minecraft",player="ediri"} 11
+minecraft_blocks_mined_total{block="oak_planks",namespace="minecraft",player="ediri"} 1
+minecraft_blocks_mined_total{block="oxeye_daisy",namespace="minecraft",player="ediri"} 1
+minecraft_blocks_mined_total{block="seagrass",namespace="minecraft",player="ediri"} 5
+minecraft_blocks_mined_total{block="spruce_leaves",namespace="minecraft",player="ediri"} 11
+minecraft_blocks_mined_total{block="spruce_log",namespace="minecraft",player="ediri"} 13
+minecraft_blocks_mined_total{block="stone",namespace="minecraft",player="ediri"} 2
+minecraft_blocks_mined_total{block="tall_grass",namespace="minecraft",player="ediri"} 1
+minecraft_blocks_mined_total{block="tall_seagrass",namespace="minecraft",player="ediri"} 5
+minecraft_blocks_mined_total{block="vine",namespace="minecraft",player="ediri"} 2
+minecraft_blocks_mined_total{block="wall_torch",namespace="minecraft",player="ediri"} 1
 # HELP minecraft_cake_slices_eaten_total The number of cake slices eaten.
 # TYPE minecraft_cake_slices_eaten_total counter
 minecraft_cake_slices_eaten_total{player="ediri"} 0
@@ -270,35 +278,35 @@ minecraft_interactions_total{entity="smoker",player="ediri"} 0
 minecraft_interactions_total{entity="stonecutter",player="ediri"} 0
 # HELP minecraft_item_actions_total Statistics related to the number of items and their actions: used, picked up, dropped, broken
 # TYPE minecraft_item_actions_total counter
-minecraft_item_actions_total{action="broken",entity="wooden_axe",player="ediri"} 1
-minecraft_item_actions_total{action="crafted",entity="crafting_table",player="ediri"} 3
-minecraft_item_actions_total{action="crafted",entity="oak_planks",player="ediri"} 32
-minecraft_item_actions_total{action="crafted",entity="oak_wood",player="ediri"} 6
-minecraft_item_actions_total{action="crafted",entity="spruce_planks",player="ediri"} 28
-minecraft_item_actions_total{action="crafted",entity="stick",player="ediri"} 32
-minecraft_item_actions_total{action="crafted",entity="torch",player="ediri"} 8
-minecraft_item_actions_total{action="crafted",entity="wooden_axe",player="ediri"} 1
-minecraft_item_actions_total{action="crafted",entity="wooden_pickaxe",player="ediri"} 3
-minecraft_item_actions_total{action="crafted",entity="wooden_shovel",player="ediri"} 1
-minecraft_item_actions_total{action="dropped",entity="porkchop",player="ediri"} 4
-minecraft_item_actions_total{action="picked_up",entity="birch_log",player="ediri"} 1
-minecraft_item_actions_total{action="picked_up",entity="coal",player="ediri"} 15
-minecraft_item_actions_total{action="picked_up",entity="crafting_table",player="ediri"} 2
-minecraft_item_actions_total{action="picked_up",entity="dirt",player="ediri"} 33
-minecraft_item_actions_total{action="picked_up",entity="oak_log",player="ediri"} 11
-minecraft_item_actions_total{action="picked_up",entity="oak_planks",player="ediri"} 1
-minecraft_item_actions_total{action="picked_up",entity="oak_sapling",player="ediri"} 1
-minecraft_item_actions_total{action="picked_up",entity="oxeye_daisy",player="ediri"} 1
-minecraft_item_actions_total{action="picked_up",entity="porkchop",player="ediri"} 4
-minecraft_item_actions_total{action="picked_up",entity="spruce_log",player="ediri"} 13
-minecraft_item_actions_total{action="picked_up",entity="torch",player="ediri"} 1
-minecraft_item_actions_total{action="picked_up",entity="wheat_seeds",player="ediri"} 6
-minecraft_item_actions_total{action="used",entity="crafting_table",player="ediri"} 3
-minecraft_item_actions_total{action="used",entity="oak_planks",player="ediri"} 1
-minecraft_item_actions_total{action="used",entity="oxeye_daisy",player="ediri"} 1
-minecraft_item_actions_total{action="used",entity="torch",player="ediri"} 2
-minecraft_item_actions_total{action="used",entity="wooden_axe",player="ediri"} 52
-minecraft_item_actions_total{action="used",entity="wooden_pickaxe",player="ediri"} 26
+minecraft_item_actions_total{action="broken",namespace="minecraft",entity="wooden_axe",player="ediri"} 1
+minecraft_item_actions_total{action="crafted",namespace="minecraft",entity="crafting_table",player="ediri"} 3
+minecraft_item_actions_total{action="crafted",namespace="minecraft",entity="oak_planks",player="ediri"} 32
+minecraft_item_actions_total{action="crafted",namespace="minecraft",entity="oak_wood",player="ediri"} 6
+minecraft_item_actions_total{action="crafted",namespace="minecraft",entity="spruce_planks",player="ediri"} 28
+minecraft_item_actions_total{action="crafted",namespace="minecraft",entity="stick",player="ediri"} 32
+minecraft_item_actions_total{action="crafted",namespace="minecraft",entity="torch",player="ediri"} 8
+minecraft_item_actions_total{action="crafted",namespace="minecraft",entity="wooden_axe",player="ediri"} 1
+minecraft_item_actions_total{action="crafted",namespace="minecraft",entity="wooden_pickaxe",player="ediri"} 3
+minecraft_item_actions_total{action="crafted",namespace="minecraft",entity="wooden_shovel",player="ediri"} 1
+minecraft_item_actions_total{action="dropped",namespace="minecraft",entity="porkchop",player="ediri"} 4
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="birch_log",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="coal",player="ediri"} 15
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="crafting_table",player="ediri"} 2
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="dirt",player="ediri"} 33
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="oak_log",player="ediri"} 11
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="oak_planks",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="oak_sapling",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="oxeye_daisy",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="porkchop",player="ediri"} 4
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="spruce_log",player="ediri"} 13
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="torch",player="ediri"} 1
+minecraft_item_actions_total{action="picked_up",namespace="minecraft",entity="wheat_seeds",player="ediri"} 6
+minecraft_item_actions_total{action="used",namespace="minecraft",entity="crafting_table",player="ediri"} 3
+minecraft_item_actions_total{action="used",namespace="minecraft",entity="oak_planks",player="ediri"} 1
+minecraft_item_actions_total{action="used",namespace="minecraft",entity="oxeye_daisy",player="ediri"} 1
+minecraft_item_actions_total{action="used",namespace="minecraft",entity="torch",player="ediri"} 2
+minecraft_item_actions_total{action="used",namespace="minecraft",entity="wooden_axe",player="ediri"} 52
+minecraft_item_actions_total{action="used",namespace="minecraft",entity="wooden_pickaxe",player="ediri"} 26
 # HELP minecraft_items_dropped_total The number of items dropped.
 # TYPE minecraft_items_dropped_total counter
 minecraft_items_dropped_total{player="ediri"} 1
@@ -310,8 +318,8 @@ minecraft_items_enchanted_total{player="ediri"} 0
 minecraft_jumps_total{player="ediri"} 406
 # HELP minecraft_killed_by_total Statistics related to the times of a player being killed by entities.
 # TYPE minecraft_killed_by_total counter
-minecraft_killed_by_total{entity="skeleton",player="ediri"} 1
-minecraft_killed_by_total{entity="zombie",player="ediri"} 7
+minecraft_killed_by_total{entity="skeleton",namespace="minecraft",player="ediri"} 1
+minecraft_killed_by_total{entity="zombie",namespace="minecraft",player="ediri"} 7
 # HELP minecraft_mobs_killed_total The number of mobs the player killed.
 # TYPE minecraft_mobs_killed_total counter
 minecraft_mobs_killed_total{player="ediri"} 2
