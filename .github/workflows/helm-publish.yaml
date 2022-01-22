@@ -35,5 +35,10 @@ jobs:
       - name: run helm-docs
         run: |
           helm-docs -t README.md.gotmpl -o README.md
-          ls -la charts/
-          cat charts/minecraft-exporter/README.md
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.2.1
+        with:
+          config: "./.github/configs/cr.yaml"
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
