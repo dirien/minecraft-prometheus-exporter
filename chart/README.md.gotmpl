@@ -1,0 +1,25 @@
+# Minecraft Exporter for Prometheus
+
+![Version: {{ .Version }}](https://img.shields.io/badge/Version-{{ .Version | replace "-" "--" }}-informational?style=for-the-badge)
+{{ if .Type }}![Type: {{ .Type }}](https://img.shields.io/badge/Type-{{ .Type }}-informational?style=for-the-badge) {{ end }}
+{{ if .AppVersion }}![AppVersion: {{ .AppVersion }}](https://img.shields.io/badge/AppVersion-{{ .AppVersion | replace "-" "--" }}-informational?style=for-the-badge) {{ end }}
+
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
+![Minecraft](https://img.shields.io/badge/Minecraft-62B47A?style=for-the-badge&logo=Minecraft&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Alpine Linux 3.15.0](https://img.shields.io/badge/alpine_linux_3.15.0-0D597F?style=for-the-badge&logo=alpine-linux&logoColor=white)
+
+## Description
+
+{{ template "chart.description" . }}
+
+## Usage
+todo
+
+{{ template "chart.valuesSection" . }}
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.maintainersSection" . }}
