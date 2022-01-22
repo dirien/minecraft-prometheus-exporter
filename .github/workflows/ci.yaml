@@ -1,5 +1,4 @@
-name: Build Binary
-
+name: build-binary
 on:
   push:
     branches:
