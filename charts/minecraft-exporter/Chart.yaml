@@ -19,7 +19,6 @@ maintainers:
 annotations:
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/changes: |
-    - Added initcontainer to deployment
     - First chart
   artifacthub.io/images: |
     - name: minecraft-exporter
