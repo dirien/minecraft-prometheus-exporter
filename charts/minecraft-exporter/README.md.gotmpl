@@ -1,0 +1,56 @@
+# Minecraft Exporter for Prometheus
+
+![minecraft-exporter](https://dirien.github.io/minecraft-prometheus-exporter/img/minecraft-exporter.jpg)
+
+![Version: {{ .Version }}](https://img.shields.io/badge/Version-{{ .Version | replace "-" "--" }}-informational?style=for-the-badge)
+{{ if .Type }}![Type: {{ .Type }}](https://img.shields.io/badge/Type-{{ .Type }}-informational?style=for-the-badge) {{ end }}
+{{ if .AppVersion }}![AppVersion: {{ .AppVersion }}](https://img.shields.io/badge/AppVersion-{{ .AppVersion | replace "-" "--" }}-informational?style=for-the-badge) {{ end }}
+
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
+![Minecraft](https://img.shields.io/badge/Minecraft-62B47A?style=for-the-badge&logo=Minecraft&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Alpine Linux 3.15.0](https://img.shields.io/badge/alpine_linux_3.15.0-0D597F?style=for-the-badge&logo=alpine-linux&logoColor=white)
+![Helm](https://img.shields.io/badge/helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)
+
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/minecraft-exporter&style=for-the-badge)](https://artifacthub.io/packages/search?repo=minecraft-exporter)
+
+## Description
+
+{{ template "chart.description" . }}
+
+## Usage
+
+Please add the minecraft-exporter repository before installing any chart provided by this repository:
+
+```bash
+helm repo add minecraft-exporter https://dirien.github.io/minecraft-prometheus-exporter
+helm repo update
+```
+
+### Installing the Chart
+
+To install the chart with the release name minecraft-exporter run:
+
+```bash
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version {{ .Version }}
+```
+
+After a few seconds, minecraft-exporter should be running.
+
+To install the chart in a specific namespace use following commands:
+
+```bash
+kubectl create ns minecraft-exporter
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporte --version {{ .Version }}
+```
+
+> **Tip**: List all releases using `helm list`, a release is a name used to track a specific deployment
+
+
+{{ template "chart.valuesSection" . }}
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.maintainersSection" . }}
