@@ -7,7 +7,7 @@ keywords:
   - prometheus
   - exporter
 type: application
-version: 0.1.4
+version: 0.2.0
 appVersion: 0.10.0
 home: https://github.com/dirien/minecraft-prometheus-exporter/
 sources:
