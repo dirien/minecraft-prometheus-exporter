@@ -3,22 +3,23 @@ name: minecraft-exporter
 icon: https://dirien.github.io/minecraft-prometheus-exporter/img/chart-logo.png
 description: A Helm chart for prometheus minecraft exporter
 keywords:
-- minecraft
-- prometheus
-- exporter
+  - minecraft
+  - prometheus
+  - exporter
 type: application
 version: 0.1.4
-appVersion: 0.9.0
+appVersion: 0.10.0
 home: https://github.com/dirien/minecraft-prometheus-exporter/
 sources:
-- https://github.com/dirien/minecraft-prometheus-exporter/
+  - https://github.com/dirien/minecraft-prometheus-exporter/
 maintainers:
-- email: engin.diri@ediri.de
-  name: dirien
+  - email: engin.diri@ediri.de
+    name: dirien
 
 annotations:
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/changes: |
+    - Update to AppVersion to 0.10.0
     - Add ArtifactHub badge
     - First chart
   artifacthub.io/images: |
