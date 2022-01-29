@@ -35,7 +35,7 @@ func Run() {
 	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())         //nolint:errcheck
 
 	prometheus.MustRegister(version.NewCollector("minecraft_exporter"))
-	prometheus.MustRegister(exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, config.DisabledMetrics, logger))
+	prometheus.MustRegister(exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, *config.ModServerStats, config.DisabledMetrics, logger))
 
 	level.Info(logger).Log("msg", "Disabling collection of exporter metrics (like go_*)", "value", config.DisableExporterMetrics) //nolint:errcheck
 	if *config.DisableExporterMetrics {

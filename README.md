@@ -149,6 +149,8 @@ Flags:
       --mc.rcon-password=MC.RCON-PASSWORD  
                                  Password of the Minecraft rcon.
       --mc.name-source="mojang"  How to retrieve names of players: offline, bukkit, mojang.
+      --mc.mod-server-stats=MC.MOD-SERVER-STATS  
+                                 Additional server stats for papermc or forge
       --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
       --version                  Show application version.
@@ -169,6 +171,7 @@ config file can be changed using `--config-path` CLI flag.
 | `rcon-address`             | `--mc.rcon-address`              | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                            |
 | `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                           |
 | `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang. |
+| `mod-server-stats`         | `--mod-server-stats`             | MC_MOD_SERVER_STATS           | Additional server stats for papermc or forge               |
 
 #### Disable exporter metrics
 
@@ -425,6 +428,75 @@ minecraft_used_cauldrons_total{player="ediri"} 0
 # HELP minecraft_won_raids_total The number of times the player won a raid
 # TYPE minecraft_won_raids_total counter
 minecraft_won_raids_total{player="ediri"} 0
+```
+
+#### Metrics for specific mods
+
+To export the metrics for a specific mod, you can set the flag: `--mc.mod-server-stats=forge|papermc` or use the
+environment variable `MC_MOD_SERVER_STATS`.
+
+#### Forge
+
+`minecraft-exporter` exports mean TPS and mean tick time for every dimension and of course the overall mean TPS and mean
+tick time.
+
+Additionally, you will get the total numbers of active entities on the server per dimension.
+
+```bash
+# HELP minecraft_ticktime_total The overall mean tick time in the server
+# TYPE minecraft_ticktime_total counter
+minecraft_ticktime_total 0.38
+# HELP minecraft_tps_total The overall mean ticks per second in the server
+# TYPE minecraft_tps_total counter
+minecraft_tps_total 20
+# HELP minecraft_dimension_ticktime_total The mean tick time in a certain dimension
+# TYPE minecraft_dimension_ticktime_total counter
+minecraft_dimension_ticktime_total{dimension="overworld",namespace="minecraft"} 0.37
+minecraft_dimension_ticktime_total{dimension="the_end",namespace="minecraft"} 0.002
+minecraft_dimension_ticktime_total{dimension="the_nether",namespace="minecraft"} 0.004
+# HELP minecraft_dimension_tps_total The number of ticks per second in a certain dimension
+# TYPE minecraft_dimension_tps_total counter
+minecraft_dimension_tps_total{dimension="overworld",namespace="minecraft"} 20
+minecraft_dimension_tps_total{dimension="the_end",namespace="minecraft"} 20
+minecraft_dimension_tps_total{dimension="the_nether",namespace="minecraft"} 20
+# HELP minecraft_active_entity_total The number and type of an active entity on the server
+# TYPE minecraft_active_entity_total counter
+minecraft_active_entity_total{entity="bat",namespace="minecraft"} 15
+minecraft_active_entity_total{entity="bee",namespace="minecraft"} 7
+minecraft_active_entity_total{entity="chest_minecart",namespace="minecraft"} 15
+minecraft_active_entity_total{entity="chicken",namespace="minecraft"} 8
+minecraft_active_entity_total{entity="cod",namespace="minecraft"} 9
+minecraft_active_entity_total{entity="cow",namespace="minecraft"} 12
+minecraft_active_entity_total{entity="creeper",namespace="minecraft"} 12
+minecraft_active_entity_total{entity="dolphin",namespace="minecraft"} 1
+minecraft_active_entity_total{entity="drowned",namespace="minecraft"} 1
+minecraft_active_entity_total{entity="enderman",namespace="minecraft"} 6
+minecraft_active_entity_total{entity="falling_block",namespace="minecraft"} 1
+minecraft_active_entity_total{entity="item",namespace="minecraft"} 13
+minecraft_active_entity_total{entity="pig",namespace="minecraft"} 12
+minecraft_active_entity_total{entity="pufferfish",namespace="minecraft"} 6
+minecraft_active_entity_total{entity="rabbit",namespace="minecraft"} 1
+minecraft_active_entity_total{entity="sheep",namespace="minecraft"} 17
+minecraft_active_entity_total{entity="skeleton",namespace="minecraft"} 28
+minecraft_active_entity_total{entity="spider",namespace="minecraft"} 6
+minecraft_active_entity_total{entity="squid",namespace="minecraft"} 5
+minecraft_active_entity_total{entity="tropical_fish",namespace="minecraft"} 8
+minecraft_active_entity_total{entity="zombie",namespace="minecraft"} 19
+```
+
+#### PaperMC
+
+`minecraft-exporter` exports the TPS from the last 1m, 5m, and 15m as histogram.
+
+```bash
+# HELP minecraft_tps_total_bucket The number of ticks per second in PaperMC
+# TYPE minecraft_tps_total_bucket histogram
+minecraft_tps_total_bucket_bucket{le="1"} 20
+minecraft_tps_total_bucket_bucket{le="5"} 20
+minecraft_tps_total_bucket_bucket{le="15"} 20
+minecraft_tps_total_bucket_bucket{le="+Inf"} 3
+minecraft_tps_total_bucket_sum 60
+minecraft_tps_total_bucket_count 3
 ```
 
 ### Libraries & Tools 🔥
