@@ -20,6 +20,8 @@ A Helm chart for prometheus minecraft exporter
 
 ## Usage
 
+> Important: You need to mount the data directory of your Minecraft container into to the exporter container. Some metrics will be scraped form the json files in the world directory.
+
 Please add the minecraft-exporter repository before installing any chart provided by this repository:
 
 ```bash
