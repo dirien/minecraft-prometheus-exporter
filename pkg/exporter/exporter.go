@@ -7,35 +7,53 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Jeffail/gabs/v2"
-	"github.com/go-kit/log"
-
 	"github.com/Tnze/go-mc/nbt"
 	mcnet "github.com/Tnze/go-mc/net"
+	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	Namespace = "minecraft"
+	Namespace                  = "minecraft"
+	Forge                      = "forge"
+	PaperMC                    = "papermc"
+	rconListCommand            = "list"
+	rconForgeTpsCommand        = "forge tps"
+	rconForgeEntityListCommand = "forge entity list"
+	rconPaperTpsCommand        = "tps"
 )
 
 // See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
 
 type Exporter struct {
-	address         string
-	password        string
-	logger          log.Logger
-	world           string
-	source          string
-	disabledMetrics map[string]bool
+	address            string
+	password           string
+	logger             log.Logger
+	world              string
+	source             string
+	serverStats        string
+	disabledMetrics    map[string]bool
+	playerOnlineRegexp *regexp.Regexp
+	overallRegexp      *regexp.Regexp
+	dimensionRegexp    *regexp.Regexp
+	entityListRegexp   *regexp.Regexp
+	paperMcTpsRegexp   *regexp.Regexp
 	// via advancements
 	// playerAdvancements *prometheus.Desc
 
 	// via RCON
-	playerOnline *prometheus.Desc
+	playerOnline    *prometheus.Desc
+	dimTps          *prometheus.Desc
+	dimTicktime     *prometheus.Desc
+	overallTps      *prometheus.Desc
+	overallTicktime *prometheus.Desc
+	entities        *prometheus.Desc
+	tpsPaperMC      *prometheus.Desc
 
 	// via stats
 	playerStat *prometheus.Desc
@@ -87,14 +105,20 @@ type Exporter struct {
 	waterTakenFromCauldron *prometheus.Desc
 }
 
-func New(server, password, world, source string, disabledMetrics map[string]bool, logger log.Logger) *Exporter {
+func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, logger log.Logger) *Exporter {
 	return &Exporter{
-		address:         server,
-		password:        password,
-		logger:          logger,
-		world:           world,
-		source:          source,
-		disabledMetrics: disabledMetrics,
+		address:            server,
+		password:           password,
+		logger:             logger,
+		world:              world,
+		source:             source,
+		serverStats:        serverStats,
+		playerOnlineRegexp: regexp.MustCompile("players online:(.*)"),
+		overallRegexp:      regexp.MustCompile(`Overall:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
+		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
+		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
+		paperMcTpsRegexp:   regexp.MustCompile(`§6TPS from last 1m, 5m, 15m:\s§a(\d.*),\s§a(\d.*),\s§a(\d.*)`),
+		disabledMetrics:    disabledMetrics,
 		playerOnline: prometheus.NewDesc(
 			prometheus.BuildFQName(Namespace, "", "player_online_total"),
 			"Players currently online (1 if player is online)",
@@ -332,6 +356,39 @@ func New(server, password, world, source string, disabledMetrics map[string]bool
 		waterTakenFromCauldron: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "used_cauldrons_total"),
 			"The number of times the player took water from cauldrons with glass bottles",
 			[]string{"player"},
+			nil,
+		),
+
+		dimTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_tps_total"),
+			"The number of ticks per second in a certain dimension",
+			[]string{"namespace", "dimension"},
+			nil,
+		),
+
+		dimTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_ticktime_total"),
+			"The mean tick time in a certain dimension",
+			[]string{"namespace", "dimension"},
+			nil,
+		),
+		overallTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps_total"),
+			"The overall mean ticks per second in the server",
+			[]string{},
+			nil,
+		),
+		overallTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "ticktime_total"),
+			"The overall mean tick time in the server",
+			[]string{},
+			nil,
+		),
+		entities: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "active_entity_total"),
+			"The number and type of an active entity on the server",
+			[]string{"namespace", "entity"},
+			nil,
+		),
+
+		tpsPaperMC: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps_total_bucket"),
+			"The number of ticks per second in PaperMC",
+			[]string{},
 			nil,
 		),
 	}
@@ -610,36 +667,99 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 	return nil
 }
 
-func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
+func (e *Exporter) executeRCONCommand(cmd string) (*string, error) {
 	conn, err := mcnet.DialRCON(e.address, e.password)
 	if err != nil {
-		return fmt.Errorf("connect rcon error: %w", err)
+		return nil, fmt.Errorf("connect rcon error: %w", err)
 	}
 
 	defer func() {
 		err := conn.Close()
 		if err != nil {
 			level.Error(e.logger).Log("msg", "Failed to close rcon endpoint", "err", err) // nolint: errcheck
-			if retErr == nil {
-				retErr = err
-			}
 		}
 	}()
 
-	err = conn.Cmd("list")
+	err = conn.Cmd(cmd)
 	if err != nil {
-		return fmt.Errorf("send rcon command error: %w", err)
+		return nil, fmt.Errorf("send rcon command error: %w", err)
 	}
 
 	resp, err := conn.Resp()
 	if err != nil {
-		return fmt.Errorf("receive rcon command error: %w", err)
+		return nil, fmt.Errorf("receive rcon command error: %w", err)
+	}
+	return &resp, nil
+}
+
+func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
+	resp, err := e.executeRCONCommand(rconListCommand)
+	if err != nil {
+		return err
 	}
 
-	r := regexp.MustCompile("players online:(.*)")
-	playersraw := r.FindStringSubmatch(resp)[1]
+	playersraw := e.playerOnlineRegexp.FindStringSubmatch(*resp)[1]
 	for _, player := range strings.Fields(strings.ReplaceAll(playersraw, ",", " ")) {
 		ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
+	}
+	return nil
+}
+
+// just in case there is a different locale
+func parseFloat64FromString(value string) float64 {
+	if strings.Contains(value, ",") {
+		value = strings.ReplaceAll(value, ",", ".")
+	}
+	valueInFloat64, _ := strconv.ParseFloat(value, 64)
+	return valueInFloat64
+}
+
+func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
+	if e.serverStats == Forge {
+		resp, err := e.executeRCONCommand(rconForgeTpsCommand)
+		if err != nil {
+			return err
+		}
+		dimTpsList := e.dimensionRegexp.FindAllStringSubmatch(*resp, -1)
+		for _, dimTps := range dimTpsList {
+			namespace := dimTps[1]
+			dimension := dimTps[2]
+			meanTickTimeDimension := parseFloat64FromString(dimTps[3])
+			meanTpsDimension := parseFloat64FromString(dimTps[4])
+			ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.CounterValue, meanTpsDimension, namespace, dimension)
+			ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.CounterValue, meanTickTimeDimension, namespace, dimension)
+		}
+		overall := e.overallRegexp.FindStringSubmatch(*resp)
+		meanTickTime := parseFloat64FromString(overall[1])
+		meanTps := parseFloat64FromString(overall[2])
+		ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.CounterValue, meanTps)
+		ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.CounterValue, meanTickTime)
+
+		resp, err = e.executeRCONCommand(rconForgeEntityListCommand)
+		if err != nil {
+			return err
+		}
+		entityList := e.entityListRegexp.FindAllStringSubmatch(*resp, -1)
+		for _, entity := range entityList {
+			entityCounter := parseFloat64FromString(entity[1])
+			namespace := entity[2]
+			entityType := entity[3]
+			ch <- prometheus.MustNewConstMetric(e.entities, prometheus.CounterValue, entityCounter, namespace, entityType)
+		}
+
+	} else if e.serverStats == PaperMC {
+		resp, err := e.executeRCONCommand(rconPaperTpsCommand)
+		if err != nil {
+			return err
+		}
+		tpsString := e.paperMcTpsRegexp.FindStringSubmatch(*resp)
+		tps := map[float64]uint64{
+			1:  uint64(parseFloat64FromString(tpsString[1])),
+			5:  uint64(parseFloat64FromString(tpsString[2])),
+			15: uint64(parseFloat64FromString(tpsString[3])),
+		}
+		sum := tps[1] + tps[5] + tps[15]
+		ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
 	}
 	return nil
 }
@@ -705,5 +825,9 @@ func (e *Exporter) Collect(metrics chan<- prometheus.Metric) {
 
 	if err := e.getPlayerStats(metrics); err != nil {
 		level.Error(e.logger).Log("msg", "Failed to get player stats", "err", err) // nolint: errcheck
+	}
+
+	if err := e.getServerStats(metrics); err != nil {
+		level.Error(e.logger).Log("msg", "Failed to get server stats", "err", err) // nolint: errcheck
 	}
 }

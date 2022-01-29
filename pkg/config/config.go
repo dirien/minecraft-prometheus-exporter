@@ -20,6 +20,7 @@ type Config struct {
 	NameSource             *string         `yaml:"name-source"`
 	DisableExporterMetrics *bool           `yaml:"disable-exporter-metrics"`
 	DisabledMetrics        map[string]bool `yaml:"disabled-metrics"`
+	ModServerStats         *string         `yaml:"mod-server-stats"`
 }
 
 func NewConfg() *Config {
@@ -33,6 +34,7 @@ func NewConfg() *Config {
 		rconAddress             = kingpin.Flag("mc.rcon-address", "Address of the Minecraft rcon.").Envar("MC_RCON_ADDRESS").Default(":25575").String()
 		rconPassword            = kingpin.Flag("mc.rcon-password", "Password of the Minecraft rcon.").Envar("MC_RCON_PASSWORD").String()
 		nameSource              = kingpin.Flag("mc.name-source", "How to retrieve names of players: offline, bukkit, mojang.").Envar("MC_NAME_SOURCE").Default("mojang").String()
+		modServerStats          = kingpin.Flag("mc.mod-server-stats", "Additional server stats for papermc or forge").Envar("MC_MOD_SERVER_STATS").String()
 	)
 	return &Config{
 		ConfigPath:             configPath,
@@ -44,6 +46,7 @@ func NewConfg() *Config {
 		RconPassword:           rconPassword,
 		WorldPath:              worldPath,
 		NameSource:             nameSource,
+		ModServerStats:         modServerStats,
 	}
 }
 
