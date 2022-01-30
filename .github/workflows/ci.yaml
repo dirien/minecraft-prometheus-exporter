@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Go
-        uses: actions/setup-go@424fc82d43fa5a37540bae62709ddcc23d9520d4 # v2
+        uses: actions/setup-go@44e221478fc6847752e5c574fc7a7b3247b00fbf
         with:
           go-version: 1.17
       - name: Tests the build
@@ -47,7 +47,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Go
-        uses: actions/setup-go@424fc82d43fa5a37540bae62709ddcc23d9520d4 # v2
+        uses: actions/setup-go@44e221478fc6847752e5c574fc7a7b3247b00fbf
         with:
           go-version: 1.17
       - uses: sigstore/cosign-installer@116dc6872c0a067bcb78758f18955414cdbf918f # v1.4.1
