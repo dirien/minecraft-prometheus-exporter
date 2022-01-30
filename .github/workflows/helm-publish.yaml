@@ -8,8 +8,8 @@ on:
       - "charts/**"
 env:
   HELM_DOCS_VERSION: "1.7.0"
-permissions:
-  contents: read
+
+permissions: read-all
 
 jobs:
   publish:
