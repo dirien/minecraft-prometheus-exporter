@@ -7,10 +7,7 @@ on:
       - '*'
   pull_request:
 
-permissions:
-  contents: write
-  id-token: write
-  packages: write
+permissions: read-all
 
 jobs:
   build:
@@ -28,6 +25,10 @@ jobs:
         run: |
           go build .
   release:
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
     needs: build
     runs-on: ubuntu-latest
     if: success() && startsWith(github.ref, 'refs/tags/')
