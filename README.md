@@ -12,6 +12,7 @@
 ![Helm](https://img.shields.io/badge/helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)
 
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/minecraft-exporter&style=for-the-badge)](https://artifacthub.io/packages/search?repo=minecraft-exporter)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/minecraft-exporter-image&style=for-the-badge)](https://artifacthub.io/packages/search?repo=minecraft-exporter-image)
 
 ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/dirien/minecraft-prometheus-exporter/Build%20Binary/main?logo=github&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/dirien/minecraft-prometheus-exporter?style=for-the-badge)
