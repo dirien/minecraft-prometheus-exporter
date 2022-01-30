@@ -1,4 +1,9 @@
 project_name: minecraft-exporter
+
+env:
+  - DESCRIPTION="Prometheus Minecraft exporter"
+  - README_URL="https://raw.githubusercontent.com/dirien/minecraft-prometheus-exporter/main/README.md"
+
 before:
   hooks:
     - go mod tidy
@@ -30,10 +35,18 @@ dockers:
     use: buildx
     build_flag_templates:
       - --platform=linux/amd64
-      - --label=org.opencontainers.image.licenses=Apache-2.0
-      - --label=org.opencontainers.image.version={{ .Version }}
-      - --label=org.opencontainers.image.title={{ .ProjectName }}
-      - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
+      - --label=org.opencontainers.image.licenses='Apache-2.0'
+      - --label=org.opencontainers.image.description={{.Env.DESCRIPTION}}
+      - --label=org.opencontainers.image.created={{.Date}}
+      - --label=org.opencontainers.image.name={{.ProjectName}}
+      - --label=org.opencontainers.image.revision={{.FullCommit}}
+      - --label=org.opencontainers.image.version={{.Version}}
+      - --label=org.opencontainers.image.source={{.GitURL}}
+      - --label=io.artifacthub.package.maintainers='[{"name":"Engin Diri","email":"engin.diri@ediri.de"}]'
+      - --label=io.artifacthub.package.readme-url={{.Env.README_URL}}
+      - --label=io.artifacthub.package.logo-url='https://dirien.github.io/minecraft-prometheus-exporter/img/chart-logo.png'
+      - --label=io.artifacthub.package.keywords='minecraft,prometheus,exporter'
+      - --label=io.artifacthub.package.license='Apache-2.0'
   - image_templates:
       - "ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}-arm64"
     goarch: arm64
@@ -41,10 +54,18 @@ dockers:
     use: buildx
     build_flag_templates:
       - --platform=linux/arm64/v8
-      - --label=org.opencontainers.image.licenses=Apache-2.0
-      - --label=org.opencontainers.image.version={{ .Version }}
-      - --label=org.opencontainers.image.title={{ .ProjectName }}
-      - --label=org.opencontainers.image.source=https://github.com/dirien/{{ .ProjectName }}
+      - --label=org.opencontainers.image.licenses='Apache-2.0'
+      - --label=org.opencontainers.image.description={{.Env.DESCRIPTION}}
+      - --label=org.opencontainers.image.created={{.Date}}
+      - --label=org.opencontainers.image.name={{.ProjectName}}
+      - --label=org.opencontainers.image.revision={{.FullCommit}}
+      - --label=org.opencontainers.image.version={{.Version}}
+      - --label=org.opencontainers.image.source={{.GitURL}}
+      - --label=io.artifacthub.package.maintainers='[{"name":"Engin Diri","email":"engin.diri@ediri.de"}]'
+      - --label=io.artifacthub.package.readme-url={{.Env.README_URL}}
+      - --label=io.artifacthub.package.logo-url='https://dirien.github.io/minecraft-prometheus-exporter/img/chart-logo.png'
+      - --label=io.artifacthub.package.keywords='minecraft,prometheus,exporter'
+      - --label=io.artifacthub.package.license='Apache-2.0'
 
 docker_manifests:
   - name_template: 'ghcr.io/dirien/{{ .ProjectName }}:{{ .Version }}'
