@@ -1,0 +1,61 @@
+name: scorecards-supply-chain-security
+on:
+  # Only the default branch is supported.
+  branch_protection_rule:
+  schedule:
+    # Weekly on Saturdays.
+    - cron: '30 1 * * 6'
+  push:
+    branches: [ main, master ]
+
+# Declare default permissions as read only.
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecards analysis
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed to upload the results to code-scanning dashboard.
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@14dc64f30986eaa2ad2dddcec073f5aab18e5a24
+        with:
+          egress-policy: audit
+      - name: "Checkout code"
+        uses: actions/checkout@230611dbd0eb52da1e1f4f7bc8bb0c3a339fc8b7
+        with:
+          persist-credentials: false
+
+      - name: "Run analysis"
+        uses: ossf/scorecard-action@9523c76ba4639c6abd946f543727c47ad97df71b
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # Read-only PAT token. To create it,
+          # follow the steps in https://github.com/ossf/scorecard-action#pat-token-creation.
+          repo_token: ${{ secrets.SCORECARD_READ_TOKEN }}
+          # Publish the results for public repositories to enable scorecard badges. For more details, see
+          # https://github.com/ossf/scorecard-action#publishing-results.
+          # For private repositories, `publish_results` will automatically be set to `false`, regardless
+          # of the value entered here.
+          publish_results: true
+
+      # Upload the results as artifacts (optional). Commenting out will disable uploads of run results in SARIF
+      # format to the repository Actions tab.
+      - name: "Upload artifact"
+        uses: actions/upload-artifact@87348cee5fefa95e42e9b4804b4d68e130304158
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+
+      # Upload the results to GitHub's code scanning dashboard.
+      - name: "Upload to code-scanning"
+        uses: github/codeql-action/upload-sarif@3b831aafd98be2329e46f6ae6d6af7aa5bacd9bd
+        with:
+          sarif_file: results.sarif

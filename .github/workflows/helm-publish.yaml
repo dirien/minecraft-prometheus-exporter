@@ -8,17 +8,22 @@ on:
       - "charts/**"
 env:
   HELM_DOCS_VERSION: "1.7.0"
+permissions:
+  contents: read
+
 jobs:
   publish:
+    permissions:
+      contents: write # for helm/chart-releaser-action to push chart release and create a release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
         with:
           fetch-depth: 0
 
       - name: Install Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@18bc76811624f360dbd7f18c2d4ecb32c7b87bab # v1
 
       - name: Configure Git
         run: |
@@ -37,7 +42,7 @@ jobs:
           helm-docs -t README.md.gotmpl -o README.md
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.2.1
+        uses: helm/chart-releaser-action@c25b74a986eb925b398320414b576227f375f946 # v1.2.1
         with:
           config: "./.github/configs/cr.yaml"
         env:

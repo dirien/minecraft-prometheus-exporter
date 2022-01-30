@@ -1,31 +1,33 @@
----
 name: ct-linting-and-testing
 on:
   pull_request:
     paths:
       - "charts/**"
+
+permissions: read-all
+
 jobs:
   chart-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
         with:
           fetch-depth: 0
 
       - name: Set up Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@18bc76811624f360dbd7f18c2d4ecb32c7b87bab # v1
         with:
           version: v3.6.3
 
       - name: Set up python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@f38219332975fe8f9c04cca981d674bf22aea1d3 # v2
         with:
           python-version: 3.7
 
       - name: Setup Chart Linting
         id: lint
-        uses: helm/chart-testing-action@v2.2.0
+        uses: helm/chart-testing-action@6b64532d456fa490a3da177fbd181ac4c8192b58 # v2.2.0
 
       - name: List changed charts
         id: list-changed
@@ -42,7 +44,7 @@ jobs:
         run: ct lint --debug --config ./.github/configs/ct-lint.yaml --lint-conf ./.github/configs/lintconf.yaml
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1.2.0
+        uses: helm/kind-action@94729529f85113b88f4f819c17ce61382e6d8478 # v1.2.0
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
