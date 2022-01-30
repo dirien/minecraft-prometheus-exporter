@@ -51,7 +51,7 @@ jobs:
         with:
           go-version: 1.17
       - uses: sigstore/cosign-installer@116dc6872c0a067bcb78758f18955414cdbf918f # v1.4.1
-      - uses: anchore/sbom-action/download-syft@3626d7d7b13e87ee6c6f9ded3940dea05a3967bc # v0.6.0
+      - uses: anchore/sbom-action/download-syft@3626d7d7b13e87ee6c6f9ded3940dea05a3967bc
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@5afacd2427634ace3f2f8a0418a526545c071ffe # v2
         with:
