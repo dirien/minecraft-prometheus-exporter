@@ -39,7 +39,7 @@ dockers:
       - --label=org.opencontainers.image.version={{.Version}}
       - --label=org.opencontainers.image.source={{.GitURL}}
       - --label=io.artifacthub.package.maintainers=[{"name":"Engin Diri","email":"engin.diri@ediri.de"}]
-      - --label=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/dirien/minecraft-prometheus-exporter/main/README.md
+      - --label=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/dirien/minecraft-prometheus-exporter/main/CONTAINER.md
       - --label=io.artifacthub.package.logo-url=https://dirien.github.io/minecraft-prometheus-exporter/img/chart-logo.png
       - --label=io.artifacthub.package.keywords=minecraft,prometheus,exporter
       - --label=io.artifacthub.package.license=Apache-2.0
@@ -58,7 +58,7 @@ dockers:
       - --label=org.opencontainers.image.version={{.Version}}
       - --label=org.opencontainers.image.source={{.GitURL}}
       - --label=io.artifacthub.package.maintainers=[{"name":"Engin Diri","email":"engin.diri@ediri.de"}]
-      - --label=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/dirien/minecraft-prometheus-exporter/main/README.md
+      - --label=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/dirien/minecraft-prometheus-exporter/main/CONTAINER.md
       - --label=io.artifacthub.package.logo-url=https://dirien.github.io/minecraft-prometheus-exporter/img/chart-logo.png
       - --label=io.artifacthub.package.keywords=minecraft,prometheus,exporter
       - --label=io.artifacthub.package.license=Apache-2.0
