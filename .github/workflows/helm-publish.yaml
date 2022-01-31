@@ -18,12 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@230611dbd0eb52da1e1f4f7bc8bb0c3a339fc8b7
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # renovate: tag=v2.4.0
         with:
           fetch-depth: 0
 
       - name: Install Helm
-        uses: azure/setup-helm@da63a48ad7b0e6db2595ebd74282ff26bf97b1c6
+        uses: azure/setup-helm@18bc76811624f360dbd7f18c2d4ecb32c7b87bab # renovate: tag=v1.1
 
       - name: Configure Git
         run: |
@@ -42,7 +42,7 @@ jobs:
           helm-docs -t README.md.gotmpl -o README.md
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@1fa3377857fddeb03de4cc76dbedca289f227ed3
+        uses: helm/chart-releaser-action@c25b74a986eb925b398320414b576227f375f946 # renovate: tag=v1.2.1
         with:
           config: "./.github/configs/cr.yaml"
         env:
