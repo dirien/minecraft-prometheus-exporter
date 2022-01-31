@@ -22,7 +22,7 @@ jobs:
           go-version: ~1.17
       - uses: actions/checkout@230611dbd0eb52da1e1f4f7bc8bb0c3a339fc8b7
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@5c56cd6c9dc07901af25baab6f2b0d9f3b7c3018 # v2
+        uses: golangci/golangci-lint-action@ee1123f13095e65bb81bad3c572e9c1d30f58a52
         with:
           skip-go-installation: true
           args: --timeout=5m
