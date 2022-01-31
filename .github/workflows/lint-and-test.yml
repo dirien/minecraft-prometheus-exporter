@@ -44,7 +44,7 @@ jobs:
         run: ct lint --debug --config ./.github/configs/ct-lint.yaml --lint-conf ./.github/configs/lintconf.yaml
 
       - name: Create kind cluster
-        uses: helm/kind-action@94729529f85113b88f4f819c17ce61382e6d8478 # v1.2.0
+        uses: helm/kind-action@2a525709fd0874b75d7ae842d257981b0e0f557d
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
