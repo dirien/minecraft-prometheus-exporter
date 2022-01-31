@@ -21,7 +21,7 @@ jobs:
           version: v3.6.3
 
       - name: Set up python
-        uses: actions/setup-python@156361d073e2d704ec0bfe646b4500cdc0547324
+        uses: actions/setup-python@ba33a692f186dd93542417e5b83c8710ad54c255
         with:
           python-version: 3.7
 
