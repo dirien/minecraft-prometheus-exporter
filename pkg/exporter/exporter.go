@@ -447,12 +447,12 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		case "mojang":
 			resp, err := http.Get(fmt.Sprintf("https://api.ashcon.app/mojang/v2/user/%s", id))
 			if err != nil {
-				level.Error(e.logger).Log("msg", "Failed to connect to api.ashcon.app", "err", err) // nolint: errcheck
+				return level.Error(e.logger).Log("msg", "Failed to connect to api.ashcon.app", "err", err) // nolint: errcheck
 			}
 
 			if resp.StatusCode == 200 {
 				if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
-					level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err) // nolint: errcheck
+					return level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err) // nolint: errcheck
 				}
 			} else {
 				return fmt.Errorf("error retrieving player info from api.ashcon.app: %w", fmt.Errorf(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
