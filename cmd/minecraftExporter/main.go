@@ -1,8 +1,11 @@
 package minecraftExporter
 
 import (
+	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/go-kit/log/level"
 	"github.com/minecraft-exporter/pkg/config"
@@ -31,11 +34,20 @@ func Run() {
 
 	config.LoadFile()
 
+	fmt.Print(`_  _ _ _  _ ____ ____ ____ ____ ____ ___    ____ _  _ ___  ____ ____ ___ ____ ____ 
+|\/| | |\ | |___ |    |__/ |__| |___  |  __ |___  \/  |__] |  | |__/  |  |___ |__/ 
+|  | | | \| |___ |___ |  \ |  | |     |     |___ _/\_ |    |__| |  \  |  |___ |  \ 
+`)
+
 	level.Info(logger).Log("msg", "Starting minecraft_exporter", "version", version.Info()) //nolint:errcheck
 	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())         //nolint:errcheck
 
 	prometheus.MustRegister(version.NewCollector("minecraft_exporter"))
-	prometheus.MustRegister(exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, *config.ModServerStats, config.DisabledMetrics, logger))
+	exporter, err := exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, *config.ModServerStats, config.DisabledMetrics, logger)
+	if err != nil {
+		level.Error(logger).Log("msg", "Failed to create exporter", "err", err) //nolint:errcheck
+	}
+	prometheus.MustRegister(exporter)
 
 	level.Info(logger).Log("msg", "Disabling collection of exporter metrics (like go_*)", "value", config.DisableExporterMetrics) //nolint:errcheck
 	if *config.DisableExporterMetrics {
@@ -52,10 +64,24 @@ func Run() {
 		}
 	})
 
-	level.Info(logger).Log("msg", "Listening on address", "address", *config.ListenAddress) //nolint:errcheck
-	srv := &http.Server{Addr: *config.ListenAddress}
-	if err := web.ListenAndServe(srv, *config.WebConfig, logger); err != nil {
-		level.Error(logger).Log("msg", "Error running HTTP server", "err", err) //nolint:errcheck
-		os.Exit(1)
-	}
+	go func() {
+		level.Info(logger).Log("msg", "Listening on address", "address", *config.ListenAddress) //nolint:errcheck
+		srv := &http.Server{Addr: *config.ListenAddress}
+		if err := web.ListenAndServe(srv, *config.WebConfig, logger); err != nil {
+			level.Error(logger).Log("msg", "Error running HTTP server", "err", err) //nolint:errcheck
+			os.Exit(1)
+		}
+	}()
+	done := make(chan struct{})
+	go func() {
+		level.Info(logger).Log("msg", "Listening signals...") //nolint:errcheck
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		exporter.StopRCON()
+		close(done)
+	}()
+
+	<-done
+	level.Info(logger).Log("msg", "Shutting down...") //nolint:errcheck
 }
