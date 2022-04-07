@@ -20,7 +20,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # tag=v3.0.0
         with:
-          go-version: 1.17
+          go-version: 1.18
       - uses: actions/cache@136d96b4aee02b1f0de3ba493b1d47135042d9c0 # tag=v3.0.1
         with:
           path: |
@@ -58,7 +58,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # tag=v3.0.0
         with:
-          go-version: 1.17
+          go-version: 1.18
       - uses: actions/cache@136d96b4aee02b1f0de3ba493b1d47135042d9c0 # tag=v3.0.1
         with:
           path: |
