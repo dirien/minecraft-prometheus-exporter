@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/Jeffail/gabs/v2 v2.6.1
 	github.com/Tnze/go-mc v1.18.1
-	github.com/go-kit/log v0.2.0
+	github.com/go-kit/log v0.2.1
 	github.com/prometheus/client_golang v1.12.2
 	github.com/prometheus/common v0.34.0
 	github.com/prometheus/exporter-toolkit v0.7.1
