@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Helm
-        uses: azure/setup-helm@199ab446dfa1589521f53f82278b37edff546f3b # tag=v2.2
+        uses: azure/setup-helm@20d2b4f98d41febe2bbca46408499dbb535b6258 # tag=v3.0
         with:
           version: v3.6.3
 
