@@ -795,13 +795,15 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				return err
 			}
 			tpsString := e.paperMcTpsRegexp.FindStringSubmatch(*resp)
-			tps := map[float64]uint64{
-				1:  uint64(parseFloat64FromString(tpsString[1])),
-				5:  uint64(parseFloat64FromString(tpsString[2])),
-				15: uint64(parseFloat64FromString(tpsString[3])),
+			if len(tpsString) == 4 {
+				tps := map[float64]uint64{
+					1:  uint64(parseFloat64FromString(tpsString[1])),
+					5:  uint64(parseFloat64FromString(tpsString[2])),
+					15: uint64(parseFloat64FromString(tpsString[3])),
+				}
+				sum := tps[1] + tps[5] + tps[15]
+				ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
 			}
-			sum := tps[1] + tps[5] + tps[15]
-			ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
 		}
 	}
 	return nil
