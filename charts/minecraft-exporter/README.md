@@ -2,9 +2,9 @@
 
 ![minecraft-exporter](https://dirien.github.io/minecraft-prometheus-exporter/img/minecraft-exporter.jpg)
 
-![Version: 0.5.0](https://img.shields.io/badge/Version-0.5.0-informational?style=for-the-badge)
+![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=for-the-badge)
 ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge)
-![AppVersion: 0.13.0](https://img.shields.io/badge/AppVersion-0.13.0-informational?style=for-the-badge)
+![AppVersion: 0.14.0](https://img.shields.io/badge/AppVersion-0.14.0-informational?style=for-the-badge)
 
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
 ![Minecraft](https://img.shields.io/badge/Minecraft-62B47A?style=for-the-badge&logo=Minecraft&logoColor=white)
@@ -32,7 +32,7 @@ helm repo update
 To install the chart with the release name minecraft-exporter run:
 
 ```bash
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.5.0
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.6.0
 ```
 
 After a few seconds, minecraft-exporter should be running.
@@ -41,7 +41,7 @@ To install the chart in a specific namespace use following commands:
 
 ```bash
 kubectl create ns minecraft-exporter
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporte --version 0.5.0
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporte --version 0.6.0
 ```
 
 > **Tip**: List all releases using `helm list`, a release is a name used to track a specific deployment
@@ -72,7 +72,7 @@ helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespac
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | rbac.pspEnabled | bool | `true` | Specifies to enable pod security policy |
 | rbac.pspUseAppArmor | bool | `true` | Specifies to enable use AppArmor |
-| replicaCount | int | `1` | (int) Numbers of replicas |
+| replicaCount | int | `1` | Numbers of replicas |
 | resources | object | `{}` | Set the resources requests and limits |
 | service.annotations | object | `{}` | Additional annotations |
 | service.port | int | `9150` | Default Service port |
@@ -92,7 +92,7 @@ helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespac
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| dirien | engin.diri@ediri.de |  |
+| dirien | <engin.diri@ediri.de> |  |
 
 ## Legal Disclaimer 👮
 
