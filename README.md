@@ -194,6 +194,13 @@ disabled-metrics:
 listen-address: ':9151' # Change address of web server. "--web.listen-address" will be ignored if this line is present here
 ```
 
+### Known Issues ⚠️️
+
+`minecraft-exporter` is heavily dependent on the username of the player. If you are using mods like [EssentialsX](https://essentialsx.net/)
+and hide or change the default grouping of players, then `minecraft-exporter` will may not work properly.
+
+> If you encounter any issues, please let me know by opening an GitHub issue in this repository.
+
 ### Collectors 📊
 
 The exporter collects a number of statistics from the server (with example of the labels):

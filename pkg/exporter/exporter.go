@@ -153,7 +153,7 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 		world:              world,
 		source:             source,
 		serverStats:        serverStats,
-		playerOnlineRegexp: regexp.MustCompile("players online:(.*)"),
+		playerOnlineRegexp: regexp.MustCompile(":(.*)"),
 		overallRegexp:      regexp.MustCompile(`Overall:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
@@ -715,15 +715,29 @@ func (e *Exporter) executeRCONCommand(cmd string) (*string, error) {
 	return nil, nil
 }
 
+func removeColorCodesFromWord(word string) string {
+	if strings.Contains(word, "§") {
+		pos := strings.IndexRune(word, '§')
+		cleanWord := strings.Split(word, "")
+		cleanWord = append(cleanWord[:pos], cleanWord[pos+2:]...)
+		return removeColorCodesFromWord(strings.Join(cleanWord, ""))
+	}
+	return word
+}
+
 func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
 	resp, err := e.executeRCONCommand(rconListCommand)
 	if err != nil {
 		return err
 	}
 	if resp != nil {
-		playersraw := e.playerOnlineRegexp.FindStringSubmatch(*resp)[1]
-		for _, player := range strings.Fields(strings.ReplaceAll(playersraw, ",", " ")) {
-			ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
+		players := e.playerOnlineRegexp.FindStringSubmatch(*resp)
+		if len(players) > 1 {
+			playersList := players[1]
+			for _, player := range strings.Fields(strings.ReplaceAll(playersList, ",", " ")) {
+				player = removeColorCodesFromWord(player)
+				ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
+			}
 		}
 	}
 	return nil
