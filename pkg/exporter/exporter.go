@@ -157,7 +157,7 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 		overallRegexp:      regexp.MustCompile(`Overall:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
-		paperMcTpsRegexp:   regexp.MustCompile(`§6TPS from last 1m, 5m, 15m:\s§a(\d.*),\s§a(\d.*),\s§a(\d.*)`),
+		paperMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
 		disabledMetrics:    disabledMetrics,
 		playerOnline: prometheus.NewDesc(
 			prometheus.BuildFQName(Namespace, "", "player_online_total"),
@@ -795,13 +795,15 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				return err
 			}
 			tpsString := e.paperMcTpsRegexp.FindStringSubmatch(*resp)
-			tps := map[float64]uint64{
-				1:  uint64(parseFloat64FromString(tpsString[1])),
-				5:  uint64(parseFloat64FromString(tpsString[2])),
-				15: uint64(parseFloat64FromString(tpsString[3])),
+			if len(tpsString) == 4 {
+				tps := map[float64]uint64{
+					1:  uint64(parseFloat64FromString(tpsString[1])),
+					5:  uint64(parseFloat64FromString(tpsString[2])),
+					15: uint64(parseFloat64FromString(tpsString[3])),
+				}
+				sum := tps[1] + tps[5] + tps[15]
+				ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
 			}
-			sum := tps[1] + tps[5] + tps[15]
-			ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
 		}
 	}
 	return nil
