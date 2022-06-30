@@ -157,7 +157,7 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 		overallRegexp:      regexp.MustCompile(`Overall:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
-		paperMcTpsRegexp:   regexp.MustCompile(`§6TPS from last 1m, 5m, 15m:\s§a(\d.*),\s§a(\d.*),\s§a(\d.*)`),
+		paperMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
 		disabledMetrics:    disabledMetrics,
 		playerOnline: prometheus.NewDesc(
 			prometheus.BuildFQName(Namespace, "", "player_online_total"),
