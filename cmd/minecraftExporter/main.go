@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-kit/log/level"
 	"github.com/minecraft-exporter/pkg/config"
@@ -66,7 +67,10 @@ func Run() {
 
 	go func() {
 		level.Info(logger).Log("msg", "Listening on address", "address", *config.ListenAddress) //nolint:errcheck
-		srv := &http.Server{Addr: *config.ListenAddress}
+		srv := &http.Server{
+			Addr:              *config.ListenAddress,
+			ReadHeaderTimeout: 60 * time.Second,
+		}
 		if err := web.ListenAndServe(srv, *config.WebConfig, logger); err != nil {
 			level.Error(logger).Log("msg", "Error running HTTP server", "err", err) //nolint:errcheck
 			os.Exit(1)
