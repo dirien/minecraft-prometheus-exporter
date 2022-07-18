@@ -41,7 +41,7 @@ To install the chart in a specific namespace use following commands:
 
 ```bash
 kubectl create ns minecraft-exporter
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporte --version 0.7.0
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporter --version 0.7.0
 ```
 
 > **Tip**: List all releases using `helm list`, a release is a name used to track a specific deployment
