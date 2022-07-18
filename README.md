@@ -172,7 +172,7 @@ config file can be changed using `--config-path` CLI flag.
 | `rcon-address`             | `--mc.rcon-address`              | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                            |
 | `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                           |
 | `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang. |
-| `mod-server-stats`         | `--mod-server-stats`             | MC_MOD_SERVER_STATS           | Additional server stats for papermc or forge               |
+| `mod-server-stats`         | `--mc.mod-server-stats`          | MC_MOD_SERVER_STATS           | Additional server stats for papermc or forge               |
 
 #### Disable exporter metrics
 
