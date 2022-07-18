@@ -644,10 +644,7 @@ func (e *Exporter) playerStatsCustomMovement(jsonParsed *gabs.Container, desc *p
 
 func pre1_17(jsonParsed *gabs.Container, field string) bool {
 	value := jsonParsed.Path(field)
-	if value == nil {
-		return false
-	}
-	return true
+	return value != nil
 }
 
 func (e *Exporter) playerStatsCustom(jsonParsed *gabs.Container, desc *prometheus.Desc, field string, ch chan<- prometheus.Metric, playerName string) {
