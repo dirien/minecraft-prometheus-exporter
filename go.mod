@@ -1,6 +1,6 @@
 module github.com/minecraft-exporter
 
-go 1.18
+go 1.19
 
 require (
 	github.com/Jeffail/gabs/v2 v2.6.1
