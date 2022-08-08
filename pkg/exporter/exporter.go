@@ -134,7 +134,7 @@ func createRCONClient(server, password string, logger log.Logger) *RCON {
 		var err error
 		rconClient, err = mcnet.DialRCON(server, password)
 		if err != nil {
-			level.Error(logger).Log("msg", "failed to connect to RCON", "err", err) // nolint:errcheck
+			level.Error(logger).Log("msg", "failed to connect to RCON", "err", err) //nolint:errcheck
 			rconClient = nil
 		}
 	}
@@ -873,24 +873,24 @@ func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 func (e *Exporter) Collect(metrics chan<- prometheus.Metric) {
 	err := e.getPlayerList(metrics)
 	if err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get player online list", "err", err) // nolint: errcheck
+		level.Error(e.logger).Log("msg", "Failed to get player online list", "err", err) //nolint: errcheck
 	}
 
 	if err := e.getPlayerStats(metrics); err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get player stats", "err", err) // nolint: errcheck
+		level.Error(e.logger).Log("msg", "Failed to get player stats", "err", err) //nolint: errcheck
 	}
 
 	if err := e.getServerStats(metrics); err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get server stats", "err", err) // nolint: errcheck
+		level.Error(e.logger).Log("msg", "Failed to get server stats", "err", err) //nolint: errcheck
 	}
 }
 
 func (e *Exporter) StopRCON() {
 	if e.rcon.rconClient != nil {
-		level.Info(e.logger).Log("msg", "Stopping RCON") // nolint: errcheck
+		level.Info(e.logger).Log("msg", "Stopping RCON") //nolint: errcheck
 		err := e.rcon.rconClient.Close()
 		if err != nil {
-			level.Error(e.logger).Log("msg", "error closing RCON connection", "err", err) // nolint: errcheck
+			level.Error(e.logger).Log("msg", "error closing RCON connection", "err", err) //nolint: errcheck
 			return
 		}
 	}
