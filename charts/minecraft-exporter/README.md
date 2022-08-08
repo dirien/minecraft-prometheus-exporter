@@ -2,7 +2,7 @@
 
 ![minecraft-exporter](https://dirien.github.io/minecraft-prometheus-exporter/img/minecraft-exporter.jpg)
 
-![Version: 0.7.0](https://img.shields.io/badge/Version-0.7.0-informational?style=for-the-badge)
+![Version: 0.7.1](https://img.shields.io/badge/Version-0.7.1-informational?style=for-the-badge)
 ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge)
 ![AppVersion: 0.15.0](https://img.shields.io/badge/AppVersion-0.15.0-informational?style=for-the-badge)
 
@@ -32,7 +32,7 @@ helm repo update
 To install the chart with the release name minecraft-exporter run:
 
 ```bash
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.7.0
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.7.1
 ```
 
 After a few seconds, minecraft-exporter should be running.
@@ -41,7 +41,7 @@ To install the chart in a specific namespace use following commands:
 
 ```bash
 kubectl create ns minecraft-exporter
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporter --version 0.7.0
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporter --version 0.7.1
 ```
 
 > **Tip**: List all releases using `helm list`, a release is a name used to track a specific deployment
@@ -69,11 +69,18 @@ helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespac
 | nodeSelector | object | `{}` | Set the node selector for the pod. |
 | options | list | `[]` | Flags - for a list visit https://github.com/dirien/minecraft-prometheus-exporter#usage- |
 | podAnnotations | object | `{}` | Annotations for the pods |
+| podSecurityContext | object | `{}` |  |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
-| rbac.pspEnabled | bool | `true` | Specifies to enable pod security policy |
-| rbac.pspUseAppArmor | bool | `true` | Specifies to enable use AppArmor |
 | replicaCount | int | `1` | Numbers of replicas |
-| resources | object | `{}` | Set the resources requests and limits |
+| resources | object | `{"limits":{"cpu":"500m","memory":"5123Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}` | Set the resources requests and limits |
+| securityContext.allowPrivilegeEscalation | bool | `false` |  |
+| securityContext.capabilities.drop[0] | string | `"ALL"` |  |
+| securityContext.privileged | bool | `false` |  |
+| securityContext.readOnlyRootFilesystem | bool | `true` |  |
+| securityContext.runAsGroup | int | `10003` |  |
+| securityContext.runAsNonRoot | bool | `true` |  |
+| securityContext.runAsUser | int | `10003` |  |
+| securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
 | service.annotations | object | `{}` | Additional annotations |
 | service.port | int | `9150` | Default Service port |
 | service.type | string | `"ClusterIP"` | Specifies what type of Service should be created |

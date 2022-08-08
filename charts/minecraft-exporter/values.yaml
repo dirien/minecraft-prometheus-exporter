@@ -8,10 +8,6 @@ replicaCount: 1
 rbac:
   # -- Specifies whether RBAC resources should be created
   create: true
-  # -- Specifies to enable pod security policy
-  pspEnabled: true
-  # -- Specifies to enable use AppArmor
-  pspUseAppArmor: true
 serviceAccount:
   # -- Specifies whether a ServiceAccount should be created
   create: true
@@ -61,17 +57,17 @@ ingress:
   #      - chart-example.local
 
 # -- Set the resources requests and limits
-resources: {}
+resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
-  # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 5123Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
 
 serviceMonitor:
   # -- When set true then use a ServiceMonitor to configure scraping
@@ -126,3 +122,19 @@ extraVolumeMounts:
 #   mountPath: /minecraft
 # - name: example
 #   mountPath: /example
+
+podSecurityContext: {}
+# fsGroup: 2000
+
+securityContext:
+  privileged: false
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsGroup: 10003
+  runAsUser: 10003
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop:
+      - ALL

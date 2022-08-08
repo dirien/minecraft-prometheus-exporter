@@ -7,7 +7,7 @@ keywords:
   - prometheus
   - exporter
 type: application
-version: 0.7.1
+version: 0.8.0
 appVersion: 0.15.0
 home: https://github.com/dirien/minecraft-prometheus-exporter/
 sources:
@@ -19,7 +19,7 @@ maintainers:
 annotations:
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/changes: |
-    - typo in documentation
+    - add trivy config scan suggestions to chart
   artifacthub.io/images: |
     - name: minecraft-exporter
       image: ghcr.io/dirien/minecraft-exporter
