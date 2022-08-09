@@ -25,6 +25,22 @@ jobs:
         with:
           python-version: 3.7
 
+      - name: Run Trivy vulnerability scanner in IaC mode
+        uses: aquasecurity/trivy-action@cb606dfdb0d2b3698ace62192088ef4f5360b24f # tag=v0.6.2
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          format: 'sarif'
+          scan-ref: 'charts/minecraft-exporter'
+          output: 'trivy-results.sarif'
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
       - name: Setup Chart Linting
         id: lint
         uses: helm/chart-testing-action@dae259e86a35ff09145c0805e2d7dd3f7207064a # tag=v2.2.1
