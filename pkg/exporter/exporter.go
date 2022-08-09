@@ -24,10 +24,11 @@ const (
 	Namespace                  = "minecraft"
 	Forge                      = "forge"
 	PaperMC                    = "papermc"
+	PurpurMC                   = "purpurmc"
 	rconListCommand            = "list"
 	rconForgeTpsCommand        = "forge tps"
 	rconForgeEntityListCommand = "forge entity list"
-	rconPaperTpsCommand        = "tps"
+	rconTpsCommand             = "tps"
 )
 
 // See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
@@ -44,6 +45,7 @@ type Exporter struct {
 	dimensionRegexp    *regexp.Regexp
 	entityListRegexp   *regexp.Regexp
 	paperMcTpsRegexp   *regexp.Regexp
+	purpurMcTpsRegexp  *regexp.Regexp
 	// via advancements
 	// playerAdvancements *prometheus.Desc
 
@@ -158,6 +160,7 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
 		paperMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
+		purpurMcTpsRegexp:  regexp.MustCompile(`§.TPS from last\s5s,\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
 		disabledMetrics:    disabledMetrics,
 		playerOnline: prometheus.NewDesc(
 			prometheus.BuildFQName(Namespace, "", "player_online_total"),
@@ -799,21 +802,35 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 			}
 		}
 
-	} else if e.serverStats == PaperMC {
-		resp, err := e.executeRCONCommand(rconPaperTpsCommand)
+	} else if e.serverStats == PaperMC || e.serverStats == PurpurMC {
+		resp, err := e.executeRCONCommand(rconTpsCommand)
 		if resp != nil {
 			if err != nil {
 				return err
 			}
-			tpsString := e.paperMcTpsRegexp.FindStringSubmatch(*resp)
-			if len(tpsString) == 4 {
-				tps := map[float64]uint64{
-					1:  uint64(parseFloat64FromString(tpsString[1])),
-					5:  uint64(parseFloat64FromString(tpsString[2])),
-					15: uint64(parseFloat64FromString(tpsString[3])),
+			if e.serverStats == PaperMC {
+				tpsString := e.paperMcTpsRegexp.FindStringSubmatch(*resp)
+				if len(tpsString) == 4 {
+					tps := map[float64]uint64{
+						1:  uint64(parseFloat64FromString(tpsString[1])),
+						5:  uint64(parseFloat64FromString(tpsString[2])),
+						15: uint64(parseFloat64FromString(tpsString[3])),
+					}
+					sum := tps[1] + tps[5] + tps[15]
+					ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
 				}
-				sum := tps[1] + tps[5] + tps[15]
-				ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
+			} else {
+				tpsString := e.purpurMcTpsRegexp.FindStringSubmatch(*resp)
+				if len(tpsString) == 5 {
+					tps := map[float64]uint64{
+						0.08: uint64(parseFloat64FromString(tpsString[1])),
+						1:    uint64(parseFloat64FromString(tpsString[2])),
+						5:    uint64(parseFloat64FromString(tpsString[3])),
+						15:   uint64(parseFloat64FromString(tpsString[4])),
+					}
+					sum := tps[0.08] + tps[1] + tps[5] + tps[15]
+					ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
+				}
 			}
 		}
 	}
