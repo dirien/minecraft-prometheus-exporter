@@ -156,7 +156,7 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 		source:             source,
 		serverStats:        serverStats,
 		playerOnlineRegexp: regexp.MustCompile(":(.*)"),
-		overallRegexp:      regexp.MustCompile(`Overall:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
+		overallRegexp:      regexp.MustCompile(`Overall\s*:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
 		paperMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
@@ -783,10 +783,12 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.CounterValue, meanTickTimeDimension, namespace, dimension)
 			}
 			overall := e.overallRegexp.FindStringSubmatch(*resp)
-			meanTickTime := parseFloat64FromString(overall[1])
-			meanTps := parseFloat64FromString(overall[2])
-			ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.CounterValue, meanTps)
-			ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.CounterValue, meanTickTime)
+			if len(overall) == 3 {
+				meanTickTime := parseFloat64FromString(overall[1])
+				meanTps := parseFloat64FromString(overall[2])
+				ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.CounterValue, meanTps)
+				ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.CounterValue, meanTickTime)
+			}
 		}
 		resp, err = e.executeRCONCommand(rconForgeEntityListCommand)
 		if resp != nil {
