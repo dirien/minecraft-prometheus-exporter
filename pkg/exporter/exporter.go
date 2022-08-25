@@ -117,7 +117,7 @@ type PlayerData struct {
 	XpLevel   int32
 	XpTotal   int32
 	Score     int32
-	Health    float32
+	Health    interface{}
 	FoodLevel int32 `nbt:"foodLevel"`
 	Bukkit    struct {
 		LastKnownName string `nbt:"lastKnownName"`
@@ -509,7 +509,11 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpLevel), player.Name, "current_xp")
 		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.Score), player.Name, "score")
 		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.FoodLevel), player.Name, "food_level")
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.Health), player.Name, "health")
+		health, err := strconv.ParseFloat(fmt.Sprint(data.Health), 64)
+		if err != nil {
+			return err
+		}
+		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, health, player.Name, "health")
 
 		err = e.advancements(id, ch, player.Name)
 		if err != nil {
