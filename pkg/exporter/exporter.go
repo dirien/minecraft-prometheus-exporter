@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -438,188 +439,190 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 }
 
 func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
-	files, err := os.ReadDir(e.world + "/stats")
+	files, err := os.ReadDir(e.world + "/playerdata")
 	if err != nil {
 		return err
 	}
 	for _, file := range files {
-		id := strings.TrimSuffix(file.Name(), ".json")
-
-		f, err := os.Open(e.world + "/playerdata/" + id + ".dat")
-		if err != nil {
-			return err
-		}
-
-		r, err := gzip.NewReader(f)
-		if err != nil {
-			return err
-		}
-
-		var data PlayerData
-		_, err = nbt.NewDecoder(r).Decode(&data)
-		if err != nil {
-			return err
-		}
-		err = r.Close()
-		if err != nil {
-			return err
-		}
-		err = f.Close()
-		if err != nil {
-			return err
-		}
-
-		var player Player
-		switch e.source {
-		case "mojang":
-			resp, err := http.Get(fmt.Sprintf("https://api.ashcon.app/mojang/v2/user/%s", id))
-			if err != nil {
-				return level.Error(e.logger).Log("msg", "Failed to connect to api.ashcon.app", "err", err)
-			}
-
-			if resp.StatusCode == 200 {
-				if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
-					return level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err)
-				}
-			} else {
-				return fmt.Errorf("error retrieving player info from api.ashcon.app: %w", fmt.Errorf(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
-			}
-
-			err = resp.Body.Close()
+		if filepath.Ext(file.Name()) == ".dat" {
+			id := strings.TrimSuffix(file.Name(), ".dat")
+			f, err := os.Open(e.world + "/playerdata/" + file.Name())
 			if err != nil {
 				return err
 			}
-		case "bukkit":
-			if data.Bukkit.LastKnownName == "" {
-				return fmt.Errorf("error retrieving player info from nbt: bukkit name is unknown")
+
+			r, err := gzip.NewReader(f)
+			if err != nil {
+				return err
 			}
 
-			player = Player{
-				ID:   id,
-				Name: data.Bukkit.LastKnownName,
+			var data PlayerData
+			_, err = nbt.NewDecoder(r).Decode(&data)
+			if err != nil {
+				return err
 			}
-		default:
-			player = Player{
-				ID:   id,
-				Name: id,
+			err = r.Close()
+			if err != nil {
+				return err
+			}
+			err = f.Close()
+			if err != nil {
+				return err
+			}
+
+			var player Player
+			switch e.source {
+			case "mojang":
+				resp, err := http.Get(fmt.Sprintf("https://api.ashcon.app/mojang/v2/user/%s", id))
+				if err != nil {
+					return level.Error(e.logger).Log("msg", "Failed to connect to api.ashcon.app", "err", err)
+				}
+
+				if resp.StatusCode == 200 {
+					if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
+						return level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err)
+					}
+				} else {
+					return fmt.Errorf("error retrieving player info from api.ashcon.app: %w", fmt.Errorf(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
+				}
+
+				err = resp.Body.Close()
+				if err != nil {
+					return err
+				}
+			case "bukkit":
+				if data.Bukkit.LastKnownName == "" {
+					return fmt.Errorf("error retrieving player info from nbt: bukkit name is unknown")
+				}
+
+				player = Player{
+					ID:   id,
+					Name: data.Bukkit.LastKnownName,
+				}
+			default:
+				player = Player{
+					ID:   id,
+					Name: id,
+				}
+			}
+
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpTotal), player.Name, "xp")
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpLevel), player.Name, "current_xp")
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.Score), player.Name, "score")
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.FoodLevel), player.Name, "food_level")
+			health, err := strconv.ParseFloat(fmt.Sprint(data.Health), 64)
+			if err != nil {
+				return err
+			}
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, health, player.Name, "health")
+
+			err = e.advancements(id, ch, player.Name)
+			if err != nil {
+				return err
+			}
+
+			byteValue, err := os.ReadFile(e.world + "/stats/" + id + ".json")
+			if err != nil {
+				level.Debug(e.logger).Log("msg", fmt.Sprintf("Stats file for player %s not exist", player.Name)) //nolint:errcheck
+			} else {
+				jsonParsed, err := gabs.ParseJSON(byteValue)
+				if err != nil {
+					return err
+				}
+
+				e.playerStats(jsonParsed, e.blocksMined, "minecraft:mined", ch, player.Name, "")
+				e.playerStats(jsonParsed, e.entitiesKilled, "minecraft:killed", ch, player.Name, "")
+				e.playerStats(jsonParsed, e.playerKilledBy, "minecraft:killed_by", ch, player.Name, "")
+
+				actionTypes := []string{"crafted", "used", "picked_up", "dropped", "broken"}
+				for _, actionType := range actionTypes {
+					field := fmt.Sprintf("minecraft:%s", actionType)
+					e.playerStats(jsonParsed, e.item, field, ch, player.Name, actionType)
+				}
+
+				e.playerStatsCustom(jsonParsed, e.animalsBred, "stats.minecraft:custom.minecraft:animals_bred", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.cleanArmor, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.cleanBanner, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Name)
+
+				e.playerStatsCustom(jsonParsed, e.openBarrel, "stats.minecraft:custom.minecraft:open_barrel", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.bellRing, "stats.minecraft:custom.minecraft:bell_ring", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.eatCakeSlice, "stats.minecraft:custom.minecraft:eat_cake_slice", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.fillCauldron, "stats.minecraft:custom.minecraft:fill_cauldron", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.openChest, "stats.minecraft:custom.minecraft:open_chest", ch, player.Name)
+
+				damageReceivedTypes := []string{"absorbed", "blocked_by_shield", "resisted", "taken"}
+				for _, damageReceivedType := range damageReceivedTypes {
+					field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", damageReceivedType)
+					e.playerStatsCustomWithType(jsonParsed, e.damageReceived, field, ch, player.Name, damageReceivedType)
+				}
+
+				damageDealtTypes := map[string]string{"dealt": "hit", "dealt_absorbed": "absorbed", "dealt_resisted": "resisted"}
+				for key, damageDealtType := range damageDealtTypes {
+					field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", key)
+					e.playerStatsCustomWithType(jsonParsed, e.damageDealt, field, ch, player.Name, damageDealtType)
+				}
+
+				movementTypes := []string{
+					"climb", "crouch", "fall", "fly", "sprint", "swim", "walk", "walk_on_water", "walk_under_water",
+					"boat", "aviate", "horse", "minecart", "pig", "strider",
+				}
+				for _, movementType := range movementTypes {
+					field := fmt.Sprintf("stats.minecraft:custom.minecraft:%s_one_cm", movementType)
+					e.playerStatsCustomMovement(jsonParsed, e.minecraftMovement, field, ch, player.Name, movementType)
+				}
+
+				inspectionTypes := []string{"dispenser", "dropper", "hopper"}
+				for _, inspectionType := range inspectionTypes {
+					field := fmt.Sprintf("stats.minecraft:custom.minecraft:inspect_%s", inspectionType)
+					e.playerStatsCustomWithType(jsonParsed, e.inspected, field, ch, player.Name, inspectionType)
+				}
+
+				e.playerStatsCustom(jsonParsed, e.openEnderChest, "stats.minecraft:custom.minecraft:open_enderchest", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.fishCaught, "stats.minecraft:custom.minecraft:fish_caught", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.leaveGame, "stats.minecraft:custom.minecraft:leave_game", ch, player.Name)
+
+				interactionTypes := []string{
+					"anvil", "beacon", "blast_furnace", "brewingstand", "campfire", "cartography_table",
+					"crafting_table", "furnace", "grindston", "lectern", "loom", "smithing_table", "smoker", "stonecutter",
+				}
+				for _, interactionType := range interactionTypes {
+					field := fmt.Sprintf("stats.minecraft:custom.minecraft:interact_with_%s", interactionType)
+					e.playerStatsCustomWithType(jsonParsed, e.interaction, field, ch, player.Name, interactionType)
+				}
+
+				e.playerStatsCustom(jsonParsed, e.itemsDropped, "stats.minecraft:custom.minecraft:drop", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.itemsEntchanted, "stats.minecraft:custom.minecraft:enchant_item", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.jump, "stats.minecraft:custom.minecraft:jump", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.mobKills, "stats.minecraft:custom.minecraft:mob_kills", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.musicDiscsPlayed, "stats.minecraft:custom.minecraft:play_record", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.noteBlocksPlayed, "stats.minecraft:custom.minecraft:play_noteblockr", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.noteBlocksTuned, "stats.minecraft:custom.minecraft:tune_noteblock", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.numberOfDeaths, "stats.minecraft:custom.minecraft:deaths", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.plantsPotted, "stats.minecraft:custom.minecraft:pot_flower", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.playerKills, "stats.minecraft:custom.minecraft:player_kills", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.raidsTriggered, "stats.minecraft:custom.minecraft:raid_trigger", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.raidsWon, "stats.minecraft:custom.minecraft:raid_win", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.shulkerBoxCleaned, "stats.minecraft:custom.minecraft:clean_shulker_box", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.shulkerBoxesOpened, "stats.minecraft:custom.minecraft:open_shulker_box", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.sneakTime, "stats.minecraft:custom.minecraft:sneak_time", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.talkedToVillager, "stats.minecraft:custom.minecraft:talked_to_villager", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.targetsHit, "stats.minecraft:custom.minecraft:target_hit", ch, player.Name)
+
+				if pre1_17(jsonParsed, "stats.minecraft:custom.minecraft:play_one_minute") {
+					e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_one_minute", ch, player.Name)
+				} else {
+					e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_time", ch, player.Name)
+				}
+
+				e.playerStatsCustom(jsonParsed, e.timeSinceDeath, "stats.minecraft:custom.minecraft:time_since_death", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.timeSinceLastRest, "stats.minecraft:custom.minecraft:time_since_rest", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.timesWorldOpen, "stats.minecraft:custom.minecraft:total_world_time", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.timesSleptInBed, "stats.minecraft:custom.minecraft:sleep_in_bed", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.tradedWithVillagers, "stats.minecraft:custom.minecraft:traded_with_villager", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.trappedChestsTriggered, "stats.minecraft:custom.minecraft:trigger_trapped_chest", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.waterTakenFromCauldron, "stats.minecraft:custom.minecraft:use_cauldron", ch, player.Name)
 			}
 		}
-
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpTotal), player.Name, "xp")
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpLevel), player.Name, "current_xp")
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.Score), player.Name, "score")
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.FoodLevel), player.Name, "food_level")
-		health, err := strconv.ParseFloat(fmt.Sprint(data.Health), 64)
-		if err != nil {
-			return err
-		}
-		ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, health, player.Name, "health")
-
-		err = e.advancements(id, ch, player.Name)
-		if err != nil {
-			return err
-		}
-
-		byteValue, err := os.ReadFile(e.world + "/stats/" + id + ".json")
-		if err != nil {
-			return err
-		}
-		jsonParsed, err := gabs.ParseJSON(byteValue)
-		if err != nil {
-			return err
-		}
-
-		e.playerStats(jsonParsed, e.blocksMined, "minecraft:mined", ch, player.Name, "")
-		e.playerStats(jsonParsed, e.entitiesKilled, "minecraft:killed", ch, player.Name, "")
-		e.playerStats(jsonParsed, e.playerKilledBy, "minecraft:killed_by", ch, player.Name, "")
-
-		actionTypes := []string{"crafted", "used", "picked_up", "dropped", "broken"}
-		for _, actionType := range actionTypes {
-			field := fmt.Sprintf("minecraft:%s", actionType)
-			e.playerStats(jsonParsed, e.item, field, ch, player.Name, actionType)
-		}
-
-		e.playerStatsCustom(jsonParsed, e.animalsBred, "stats.minecraft:custom.minecraft:animals_bred", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.cleanArmor, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.cleanBanner, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Name)
-
-		e.playerStatsCustom(jsonParsed, e.openBarrel, "stats.minecraft:custom.minecraft:open_barrel", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.bellRing, "stats.minecraft:custom.minecraft:bell_ring", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.eatCakeSlice, "stats.minecraft:custom.minecraft:eat_cake_slice", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.fillCauldron, "stats.minecraft:custom.minecraft:fill_cauldron", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.openChest, "stats.minecraft:custom.minecraft:open_chest", ch, player.Name)
-
-		damageReceivedTypes := []string{"absorbed", "blocked_by_shield", "resisted", "taken"}
-		for _, damageReceivedType := range damageReceivedTypes {
-			field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", damageReceivedType)
-			e.playerStatsCustomWithType(jsonParsed, e.damageReceived, field, ch, player.Name, damageReceivedType)
-		}
-
-		damageDealtTypes := map[string]string{"dealt": "hit", "dealt_absorbed": "absorbed", "dealt_resisted": "resisted"}
-		for key, damageDealtType := range damageDealtTypes {
-			field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", key)
-			e.playerStatsCustomWithType(jsonParsed, e.damageDealt, field, ch, player.Name, damageDealtType)
-		}
-
-		movementTypes := []string{
-			"climb", "crouch", "fall", "fly", "sprint", "swim", "walk", "walk_on_water", "walk_under_water",
-			"boat", "aviate", "horse", "minecart", "pig", "strider",
-		}
-		for _, movementType := range movementTypes {
-			field := fmt.Sprintf("stats.minecraft:custom.minecraft:%s_one_cm", movementType)
-			e.playerStatsCustomMovement(jsonParsed, e.minecraftMovement, field, ch, player.Name, movementType)
-		}
-
-		inspectionTypes := []string{"dispenser", "dropper", "hopper"}
-		for _, inspectionType := range inspectionTypes {
-			field := fmt.Sprintf("stats.minecraft:custom.minecraft:inspect_%s", inspectionType)
-			e.playerStatsCustomWithType(jsonParsed, e.inspected, field, ch, player.Name, inspectionType)
-		}
-
-		e.playerStatsCustom(jsonParsed, e.openEnderChest, "stats.minecraft:custom.minecraft:open_enderchest", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.fishCaught, "stats.minecraft:custom.minecraft:fish_caught", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.leaveGame, "stats.minecraft:custom.minecraft:leave_game", ch, player.Name)
-
-		interactionTypes := []string{
-			"anvil", "beacon", "blast_furnace", "brewingstand", "campfire", "cartography_table",
-			"crafting_table", "furnace", "grindston", "lectern", "loom", "smithing_table", "smoker", "stonecutter",
-		}
-		for _, interactionType := range interactionTypes {
-			field := fmt.Sprintf("stats.minecraft:custom.minecraft:interact_with_%s", interactionType)
-			e.playerStatsCustomWithType(jsonParsed, e.interaction, field, ch, player.Name, interactionType)
-		}
-
-		e.playerStatsCustom(jsonParsed, e.itemsDropped, "stats.minecraft:custom.minecraft:drop", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.itemsEntchanted, "stats.minecraft:custom.minecraft:enchant_item", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.jump, "stats.minecraft:custom.minecraft:jump", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.mobKills, "stats.minecraft:custom.minecraft:mob_kills", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.musicDiscsPlayed, "stats.minecraft:custom.minecraft:play_record", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.noteBlocksPlayed, "stats.minecraft:custom.minecraft:play_noteblockr", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.noteBlocksTuned, "stats.minecraft:custom.minecraft:tune_noteblock", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.numberOfDeaths, "stats.minecraft:custom.minecraft:deaths", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.plantsPotted, "stats.minecraft:custom.minecraft:pot_flower", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.playerKills, "stats.minecraft:custom.minecraft:player_kills", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.raidsTriggered, "stats.minecraft:custom.minecraft:raid_trigger", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.raidsWon, "stats.minecraft:custom.minecraft:raid_win", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.shulkerBoxCleaned, "stats.minecraft:custom.minecraft:clean_shulker_box", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.shulkerBoxesOpened, "stats.minecraft:custom.minecraft:open_shulker_box", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.sneakTime, "stats.minecraft:custom.minecraft:sneak_time", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.talkedToVillager, "stats.minecraft:custom.minecraft:talked_to_villager", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.targetsHit, "stats.minecraft:custom.minecraft:target_hit", ch, player.Name)
-
-		if pre1_17(jsonParsed, "stats.minecraft:custom.minecraft:play_one_minute") {
-			e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_one_minute", ch, player.Name)
-		} else {
-			e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_time", ch, player.Name)
-		}
-
-		e.playerStatsCustom(jsonParsed, e.timeSinceDeath, "stats.minecraft:custom.minecraft:time_since_death", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.timeSinceLastRest, "stats.minecraft:custom.minecraft:time_since_rest", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.timesWorldOpen, "stats.minecraft:custom.minecraft:total_world_time", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.timesSleptInBed, "stats.minecraft:custom.minecraft:sleep_in_bed", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.tradedWithVillagers, "stats.minecraft:custom.minecraft:traded_with_villager", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.trappedChestsTriggered, "stats.minecraft:custom.minecraft:trigger_trapped_chest", ch, player.Name)
-		e.playerStatsCustom(jsonParsed, e.waterTakenFromCauldron, "stats.minecraft:custom.minecraft:use_cauldron", ch, player.Name)
 	}
 	return nil
 }
@@ -687,7 +690,8 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 	var payload map[string]interface{}
 	byteValue, err := os.ReadFile(e.world + "/advancements/" + id + ".json")
 	if err != nil {
-		return err
+		level.Debug(e.logger).Log("msg", fmt.Sprintf("advancements file for player %s not exist", playerName)) //nolint:errcheck
+		return nil
 	}
 	err = json.Unmarshal(byteValue, &payload)
 	if err != nil {
@@ -705,7 +709,6 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 		}
 	}
 	ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(completed), playerName, "advancements")
-
 	return nil
 }
 
