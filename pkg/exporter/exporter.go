@@ -523,7 +523,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 
 			byteValue, err := os.ReadFile(e.world + "/stats/" + id + ".json")
 			if err != nil {
-				level.Warn(e.logger).Log("msg", fmt.Sprintf("Stats file for player %s not exist", player.Name)) //nolint:errcheck
+				level.Debug(e.logger).Log("msg", fmt.Sprintf("Stats file for player %s not exist", player.Name)) //nolint:errcheck
 			} else {
 				jsonParsed, err := gabs.ParseJSON(byteValue)
 				if err != nil {
@@ -690,7 +690,7 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 	var payload map[string]interface{}
 	byteValue, err := os.ReadFile(e.world + "/advancements/" + id + ".json")
 	if err != nil {
-		level.Warn(e.logger).Log("msg", fmt.Sprintf("advancements file for player %s not exist", playerName)) //nolint:errcheck
+		level.Debug(e.logger).Log("msg", fmt.Sprintf("advancements file for player %s not exist", playerName)) //nolint:errcheck
 		return nil
 	}
 	err = json.Unmarshal(byteValue, &payload)
