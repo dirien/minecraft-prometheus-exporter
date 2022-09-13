@@ -1,5 +1,5 @@
 # Dockerfile
-FROM ghcr.io/distroless/static@sha256:a65803353d3a91249b1698cdacd6cf4169678a3654060050530ccf621102b877
+FROM ghcr.io/distroless/static@sha256:1a83c8dae2f71e0c95d302a98a1b12a732ccea60c8f7feb226fa70615ca001b6
 COPY minecraft-exporter \
 	/usr/bin/minecraft-exporter
 ENTRYPOINT ["/usr/bin/minecraft-exporter"]
