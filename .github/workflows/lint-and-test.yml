@@ -58,7 +58,7 @@ jobs:
 
       - name: Run Artifact Hub lint
         run: |
-          curl -s https://api.github.com/repos/artifacthub/hub/releases/latest | grep -E 'browser_download_url' | grep linux_amd64 | grep -Eo 'https://[^\"]*' | xargs wget -O - | tar -xz
+          curl -s https://api.github.com/repos/artifacthub/hub/releases/latest | grep -E 'browser_download_url' | grep linux_amd64.tar.gz\" | grep -Eo 'https://[^\"]*' | xargs wget -O - | tar -xz
           ./ah lint -p charts/minecraft-exporter || exit 1
           rm -f ./ah
 
