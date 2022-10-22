@@ -1,10 +1,10 @@
 package config
 
 import (
-	"github.com/prometheus/exporter-toolkit/web"
 	"os"
 	"path/filepath"
 
+	"github.com/prometheus/exporter-toolkit/web"
 	webflag "github.com/prometheus/exporter-toolkit/web/kingpinflag"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"gopkg.in/yaml.v2"
