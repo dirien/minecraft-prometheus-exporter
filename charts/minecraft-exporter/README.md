@@ -4,7 +4,7 @@
 
 ![Version: 0.9.2](https://img.shields.io/badge/Version-0.9.2-informational?style=for-the-badge)
 ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge)
-![AppVersion: 0.16.3](https://img.shields.io/badge/AppVersion-0.16.3-informational?style=for-the-badge)
+![AppVersion: 0.17.0](https://img.shields.io/badge/AppVersion-0.17.0-informational?style=for-the-badge)
 
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
 ![Minecraft](https://img.shields.io/badge/Minecraft-62B47A?style=for-the-badge&logo=Minecraft&logoColor=white)
