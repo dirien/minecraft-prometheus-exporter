@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/prometheus/exporter-toolkit/web"
 	"os"
 	"path/filepath"
 
@@ -11,8 +12,8 @@ import (
 
 type Config struct {
 	ConfigPath             *string
+	FlagConfig             *web.FlagConfig
 	MetricsPath            *string         `yaml:"metrics-path"`
-	WebConfig              *string         `yaml:"web-config"`
 	ListenAddress          *string         `yaml:"listen-address"`
 	WorldPath              *string         `yaml:"world-path"`
 	RconAddress            *string         `yaml:"rcon-address"`
@@ -25,9 +26,8 @@ type Config struct {
 
 func NewConfg() *Config {
 	var (
-		webConfig               = webflag.AddFlags(kingpin.CommandLine)
+		flagConfig              = webflag.AddFlags(kingpin.CommandLine, ":9150")
 		metricsPath             = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Envar("WEB_TELEMETRY_PATH").Default("/metrics").String()
-		listenAddress           = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Envar("WEB_LISTEN_ADDRESS").Default(":9150").String()
 		disabledExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Disabling collection of exporter metrics (like go_*)").Envar("WEB_DISABLED_EXPORTER_METRICS").Bool()
 		configPath              = kingpin.Flag("mc.config-path", "Path to YAML file with config.").Envar("MC_CONFIG_PATH").Default("config.yml").String()
 		worldPath               = kingpin.Flag("mc.world", "Path the to world folder").Envar("MC_WORLD").Default("/minecraft/world").String()
@@ -40,8 +40,7 @@ func NewConfg() *Config {
 		ConfigPath:             configPath,
 		DisableExporterMetrics: disabledExporterMetrics,
 		MetricsPath:            metricsPath,
-		WebConfig:              webConfig,
-		ListenAddress:          listenAddress,
+		FlagConfig:             flagConfig,
 		RconAddress:            rconAddress,
 		RconPassword:           rconPassword,
 		WorldPath:              worldPath,
