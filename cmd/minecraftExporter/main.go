@@ -66,12 +66,12 @@ func Run() {
 	})
 
 	go func() {
-		level.Info(logger).Log("msg", "Listening on address", "address", *config.ListenAddress) //nolint:errcheck
+		level.Info(logger).Log("msg", "Listening on address", "address", (*config.FlagConfig.WebListenAddresses)[0]) //nolint:errcheck
 		srv := &http.Server{
-			Addr:              *config.ListenAddress,
+			Addr:              (*config.FlagConfig.WebListenAddresses)[0],
 			ReadHeaderTimeout: 60 * time.Second,
 		}
-		if err := web.ListenAndServe(srv, *config.WebConfig, logger); err != nil {
+		if err := web.ListenAndServe(srv, config.FlagConfig, logger); err != nil {
 			level.Error(logger).Log("msg", "Error running HTTP server", "err", err) //nolint:errcheck
 			os.Exit(1)
 		}
