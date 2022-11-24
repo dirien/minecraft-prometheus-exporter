@@ -3,6 +3,38 @@ entries:
   minecraft-exporter:
   - annotations:
       artifacthub.io/changes: |
+        - update appVersion to 0.17.1
+      artifacthub.io/containsSecurityUpdates: "false"
+      artifacthub.io/images: |
+        - name: minecraft-exporter
+          image: ghcr.io/dirien/minecraft-exporter
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/maintainers: |
+        - name: dirien
+          email: engin.diri@ediri.de
+    apiVersion: v2
+    appVersion: 0.17.1
+    created: "2022-11-24T10:48:37.269688502Z"
+    description: A Helm chart for prometheus minecraft exporter
+    digest: 3b885bc310d46dd6d96326c15ac361175a4995e0ad21e70ee0db2f5c1a74e0ec
+    home: https://github.com/dirien/minecraft-prometheus-exporter/
+    icon: https://dirien.github.io/minecraft-prometheus-exporter/img/chart-logo.png
+    keywords:
+    - minecraft
+    - prometheus
+    - exporter
+    maintainers:
+    - email: engin.diri@ediri.de
+      name: dirien
+    name: minecraft-exporter
+    sources:
+    - https://github.com/dirien/minecraft-prometheus-exporter/
+    type: application
+    urls:
+    - https://github.com/dirien/minecraft-prometheus-exporter/releases/download/0.10.1-helm/minecraft-exporter-0.10.1.tgz
+    version: 0.10.1
+  - annotations:
+      artifacthub.io/changes: |
         - update appVersion to 0.17.0
       artifacthub.io/containsSecurityUpdates: "false"
       artifacthub.io/images: |
@@ -594,4 +626,4 @@ entries:
     urls:
     - https://github.com/dirien/minecraft-prometheus-exporter/releases/download/minecraft-exporter-0.1.1/minecraft-exporter-0.1.1.tgz
     version: 0.1.1
-generated: "2022-10-22T16:16:36.849605566Z"
+generated: "2022-11-24T10:48:37.269801503Z"
