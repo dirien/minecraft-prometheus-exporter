@@ -16,6 +16,16 @@
 
 {{ template "chart.description" . }}
 
+## Usage (via OCI Registry)
+
+To install the chart using the OCI artifact, run:
+
+```bash
+helm install minecraft-exporter oci://ghcr.io/dirien/charts/minecraft-exporter --version {{ .Version }}
+```
+
+Keep in mind that you need Helm > 3.8.0 to use the [OCI feature](https://helm.sh/blog/storing-charts-in-oci/).
+
 ## Usage
 
 Please add the minecraft-exporter repository before installing any chart provided by this repository:
