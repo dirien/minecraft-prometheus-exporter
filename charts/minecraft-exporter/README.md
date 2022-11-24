@@ -2,14 +2,12 @@
 
 ![minecraft-exporter](https://dirien.github.io/minecraft-prometheus-exporter/img/minecraft-exporter.jpg)
 
-![Version: 0.9.2](https://img.shields.io/badge/Version-0.9.2-informational?style=for-the-badge)
-![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge)
-![AppVersion: 0.17.0](https://img.shields.io/badge/AppVersion-0.17.0-informational?style=for-the-badge)
+![Version: 0.10.1](https://img.shields.io/badge/Version-0.10.1-informational?style=for-the-badge) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge) ![AppVersion: 0.17.1](https://img.shields.io/badge/AppVersion-0.17.1-informational?style=for-the-badge)
 
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
 ![Minecraft](https://img.shields.io/badge/Minecraft-62B47A?style=for-the-badge&logo=Minecraft&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Alpine Linux 3.15.0](https://img.shields.io/badge/alpine_linux_3.15.0-0D597F?style=for-the-badge&logo=alpine-linux&logoColor=white)
+![Chaingard Static](https://img.shields.io/badge/chainguard_image_static-4445E7?style=for-the-badge&logo=alpine-linux&logoColor=white)
 ![Helm](https://img.shields.io/badge/helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)
 
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/minecraft-exporter&style=for-the-badge)](https://artifacthub.io/packages/search?repo=minecraft-exporter)
@@ -32,7 +30,7 @@ helm repo update
 To install the chart with the release name minecraft-exporter run:
 
 ```bash
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.9.2
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.10.1
 ```
 
 After a few seconds, minecraft-exporter should be running.
@@ -41,7 +39,7 @@ To install the chart in a specific namespace use following commands:
 
 ```bash
 kubectl create ns minecraft-exporter
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporter --version 0.9.2
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporter --version 0.10.1
 ```
 
 > **Tip**: List all releases using `helm list`, a release is a name used to track a specific deployment
