@@ -49,6 +49,13 @@ jobs:
           ./ah lint -p charts/minecraft-exporter || exit 1
           rm -f ./ah
 
+      - name: Login to GHCR
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # tag=v2.1.0
+        with:
+          registry: ghcr.io
+          username: ${ GITHUB_REPOSITORY_OWNER }
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@98bccfd32b0f76149d188912ac8e45ddd3f8695f # tag=v1.4.1
         with:
