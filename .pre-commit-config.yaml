@@ -5,3 +5,4 @@ repos:
       - id: helm-docs
         args:
           - --template-files=README.md.gotmpl
+          - --badge-style=for-the-badge

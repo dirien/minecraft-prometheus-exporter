@@ -41,7 +41,7 @@ jobs:
 
       - name: run helm-docs
         run: |
-          helm-docs -t README.md.gotmpl -o README.md
+          helm-docs -t README.md.gotmpl -o README.md -b for-the-badge
 
       - name: Run Artifact Hub lint
         run: |
