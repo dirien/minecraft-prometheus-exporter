@@ -15,6 +15,8 @@ jobs:
   publish:
     permissions:
       contents: write # for helm/chart-releaser-action to push chart release and create a release
+      packages: write # for helm/chart-releaser-action to push chart release and create a release
+      id-token: write # for helm/chart-releaser-action to push chart release and create a release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -54,3 +56,17 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_RELEASE_NAME_TEMPLATE: "{{ .Version }}-helm"
+
+      - uses: sigstore/cosign-installer@9becc617647dfa20ae7b1151972e9b3a2c338a2b # tag=v2.8.1
+      - name: Push chart to GHCR
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          shopt -s nullglob
+          for pkg in .cr-release-packages/*; do
+            if [ -z "${pkg:-}" ]; then
+              break
+            fi
+            helm push "${pkg}" oci://ghcr.io/"${GITHUB_REPOSITORY_OWNER}"/charts > .digest
+            cosign sign $(cat .digest | awk -F "[, ]+" '/Pushed/{print $NF}')
+          done
