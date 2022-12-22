@@ -543,3 +543,7 @@ This project is not affiliated with Mojang Studios, XBox Game Studios, Double El
 "Minecraft" is a trademark of Mojang Synergies AB.
 
 Other trademarks referenced herein are property of their respective owners.
+
+### Stargazers over time 🌟
+
+[![Stargazers over time](https://starchart.cc/dirien/minecraft-prometheus-exporter.svg)](https://starchart.cc/dirien/minecraft-prometheus-exporter) 
