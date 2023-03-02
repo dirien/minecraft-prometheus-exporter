@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/go-kit/log/level"
 	"github.com/minecraft-exporter/pkg/config"
 	"github.com/minecraft-exporter/pkg/exporter"
@@ -19,7 +20,6 @@ import (
 	"github.com/prometheus/common/promlog/flag"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func Run() {
