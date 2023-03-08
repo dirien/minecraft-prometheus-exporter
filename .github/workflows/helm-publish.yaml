@@ -75,5 +75,5 @@ jobs:
               break
             fi
             helm push "${pkg}" oci://ghcr.io/"${GITHUB_REPOSITORY_OWNER}"/charts |& tee .digest
-            cosign sign $(cat .digest | awk -F "[, ]+" '/Pushed/{print $NF}')
+            cosign sign -y $(cat .digest | awk -F "[, ]+" '/Pushed/{print $NF}')
           done
