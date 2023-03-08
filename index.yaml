@@ -14,6 +14,38 @@ entries:
           email: engin.diri@ediri.de
     apiVersion: v2
     appVersion: 0.18.0
+    created: "2023-03-08T09:37:00.14447871Z"
+    description: A Helm chart for prometheus minecraft exporter
+    digest: 09e9f5a72ce23137d3a9cc88c95f5270c7a6622adec13804519c518f6e8f34e9
+    home: https://github.com/dirien/minecraft-prometheus-exporter/
+    icon: https://dirien.github.io/minecraft-prometheus-exporter/img/chart-logo.png
+    keywords:
+    - minecraft
+    - prometheus
+    - exporter
+    maintainers:
+    - email: engin.diri@ediri.de
+      name: dirien
+    name: minecraft-exporter
+    sources:
+    - https://github.com/dirien/minecraft-prometheus-exporter/
+    type: application
+    urls:
+    - https://github.com/dirien/minecraft-prometheus-exporter/releases/download/0.11.1-helm/minecraft-exporter-0.11.1.tgz
+    version: 0.11.1
+  - annotations:
+      artifacthub.io/changes: |
+        - update exporter to 0.18.0
+      artifacthub.io/containsSecurityUpdates: "false"
+      artifacthub.io/images: |
+        - name: minecraft-exporter
+          image: ghcr.io/dirien/minecraft-exporter
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/maintainers: |
+        - name: dirien
+          email: engin.diri@ediri.de
+    apiVersion: v2
+    appVersion: 0.18.0
     created: "2023-03-08T09:27:58.924798763Z"
     description: A Helm chart for prometheus minecraft exporter
     digest: 8e0909e07c3064d24b1e424643ab9ac59e2435c0368f484c5aa0e5d49948df5c
@@ -722,4 +754,4 @@ entries:
     urls:
     - https://github.com/dirien/minecraft-prometheus-exporter/releases/download/minecraft-exporter-0.1.1/minecraft-exporter-0.1.1.tgz
     version: 0.1.1
-generated: "2023-03-08T09:27:58.925160863Z"
+generated: "2023-03-08T09:37:00.144599616Z"
