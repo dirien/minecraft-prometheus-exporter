@@ -1,4 +1,4 @@
-package minecraftExporter
+package minecraftexporter
 
 import (
 	"fmt"
