@@ -64,7 +64,7 @@ jobs:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_RELEASE_NAME_TEMPLATE: "{{ .Version }}-helm"
 
-      - uses: sigstore/cosign-installer@204a51a57a74d190b284a0ce69b44bc37201f343 # v3.0.3
+      - uses: sigstore/cosign-installer@03d0fecf172873164a163bbc64bed0f3bf114ed7 # v3.0.4
       - name: Push chart to GHCR
         env:
           COSIGN_EXPERIMENTAL: 1
