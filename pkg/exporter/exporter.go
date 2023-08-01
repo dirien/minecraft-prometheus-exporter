@@ -444,7 +444,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 		return err
 	}
 	for _, file := range files {
-		if filepath.Ext(file.Name()) == ".dat" {
+		if filepath.Ext(file.Name()) == ".dat" && !strings.Contains(file.Name(), "_cyclic") {
 			id := strings.TrimSuffix(file.Name(), ".dat")
 			f, err := os.Open(e.world + "/playerdata/" + file.Name())
 			if err != nil {
