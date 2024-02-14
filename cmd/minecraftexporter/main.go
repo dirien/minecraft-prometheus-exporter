@@ -58,7 +58,7 @@ func Run() {
 
 	http.Handle(*config.MetricsPath, promhttp.Handler())
 	template := template.NewIndexTemplate()
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		err := template.Execute(w, config)
 		if err != nil {
 			level.Error(logger).Log("msg", "Error executing template", "err", err) //nolint:errcheck
