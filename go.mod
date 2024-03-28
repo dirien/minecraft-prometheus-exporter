@@ -7,8 +7,8 @@ require (
 	github.com/Tnze/go-mc v1.20.1
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/go-kit/log v0.2.1
-	github.com/prometheus/client_golang v1.18.0
-	github.com/prometheus/common v0.46.0
+	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/common v0.48.0
 	github.com/prometheus/exporter-toolkit v0.11.0
 	gopkg.in/yaml.v3 v3.0.1
 )
