@@ -440,32 +440,51 @@ func New(server, password, world, root, source, serverStats string, disabledMetr
 	}, nil
 }
 
+func (e *Exporter) getLocalNames() (map[string]string, error) {
+	if e.root == "" {
+		return nil, fmt.Errorf("error retrieving player info from server cache: root folder unknown")
+	}
+	var f string
+	if e.serverStats == Forge {
+		f = "/usernamecache.json"
+	} else {
+		f = "/usercache.json"
+	}
+
+	byteValue, err := os.ReadFile(e.root + f)
+	if err != nil {
+		return nil, level.Error(e.logger).Log("msg", "Failed to open user cache file", "err", err)
+	}
+	playerJSON, err := gabs.ParseJSON(byteValue)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]string)
+	if e.serverStats == Forge {
+		for uuid, name := range playerJSON.ChildrenMap() {
+			out[uuid] = name.Data().(string)
+		}
+	} else {
+		for _, p := range playerJSON.Children() {
+			u := p.ChildrenMap()
+			out[u["uuid"].Data().(string)] = u["name"].Data().(string)
+		}
+	}
+	return out, nil
+}
+
 func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 	files, err := os.ReadDir(e.world + "/playerdata")
 	if err != nil {
 		return err
 	}
 
-	// preload local user cache to avoid opening file for each player
-	var playerJson *gabs.Container
+	var localNames map[string]string
 	if e.source == "local" {
-		if e.root == "" {
-			return fmt.Errorf("error retrieving player info from server cache: root folder unknown")
-		}
-		var f string
-		if e.serverStats == Forge {
-			f = "/usernamecache.json"
-		} else {
-			f = "/usercache.json"
-		}
-		byteValue, err := os.ReadFile(e.root + f)
+		localNames, err = e.getLocalNames()
 		if err != nil {
-			return level.Error(e.logger).Log("msg", "Failed to open user cache file", "err", err)
-		} else {
-			playerJson, err = gabs.ParseJSON(byteValue)
-			if err != nil {
-				return err
-			}
+			return err
 		}
 	}
 
@@ -526,19 +545,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 					Name: data.Bukkit.LastKnownName,
 				}
 			case "local":
-				var name string
-				if e.serverStats == Forge {
-					name = playerJson.S(id).Data().(string)
-				} else {
-					t := playerJson.Data().([]interface{})
-					for _, p := range t {
-						u := p.(map[string]interface{})
-						if u["uuid"] == id {
-							name = u["name"].(string)
-							break
-						}
-					}
-				}
+				name := localNames[id]
 				if name == "" {
 					name = id
 				}
