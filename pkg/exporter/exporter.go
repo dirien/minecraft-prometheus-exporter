@@ -38,6 +38,7 @@ type Exporter struct {
 	rcon               *RCON
 	logger             log.Logger
 	world              string
+	root               string
 	source             string
 	serverStats        string
 	disabledMetrics    map[string]bool
@@ -148,12 +149,13 @@ func createRCONClient(server, password string, logger log.Logger) *RCON {
 	}
 }
 
-func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, logger log.Logger) (*Exporter, error) {
+func New(server, password, world, root, source, serverStats string, disabledMetrics map[string]bool, logger log.Logger) (*Exporter, error) {
 	rcon := createRCONClient(server, password, logger)
 	return &Exporter{
 		rcon:               rcon,
 		logger:             logger,
 		world:              world,
+		root:               root,
 		source:             source,
 		serverStats:        serverStats,
 		playerOnlineRegexp: regexp.MustCompile(":(.*)"),
@@ -443,6 +445,30 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 	if err != nil {
 		return err
 	}
+
+	// preload local user cache to avoid opening file for each player
+	var playerJson *gabs.Container
+	if e.source == "local" {
+		if e.root == "" {
+			return fmt.Errorf("error retrieving player info from server cache: root folder unknown")
+		}
+		var f string
+		if e.serverStats == Forge {
+			f = "/usernamecache.json"
+		} else {
+			f = "/usercache.json"
+		}
+		byteValue, err := os.ReadFile(e.root + f)
+		if err != nil {
+			return level.Error(e.logger).Log("msg", "Failed to open user cache file", "err", err)
+		} else {
+			playerJson, err = gabs.ParseJSON(byteValue)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".dat" && !strings.Contains(file.Name(), "_cyclic") {
 			id := strings.TrimSuffix(file.Name(), ".dat")
@@ -498,6 +524,27 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 				player = Player{
 					ID:   id,
 					Name: data.Bukkit.LastKnownName,
+				}
+			case "local":
+				var name string
+				if e.serverStats == Forge {
+					name = playerJson.S(id).Data().(string)
+				} else {
+					t := playerJson.Data().([]interface{})
+					for _, p := range t {
+						u := p.(map[string]interface{})
+						if u["uuid"] == id {
+							name = u["name"].(string)
+							break
+						}
+					}
+				}
+				if name == "" {
+					name = id
+				}
+				player = Player{
+					ID:   id,
+					Name: name,
 				}
 			default:
 				player = Player{
