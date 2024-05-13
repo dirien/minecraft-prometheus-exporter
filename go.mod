@@ -1,13 +1,13 @@
 module github.com/minecraft-exporter
 
-go 1.20
+go 1.22
 
 require (
 	github.com/Jeffail/gabs/v2 v2.7.0
 	github.com/Tnze/go-mc v1.20.2
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/go-kit/log v0.2.1
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/prometheus/common v0.53.0
 	github.com/prometheus/exporter-toolkit v0.11.0
 	gopkg.in/yaml.v3 v3.0.1
