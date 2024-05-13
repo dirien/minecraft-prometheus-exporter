@@ -2,7 +2,6 @@ package minecraftexporter
 
 import (
 	"fmt"
-
 	"net/http"
 	"os"
 	"os/signal"
