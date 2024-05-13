@@ -15,6 +15,7 @@ import (
 	"github.com/minecraft-exporter/pkg/template"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
+	v2 "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
@@ -43,7 +44,7 @@ func Run() {
 	level.Info(logger).Log("msg", "Starting minecraft_exporter", "version", version.Info()) //nolint:errcheck
 	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())         //nolint:errcheck
 
-	prometheus.MustRegister(version.NewCollector("minecraft_exporter"))
+	prometheus.MustRegister(v2.NewCollector(("minecraft_exporter")))
 	exporter, err := exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, *config.ModServerStats, config.DisabledMetrics, logger)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to create exporter", "err", err) //nolint:errcheck
