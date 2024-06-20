@@ -151,7 +151,7 @@ Flags:
                                  Password of the Minecraft rcon.
       --mc.name-source="mojang"  How to retrieve names of players: offline, bukkit, mojang.
       --mc.mod-server-stats=MC.MOD-SERVER-STATS  
-                                 Additional server stats for papermc, purpurmc or forge
+                                 Additional server stats for papermc, purpurmc, forge, or fabric.
       --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
       --version                  Show application version.
@@ -162,17 +162,17 @@ Flags:
 You can override CLI flags using config file. By default, `config.yml` located in the current directory is used. Path to
 config file can be changed using `--config-path` CLI flag.
 
-| Key in config file         | Equivalent CLI flag              | ENV variable                  | Description                                                  |
-|----------------------------|----------------------------------|-------------------------------|--------------------------------------------------------------|
-| `metrics-path`             | `--web.telemetry-path`           | WEB_TELEMETRY_PATH            | Path under which to expose metrics.                          |
-| `listen-address`           | `--web.listen-address`           | WEB_LISTEN_ADDRESS            | Address to listen on for web interface and telemetry.        |
-| `disable-exporter-metrics` | `--web.disable-exporter-metrics` | WEB_DISABLED_EXPORTER_METRICS | Disabling collection of exporter metrics (like go_*)         |
-| `web-config`               | `--mc.config-path`               | MC_CONFIG_PATH                | Path to YAML file with config for the mc variables           |
-| `world-path`               | `--mc.world`                     | MC_WORLD                      | Path to the world folder.                                    |
-| `rcon-address`             | `--mc.rcon-address`              | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                              |
-| `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                             |
-| `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang.   |
-| `mod-server-stats`         | `--mc.mod-server-stats`          | MC_MOD_SERVER_STATS           | Set server for additional stats (papermc, purpurmc or forge) |
+| Key in config file         | Equivalent CLI flag              | ENV variable                  | Description                                                           |
+|----------------------------|----------------------------------|-------------------------------|-----------------------------------------------------------------------|
+| `metrics-path`             | `--web.telemetry-path`           | WEB_TELEMETRY_PATH            | Path under which to expose metrics.                                   |
+| `listen-address`           | `--web.listen-address`           | WEB_LISTEN_ADDRESS            | Address to listen on for web interface and telemetry.                 |
+| `disable-exporter-metrics` | `--web.disable-exporter-metrics` | WEB_DISABLED_EXPORTER_METRICS | Disabling collection of exporter metrics (like go_*)                  |
+| `web-config`               | `--mc.config-path`               | MC_CONFIG_PATH                | Path to YAML file with config for the mc variables                    |
+| `world-path`               | `--mc.world`                     | MC_WORLD                      | Path to the world folder.                                             |
+| `rcon-address`             | `--mc.rcon-address`              | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                                       |
+| `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                                      |
+| `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang.            |
+| `mod-server-stats`         | `--mc.mod-server-stats`          | MC_MOD_SERVER_STATS           | Set server for additional stats (papermc, purpurmc, forge, or fabric) |
 
 #### Disable exporter metrics
 
@@ -440,7 +440,7 @@ minecraft_won_raids_total{player="ediri"} 0
 
 #### Metrics for specific mods
 
-To export the metrics for a specific mod, you can set the flag: `--mc.mod-server-stats=forge|papermc` or use the
+To export the metrics for a specific mod, you can set the flag: `--mc.mod-server-stats=forge|papermc|fabric` or use the
 environment variable `MC_MOD_SERVER_STATS`.
 
 #### Forge
