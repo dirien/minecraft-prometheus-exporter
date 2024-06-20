@@ -38,6 +38,7 @@ type Exporter struct {
 	rcon               *RCON
 	logger             log.Logger
 	world              string
+	root               string
 	source             string
 	serverStats        string
 	disabledMetrics    map[string]bool
@@ -148,12 +149,13 @@ func createRCONClient(server, password string, logger log.Logger) *RCON {
 	}
 }
 
-func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, logger log.Logger) (*Exporter, error) {
+func New(server, password, world, root, source, serverStats string, disabledMetrics map[string]bool, logger log.Logger) (*Exporter, error) {
 	rcon := createRCONClient(server, password, logger)
 	return &Exporter{
 		rcon:               rcon,
 		logger:             logger,
 		world:              world,
+		root:               root,
 		source:             source,
 		serverStats:        serverStats,
 		playerOnlineRegexp: regexp.MustCompile(":(.*)"),
@@ -438,11 +440,54 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 	}, nil
 }
 
+func (e *Exporter) getLocalNames() (map[string]string, error) {
+	if e.root == "" {
+		return nil, fmt.Errorf("error retrieving player info from server cache: root folder unknown")
+	}
+	var f string
+	if e.serverStats == Forge {
+		f = "/usernamecache.json"
+	} else {
+		f = "/usercache.json"
+	}
+
+	byteValue, err := os.ReadFile(e.root + f)
+	if err != nil {
+		return nil, level.Error(e.logger).Log("msg", "Failed to open user cache file", "err", err)
+	}
+	playerJSON, err := gabs.ParseJSON(byteValue)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]string)
+	if e.serverStats == Forge {
+		for uuid, name := range playerJSON.ChildrenMap() {
+			out[uuid] = name.Data().(string)
+		}
+	} else {
+		for _, p := range playerJSON.Children() {
+			u := p.ChildrenMap()
+			out[u["uuid"].Data().(string)] = u["name"].Data().(string)
+		}
+	}
+	return out, nil
+}
+
 func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 	files, err := os.ReadDir(e.world + "/playerdata")
 	if err != nil {
 		return err
 	}
+
+	var localNames map[string]string
+	if e.source == "local" {
+		localNames, err = e.getLocalNames()
+		if err != nil {
+			return err
+		}
+	}
+
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".dat" && !strings.Contains(file.Name(), "_cyclic") {
 			id := strings.TrimSuffix(file.Name(), ".dat")
@@ -498,6 +543,15 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 				player = Player{
 					ID:   id,
 					Name: data.Bukkit.LastKnownName,
+				}
+			case "local":
+				name := localNames[id]
+				if name == "" {
+					name = id
+				}
+				player = Player{
+					ID:   id,
+					Name: name,
 				}
 			default:
 				player = Player{
