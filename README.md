@@ -443,6 +443,8 @@ minecraft_won_raids_total{player="ediri"} 0
 To export the metrics for a specific mod, you can set the flag: `--mc.mod-server-stats=forge|papermc|fabric` or use the
 environment variable `MC_MOD_SERVER_STATS`.
 
+**Note:** Fabric requires the [Fabric TPS](https://modrinth.com/mod/fabric-tps) mod.
+
 #### Forge
 
 `minecraft-exporter` exports mean TPS and mean tick time for every dimension and of course the overall mean TPS and mean
