@@ -25,11 +25,13 @@ const (
 	Namespace                  = "minecraft"
 	Forge                      = "forge"
 	PaperMC                    = "papermc"
+	Fabric					   = "fabric"
 	PurpurMC                   = "purpurmc"
 	rconListCommand            = "list"
 	rconForgeTpsCommand        = "forge tps"
 	rconForgeEntityListCommand = "forge entity list"
 	rconTpsCommand             = "tps"
+	rconFabricTpsCommand	   = "fabric tps"
 )
 
 // See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
@@ -47,6 +49,7 @@ type Exporter struct {
 	entityListRegexp   *regexp.Regexp
 	paperMcTpsRegexp   *regexp.Regexp
 	purpurMcTpsRegexp  *regexp.Regexp
+	fabricMcTpsRegexp  *regexp.Regexp
 	// via advancements
 	// playerAdvancements *prometheus.Desc
 
@@ -840,6 +843,29 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 					sum := tps[0.08] + tps[1] + tps[5] + tps[15]
 					ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
 				}
+			}
+		}
+	} else if e.serverStats == Fabric {
+		resp, err := e.executeRCONCommand(rconFabricTpsCommand)
+		if err != nil {
+			return err
+		}
+		if resp != nil {
+			dimTpsList := e.dimensionRegexp.FindAllStringSubmatch(*resp, -1)
+			for _, dimTps := range dimTpsList {
+				namespace := dimTps[1]
+				dimension := dimTps[2]
+				meanTickTimeDimension := parseFloat64FromString(dimTps[3])
+				meanTpsDimension := parseFloat64FromString(dimTps[4])
+				ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.CounterValue, meanTpsDimension, namespace, dimension)
+				ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.CounterValue, meanTickTimeDimension, namespace, dimension)
+			}
+			overall := e.overallRegexp.FindStringSubmatch(*resp)
+			if len(overall) == 3 {
+				meanTickTime := parseFloat64FromString(overall[1])
+				meanTps := parseFloat64FromString(overall[2])
+				ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.CounterValue, meanTps)
+				ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.CounterValue, meanTickTime)
 			}
 		}
 	}
