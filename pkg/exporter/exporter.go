@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,8 +17,6 @@ import (
 	"github.com/Jeffail/gabs/v2"
 	"github.com/Tnze/go-mc/nbt"
 	mcnet "github.com/Tnze/go-mc/net"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -36,7 +35,7 @@ const (
 
 type Exporter struct {
 	rcon               *RCON
-	logger             log.Logger
+	logger             *slog.Logger
 	world              string
 	source             string
 	serverStats        string
@@ -131,13 +130,13 @@ type RCON struct {
 	rconPassword string
 }
 
-func createRCONClient(server, password string, logger log.Logger) *RCON {
+func createRCONClient(server, password string, logger *slog.Logger) *RCON {
 	var rconClient mcnet.RCONClientConn
 	if len(password) > 0 {
 		var err error
 		rconClient, err = mcnet.DialRCON(server, password)
 		if err != nil {
-			level.Error(logger).Log("msg", "failed to connect to RCON", "err", err) //nolint:errcheck
+			logger.Error("failed to connect to RCON", "err", err)
 			rconClient = nil
 		}
 	}
@@ -148,7 +147,7 @@ func createRCONClient(server, password string, logger log.Logger) *RCON {
 	}
 }
 
-func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, logger log.Logger) (*Exporter, error) {
+func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, logger *slog.Logger) (*Exporter, error) {
 	rcon := createRCONClient(server, password, logger)
 	return &Exporter{
 		rcon:               rcon,
@@ -475,15 +474,17 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 			case "mojang":
 				resp, err := http.Get(fmt.Sprintf("https://api.ashcon.app/mojang/v2/user/%s", id))
 				if err != nil {
-					return level.Error(e.logger).Log("msg", "Failed to connect to api.ashcon.app", "err", err)
+					e.logger.Error("Failed to connect to api.ashcon.app", "err", err)
+					return err
 				}
 
 				if resp.StatusCode == 200 {
 					if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
-						return level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err)
+						e.logger.Error("Failed to connect decode response", "err", err)
+						return err
 					}
 				} else {
-					return fmt.Errorf("error retrieving player info from api.ashcon.app: %w", fmt.Errorf(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
+					return fmt.Errorf("error retrieving player info from api.ashcon.app: %s", fmt.Sprintf("Status Code: %d", resp.StatusCode))
 				}
 
 				err = resp.Body.Close()
@@ -523,7 +524,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 
 			byteValue, err := os.ReadFile(e.world + "/stats/" + id + ".json")
 			if err != nil {
-				level.Debug(e.logger).Log("msg", fmt.Sprintf("Stats file for player %s not exist", player.Name)) //nolint:errcheck
+				e.logger.Error(fmt.Sprintf("Stats file for player %s not exist", player.Name))
 			} else {
 				jsonParsed, err := gabs.ParseJSON(byteValue)
 				if err != nil {
@@ -690,7 +691,7 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 	var payload map[string]interface{}
 	byteValue, err := os.ReadFile(e.world + "/advancements/" + id + ".json")
 	if err != nil {
-		level.Debug(e.logger).Log("msg", fmt.Sprintf("advancements file for player %s not exist", playerName)) //nolint:errcheck
+		e.logger.Error(fmt.Sprintf("advancements file for player %s not exist", playerName))
 		return nil
 	}
 	err = json.Unmarshal(byteValue, &payload)
@@ -714,14 +715,14 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 
 func (e *Exporter) executeRCONCommand(cmd string) (*string, error) {
 	if len(e.rcon.rconPassword) > 0 && e.rcon.rconClient == nil {
-		level.Warn(e.logger).Log("msg", "Trying to reconnect to RCON") //nolint:errcheck
+		e.logger.Warn("RCON is not connected, trying to reconnect")
 		e.rcon = createRCONClient(e.rcon.rconServer, e.rcon.rconPassword, e.logger)
 	}
 	if e.rcon.rconClient != nil {
 		err := e.rcon.rconClient.Cmd(cmd)
 		if err != nil {
 			if errors.Is(err, syscall.EPIPE) {
-				level.Warn(e.logger).Log("This is broken pipe error, trying to reconnect") //nolint:errcheck
+				e.logger.Warn("This is broken pipe error, trying to reconnect")
 				e.rcon = createRCONClient(e.rcon.rconServer, e.rcon.rconPassword, e.logger)
 			}
 			return nil, fmt.Errorf("send rcon command error: %w", err)
@@ -899,25 +900,24 @@ func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 func (e *Exporter) Collect(metrics chan<- prometheus.Metric) {
 	err := e.getPlayerList(metrics)
 	if err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get player online list", "err", err) //nolint: errcheck
+		e.logger.Error("Failed to get player online list", "err", err)
 	}
 
 	if err := e.getPlayerStats(metrics); err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get player stats", "err", err) //nolint: errcheck
+		e.logger.Error("Failed to get player stats", "err", err)
 	}
 
 	if err := e.getServerStats(metrics); err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get server stats", "err", err) //nolint: errcheck
+		e.logger.Error("Failed to get server stats", "err", err)
 	}
 }
 
 func (e *Exporter) StopRCON() {
 	if e.rcon.rconClient != nil {
-		level.Info(e.logger).Log("msg", "Stopping RCON") //nolint: errcheck
+		e.logger.Info("Stopping RCON")
 		err := e.rcon.rconClient.Close()
 		if err != nil {
-			level.Error(e.logger).Log("msg", "error closing RCON connection", "err", err) //nolint: errcheck
-			return
+			e.logger.Error("Failed to close RCON connection", "err", err)
 		}
 	}
 }

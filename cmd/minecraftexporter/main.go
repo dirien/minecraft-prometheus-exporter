@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
-	"github.com/go-kit/log/level"
 	"github.com/minecraft-exporter/pkg/config"
 	"github.com/minecraft-exporter/pkg/exporter"
 	"github.com/minecraft-exporter/pkg/template"
@@ -17,22 +16,22 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	v2 "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/promlog"
-	"github.com/prometheus/common/promlog/flag"
+	"github.com/prometheus/common/promslog"
+	"github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
 )
 
 func Run() {
 	config := config.NewConfg()
-	promlogConfig := &promlog.Config{
-		Level: &promlog.AllowedLevel{},
+	promlogConfig := &promslog.Config{
+		Level: &promslog.AllowedLevel{},
 	}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
 	kingpin.Version(version.Print("minecraft_exporter"))
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
-	logger := promlog.New(promlogConfig)
+	logger := promslog.New(promlogConfig)
 
 	config.LoadFile()
 
@@ -41,17 +40,17 @@ func Run() {
 |  | | | \| |___ |___ |  \ |  | |     |     |___ _/\_ |    |__| |  \  |  |___ |  \ 
 `)
 
-	level.Info(logger).Log("msg", "Starting minecraft_exporter", "version", version.Info()) //nolint:errcheck
-	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())         //nolint:errcheck
+	logger.Info("Starting minecraft_exporter", "version", version.Info())
+	logger.Info("Build context", "build", version.BuildContext())
 
-	prometheus.MustRegister(v2.NewCollector(("minecraft_exporter")))
+	prometheus.MustRegister(v2.NewCollector("minecraft_exporter"))
 	exporter, err := exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, *config.ModServerStats, config.DisabledMetrics, logger)
 	if err != nil {
-		level.Error(logger).Log("msg", "Failed to create exporter", "err", err) //nolint:errcheck
+		logger.Error("Failed to create exporter", "err", err)
 	}
 	prometheus.MustRegister(exporter)
 
-	level.Info(logger).Log("msg", "Disabling collection of exporter metrics (like go_*)", "value", config.DisableExporterMetrics) //nolint:errcheck
+	logger.Info("Disabling collection of exporter metrics (like go_*)", "value", config.DisableExporterMetrics)
 	if *config.DisableExporterMetrics {
 		prometheus.Unregister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 		prometheus.Unregister(collectors.NewGoCollector())
@@ -62,24 +61,24 @@ func Run() {
 	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		err := template.Execute(w, config)
 		if err != nil {
-			level.Error(logger).Log("msg", "Error executing template", "err", err) //nolint:errcheck
+			logger.Error("Error executing template", "err", err)
 		}
 	})
 
 	go func() {
-		level.Info(logger).Log("msg", "Listening on address", "address", (*config.FlagConfig.WebListenAddresses)[0]) //nolint:errcheck
+		logger.Info("Listening on address", "address", (*config.FlagConfig.WebListenAddresses)[0])
 		srv := &http.Server{
 			Addr:              (*config.FlagConfig.WebListenAddresses)[0],
 			ReadHeaderTimeout: 60 * time.Second,
 		}
 		if err := web.ListenAndServe(srv, config.FlagConfig, logger); err != nil {
-			level.Error(logger).Log("msg", "Error running HTTP server", "err", err) //nolint:errcheck
+			logger.Error("Error running HTTP server", "err", err)
 			os.Exit(1)
 		}
 	}()
 	done := make(chan struct{})
 	go func() {
-		level.Info(logger).Log("msg", "Listening signals...") //nolint:errcheck
+		logger.Info("Listening signals...")
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		<-c
@@ -88,5 +87,5 @@ func Run() {
 	}()
 
 	<-done
-	level.Info(logger).Log("msg", "Shutting down...") //nolint:errcheck
+	logger.Info("Shutting down...")
 }
