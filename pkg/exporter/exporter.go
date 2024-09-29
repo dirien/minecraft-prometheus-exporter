@@ -24,13 +24,13 @@ const (
 	Namespace                  = "minecraft"
 	Forge                      = "forge"
 	PaperMC                    = "papermc"
-	Fabric					   = "fabric"
+	Fabric                     = "fabric"
 	PurpurMC                   = "purpurmc"
 	rconListCommand            = "list"
 	rconForgeTpsCommand        = "forge tps"
 	rconForgeEntityListCommand = "forge entity list"
 	rconTpsCommand             = "tps"
-	rconFabricTpsCommand	   = "fabric tps"
+	rconFabricTpsCommand       = "fabric tps"
 )
 
 // See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
@@ -48,7 +48,7 @@ type Exporter struct {
 	entityListRegexp   *regexp.Regexp
 	paperMcTpsRegexp   *regexp.Regexp
 	purpurMcTpsRegexp  *regexp.Regexp
-	fabricMcTpsRegexp  *regexp.Regexp
+
 	// via advancements
 	// playerAdvancements *prometheus.Desc
 
@@ -779,7 +779,8 @@ func parseFloat64FromString(value string) float64 {
 }
 
 func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
-	if e.serverStats == Forge {
+	switch e.serverStats {
+	case Forge:
 		resp, err := e.executeRCONCommand(rconForgeTpsCommand)
 		if err != nil {
 			return err
@@ -815,8 +816,7 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				ch <- prometheus.MustNewConstMetric(e.entities, prometheus.CounterValue, entityCounter, namespace, entityType)
 			}
 		}
-
-	} else if e.serverStats == PaperMC || e.serverStats == PurpurMC {
+	case PaperMC, PurpurMC:
 		resp, err := e.executeRCONCommand(rconTpsCommand)
 		if resp != nil {
 			if err != nil {
@@ -847,7 +847,7 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				}
 			}
 		}
-	} else if e.serverStats == Fabric {
+	case Fabric:
 		resp, err := e.executeRCONCommand(rconFabricTpsCommand)
 		if err != nil {
 			return err
