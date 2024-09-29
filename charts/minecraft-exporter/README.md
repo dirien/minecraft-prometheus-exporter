@@ -2,7 +2,7 @@
 
 ![minecraft-exporter](https://dirien.github.io/minecraft-prometheus-exporter/img/minecraft-exporter.jpg)
 
-![Version: 0.11.1](https://img.shields.io/badge/Version-0.11.1-informational?style=for-the-badge) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge) ![AppVersion: 0.18.0](https://img.shields.io/badge/AppVersion-0.18.0-informational?style=for-the-badge)
+![Version: 0.11.1](https://img.shields.io/badge/Version-0.11.1-informational?style=for-the-badge) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge) ![AppVersion: 0.20.0](https://img.shields.io/badge/AppVersion-0.20.0-informational?style=for-the-badge)
 
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
 ![Minecraft](https://img.shields.io/badge/Minecraft-62B47A?style=for-the-badge&logo=Minecraft&logoColor=white)
