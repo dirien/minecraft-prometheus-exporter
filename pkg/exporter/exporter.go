@@ -759,7 +759,8 @@ func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
 		players := e.playerOnlineRegexp.FindStringSubmatch(*resp)
 		if len(players) > 1 {
 			playersList := players[1]
-			for _, player := range strings.Fields(strings.ReplaceAll(playersList, ",", " ")) {
+			list := strings.Split(playersList, ",")
+			for _, player := range list {
 				player = removeColorCodesFromWord(player)
 				ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
 			}
