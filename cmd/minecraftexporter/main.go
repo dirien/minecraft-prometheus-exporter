@@ -40,17 +40,17 @@ func Run() {
 |  | | | \| |___ |___ |  \ |  | |     |     |___ _/\_ |    |__| |  \  |  |___ |  \ 
 `)
 
-	logger.Info("Starting minecraft_exporter", "version", version.Info()) //nolint:errcheck
-	logger.Info("Build context", "build", version.BuildContext())         //nolint:errcheck
+	logger.Info("Starting minecraft_exporter", "version", version.Info())
+	logger.Info("Build context", "build", version.BuildContext())
 
 	prometheus.MustRegister(v2.NewCollector("minecraft_exporter"))
 	exporter, err := exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, *config.ModServerStats, config.DisabledMetrics, logger)
 	if err != nil {
-		logger.Error("Failed to create exporter", "err", err) //nolint:errcheck
+		logger.Error("Failed to create exporter", "err", err)
 	}
 	prometheus.MustRegister(exporter)
 
-	logger.Info("Disabling collection of exporter metrics (like go_*)", "value", config.DisableExporterMetrics) //nolint:errcheck
+	logger.Info("Disabling collection of exporter metrics (like go_*)", "value", config.DisableExporterMetrics)
 	if *config.DisableExporterMetrics {
 		prometheus.Unregister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 		prometheus.Unregister(collectors.NewGoCollector())
@@ -61,24 +61,24 @@ func Run() {
 	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		err := template.Execute(w, config)
 		if err != nil {
-			logger.Error("Error executing template", "err", err) //nolint:errcheck
+			logger.Error("Error executing template", "err", err)
 		}
 	})
 
 	go func() {
-		logger.Info("Listening on address", "address", (*config.FlagConfig.WebListenAddresses)[0]) //nolint:errcheck
+		logger.Info("Listening on address", "address", (*config.FlagConfig.WebListenAddresses)[0])
 		srv := &http.Server{
 			Addr:              (*config.FlagConfig.WebListenAddresses)[0],
 			ReadHeaderTimeout: 60 * time.Second,
 		}
 		if err := web.ListenAndServe(srv, config.FlagConfig, logger); err != nil {
-			logger.Error("Error running HTTP server", "err", err) //nolint:errcheck
+			logger.Error("Error running HTTP server", "err", err)
 			os.Exit(1)
 		}
 	}()
 	done := make(chan struct{})
 	go func() {
-		logger.Info("Listening signals...") //nolint:errcheck
+		logger.Info("Listening signals...")
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		<-c
@@ -87,5 +87,5 @@ func Run() {
 	}()
 
 	<-done
-	logger.Info("Shutting down...") //nolint:errcheck
+	logger.Info("Shutting down...")
 }
