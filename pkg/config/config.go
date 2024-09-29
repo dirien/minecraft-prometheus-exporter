@@ -16,6 +16,7 @@ type Config struct {
 	MetricsPath            *string         `yaml:"metrics-path"`
 	ListenAddress          *string         `yaml:"listen-address"`
 	WorldPath              *string         `yaml:"world-path"`
+	ServerRoot             *string         `yaml:"server-root"`
 	RconAddress            *string         `yaml:"rcon-address"`
 	RconPassword           *string         `yaml:"rcon-password"`
 	NameSource             *string         `yaml:"name-source"`
@@ -31,6 +32,7 @@ func NewConfg() *Config {
 		disabledExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Disabling collection of exporter metrics (like go_*)").Envar("WEB_DISABLED_EXPORTER_METRICS").Bool()
 		configPath              = kingpin.Flag("mc.config-path", "Path to YAML file with config.").Envar("MC_CONFIG_PATH").Default("config.yml").String()
 		worldPath               = kingpin.Flag("mc.world", "Path the to world folder").Envar("MC_WORLD").Default("/minecraft/world").String()
+		serverRoot              = kingpin.Flag("mc.root", "Path the to server root folder").Envar("MC_ROOT").Default("/minecraft").String()
 		rconAddress             = kingpin.Flag("mc.rcon-address", "Address of the Minecraft rcon.").Envar("MC_RCON_ADDRESS").Default(":25575").String()
 		rconPassword            = kingpin.Flag("mc.rcon-password", "Password of the Minecraft rcon.").Envar("MC_RCON_PASSWORD").String()
 		nameSource              = kingpin.Flag("mc.name-source", "How to retrieve names of players: offline, bukkit, mojang.").Envar("MC_NAME_SOURCE").Default("mojang").String()
@@ -44,6 +46,7 @@ func NewConfg() *Config {
 		RconAddress:            rconAddress,
 		RconPassword:           rconPassword,
 		WorldPath:              worldPath,
+		ServerRoot:             serverRoot,
 		NameSource:             nameSource,
 		ModServerStats:         modServerStats,
 	}
