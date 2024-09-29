@@ -2,7 +2,7 @@
 
 ![minecraft-exporter](https://dirien.github.io/minecraft-prometheus-exporter/img/minecraft-exporter.jpg)
 
-![Version: 0.11.1](https://img.shields.io/badge/Version-0.11.1-informational?style=for-the-badge) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge) ![AppVersion: 0.18.0](https://img.shields.io/badge/AppVersion-0.18.0-informational?style=for-the-badge)
+![Version: 0.12.0](https://img.shields.io/badge/Version-0.12.0-informational?style=for-the-badge) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge) ![AppVersion: 0.20.0](https://img.shields.io/badge/AppVersion-0.20.0-informational?style=for-the-badge)
 
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
 ![Minecraft](https://img.shields.io/badge/Minecraft-62B47A?style=for-the-badge&logo=Minecraft&logoColor=white)
@@ -21,7 +21,7 @@ A Helm chart for prometheus minecraft exporter
 To install the chart using the OCI artifact, run:
 
 ```bash
-helm install minecraft-exporter oci://ghcr.io/dirien/charts/minecraft-exporter --version 0.11.1
+helm install minecraft-exporter oci://ghcr.io/dirien/charts/minecraft-exporter --version 0.12.0
 ```
 
 Keep in mind that you need Helm > 3.8.0 to use the [OCI feature](https://helm.sh/blog/storing-charts-in-oci/).
@@ -40,7 +40,7 @@ helm repo update
 To install the chart with the release name minecraft-exporter run:
 
 ```bash
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.11.1
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.12.0
 ```
 
 After a few seconds, minecraft-exporter should be running.
@@ -49,7 +49,7 @@ To install the chart in a specific namespace use following commands:
 
 ```bash
 kubectl create ns minecraft-exporter
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporter --version 0.11.1
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporter --version 0.12.0
 ```
 
 > **Tip**: List all releases using `helm list`, a release is a name used to track a specific deployment

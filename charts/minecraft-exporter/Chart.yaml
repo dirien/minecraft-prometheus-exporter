@@ -7,8 +7,8 @@ keywords:
   - prometheus
   - exporter
 type: application
-version: 0.11.1
-appVersion: 0.18.0
+version: 0.12.0
+appVersion: 0.20.0
 home: https://github.com/dirien/minecraft-prometheus-exporter/
 sources:
   - https://github.com/dirien/minecraft-prometheus-exporter/
@@ -19,10 +19,10 @@ maintainers:
 annotations:
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/changes: |
-    - update exporter to 0.18.0
+    - update exporter to 0.20.0
   artifacthub.io/images: |
     - name: minecraft-exporter
-      image: ghcr.io/dirien/minecraft-exporter
+      image: ghcr.io/dirien/minecraft-exporter:0.20.0
   artifacthub.io/license: Apache-2.0
   artifacthub.io/maintainers: |
     - name: dirien
