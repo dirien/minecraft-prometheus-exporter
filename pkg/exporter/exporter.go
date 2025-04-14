@@ -503,6 +503,54 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 					ID:   id,
 					Name: data.Bukkit.LastKnownName,
 				}
+			case "cache":
+				if _, err := os.Stat(e.world + "/../usernamecache.json"); err == nil {
+					data, err := os.ReadFile(e.world + "/../usernamecache.json")
+					if err != nil {
+						return fmt.Errorf("error retrieving player info from cache: failed to open usernamecache.json")
+					}
+					var cache map[string]string
+					if err := json.Unmarshal(data, &cache); err != nil {
+						return fmt.Errorf("error retrieving player info from cache: failed to parse usernamecache.json")
+					}
+					if name, exists := cache[id]; exists {
+						player = Player{
+							ID:   id,
+							Name: name,
+						}
+						break
+					}
+					player = Player{
+						ID:   id,
+						Name: id,
+					}
+				}
+				if _, err := os.Stat(e.world + "/../usercache.json"); err == nil {
+					data, err := os.ReadFile(e.world + "/../usercache.json")
+					if err != nil {
+						return fmt.Errorf("error retrieving player info from cache: failed to open usercache.json")
+					}
+					var users []struct {
+						Name string `json:"name"`
+						UUID string `json:"uuid"`
+					}
+					if err := json.Unmarshal(data, &users); err != nil {
+						return fmt.Errorf("error retrieving player info from cache: failed to parse usercache.json")
+					}
+					for _, user := range users {
+						if user.UUID == id {
+							player = Player{
+								ID:   id,
+								Name: user.Name,
+							}
+							break
+						}
+					}
+					player = Player{
+						ID:   id,
+						Name: id,
+					}
+				}
 			default:
 				player = Player{
 					ID:   id,
