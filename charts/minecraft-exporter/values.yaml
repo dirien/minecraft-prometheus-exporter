@@ -123,8 +123,13 @@ extraVolumeMounts:
 # - name: example
 #   mountPath: /example
 
-podSecurityContext: {}
-# fsGroup: 2000
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10003
+  runAsGroup: 10003
+  fsGroup: 10003
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
   privileged: false

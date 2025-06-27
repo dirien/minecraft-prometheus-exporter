@@ -2,7 +2,7 @@
 
 ![minecraft-exporter](https://dirien.github.io/minecraft-prometheus-exporter/img/minecraft-exporter.jpg)
 
-![Version: 0.13.0](https://img.shields.io/badge/Version-0.13.0-informational?style=for-the-badge) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge) ![AppVersion: 0.21.0](https://img.shields.io/badge/AppVersion-0.21.0-informational?style=for-the-badge)
+![Version: 0.14.0](https://img.shields.io/badge/Version-0.14.0-informational?style=for-the-badge) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=for-the-badge) ![AppVersion: 0.22.0](https://img.shields.io/badge/AppVersion-0.22.0-informational?style=for-the-badge)
 
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
 ![Minecraft](https://img.shields.io/badge/Minecraft-62B47A?style=for-the-badge&logo=Minecraft&logoColor=white)
@@ -21,7 +21,7 @@ A Helm chart for prometheus minecraft exporter
 To install the chart using the OCI artifact, run:
 
 ```bash
-helm install minecraft-exporter oci://ghcr.io/dirien/charts/minecraft-exporter --version 0.13.0
+helm install minecraft-exporter oci://ghcr.io/dirien/charts/minecraft-exporter --version 0.14.0
 ```
 
 Keep in mind that you need Helm > 3.8.0 to use the [OCI feature](https://helm.sh/blog/storing-charts-in-oci/).
@@ -40,7 +40,7 @@ helm repo update
 To install the chart with the release name minecraft-exporter run:
 
 ```bash
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.13.0
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --version 0.14.0
 ```
 
 After a few seconds, minecraft-exporter should be running.
@@ -49,7 +49,7 @@ To install the chart in a specific namespace use following commands:
 
 ```bash
 kubectl create ns minecraft-exporter
-helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporter --version 0.13.0
+helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespace minecraft-exporter --version 0.14.0
 ```
 
 > **Tip**: List all releases using `helm list`, a release is a name used to track a specific deployment
@@ -77,7 +77,11 @@ helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespac
 | nodeSelector | object | `{}` | Set the node selector for the pod. |
 | options | list | `[]` | Flags - for a list visit https://github.com/dirien/minecraft-prometheus-exporter#usage- |
 | podAnnotations | object | `{}` | Annotations for the pods |
-| podSecurityContext | object | `{}` |  |
+| podSecurityContext.fsGroup | int | `10003` |  |
+| podSecurityContext.runAsGroup | int | `10003` |  |
+| podSecurityContext.runAsNonRoot | bool | `true` |  |
+| podSecurityContext.runAsUser | int | `10003` |  |
+| podSecurityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | replicaCount | int | `1` | Numbers of replicas |
 | resources | object | `{"limits":{"cpu":"500m","memory":"5123Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}` | Set the resources requests and limits |
