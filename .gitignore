@@ -21,3 +21,4 @@ cmd/exporter
 **/cosign-*.sig
 **/*-cosign.pub
 minecraft-exporter
+**/CLAUDE.md
