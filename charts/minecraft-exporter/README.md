@@ -77,7 +77,11 @@ helm install minecraft-exporter minecraft-exporter/minecraft-exporter --namespac
 | nodeSelector | object | `{}` | Set the node selector for the pod. |
 | options | list | `[]` | Flags - for a list visit https://github.com/dirien/minecraft-prometheus-exporter#usage- |
 | podAnnotations | object | `{}` | Annotations for the pods |
-| podSecurityContext | object | `{}` |  |
+| podSecurityContext.fsGroup | int | `10003` |  |
+| podSecurityContext.runAsGroup | int | `10003` |  |
+| podSecurityContext.runAsNonRoot | bool | `true` |  |
+| podSecurityContext.runAsUser | int | `10003` |  |
+| podSecurityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | replicaCount | int | `1` | Numbers of replicas |
 | resources | object | `{"limits":{"cpu":"500m","memory":"5123Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}` | Set the resources requests and limits |
