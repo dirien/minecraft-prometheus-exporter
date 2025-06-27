@@ -796,7 +796,6 @@ func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
 	}
 	if resp != nil {
 		players := e.playerOnlineRegexp.FindStringSubmatch(*resp)
-		fmt.Println(players)
 		if len(players) > 1 {
 			playersList := strings.TrimSpace(players[1])
 			if playersList != "" {
