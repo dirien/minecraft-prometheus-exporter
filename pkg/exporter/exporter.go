@@ -585,7 +585,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 
 				e.playerStatsCustom(jsonParsed, e.animalsBred, "stats.minecraft:custom.minecraft:animals_bred", ch, player.Data.Player.Username)
 				e.playerStatsCustom(jsonParsed, e.cleanArmor, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Data.Player.Username)
-				e.playerStatsCustom(jsonParsed, e.cleanBanner, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Data.Player.Username)
+				e.playerStatsCustom(jsonParsed, e.cleanBanner, "stats.minecraft:custom.minecraft:clean_banner", ch, player.Data.Player.Username)
 
 				e.playerStatsCustom(jsonParsed, e.openBarrel, "stats.minecraft:custom.minecraft:open_barrel", ch, player.Data.Player.Username)
 				e.playerStatsCustom(jsonParsed, e.bellRing, "stats.minecraft:custom.minecraft:bell_ring", ch, player.Data.Player.Username)
