@@ -518,7 +518,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 						return err
 					}
 				} else {
-					return fmt.Errorf("error retrieving player info from playerdb.co: %s", fmt.Sprintf("Status Code: %d", resp.StatusCode))
+					return fmt.Errorf("error retrieving player info from playerdb.co: status code %d", resp.StatusCode)
 				}
 
 				err = resp.Body.Close()
