@@ -567,7 +567,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 
 			byteValue, err := os.ReadFile(e.world + "/stats/" + id + ".json")
 			if err != nil {
-				e.logger.Error(fmt.Sprintf("Stats file for player %s not exist", username))
+				e.logger.Error(fmt.Sprintf("Stats file for player %s does not exist", username))
 			} else {
 				jsonParsed, err := gabs.ParseJSON(byteValue)
 				if err != nil {
