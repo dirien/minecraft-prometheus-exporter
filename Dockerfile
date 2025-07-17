@@ -1,5 +1,5 @@
 # Dockerfile
-FROM cgr.dev/chainguard/static@sha256:d786d1c686ce4a49376cd2f068d91e691b2bb2e3a6f38513b2396b69b1a9c06f
+FROM cgr.dev/chainguard/static@sha256:e55a04f85f58e6b0e36bae05b8ff18c79035e65c0151e4e866eb49679782d28e
 COPY minecraft-exporter \
 	/usr/bin/minecraft-exporter
 ENTRYPOINT ["/usr/bin/minecraft-exporter"]
