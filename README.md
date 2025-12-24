@@ -400,9 +400,9 @@ minecraft_shulker_boxes_cleaned_total{player="ediri"} 0
 # HELP minecraft_shulker_boxes_opened_total The number of times the player opened a shulker box
 # TYPE minecraft_shulker_boxes_opened_total counter
 minecraft_shulker_boxes_opened_total{player="ediri"} 0
-# HELP minecraft_sleep_in_bed_ticks_total The number of times the player slept in a bed
-# TYPE minecraft_sleep_in_bed_ticks_total counter
-minecraft_sleep_in_bed_ticks_total{player="ediri"} 0
+# HELP minecraft_sleep_in_bed_total The number of times the player slept in a bed
+# TYPE minecraft_sleep_in_bed_total counter
+minecraft_sleep_in_bed_total{player="ediri"} 0
 # HELP minecraft_sneak_time_ticks_total The number of ticks the player has spent sneaking
 # TYPE minecraft_sneak_time_ticks_total counter
 minecraft_sneak_time_ticks_total{player="ediri"} 0
@@ -499,14 +499,14 @@ minecraft_active_entities{entity="zombie",namespace="minecraft"} 19
 `minecraft-exporter` exports the TPS from the last 1m, 5m, and 15m as histogram.
 
 ```bash
-# HELP minecraft_tps_total_bucket The number of ticks per second in PaperMC
-# TYPE minecraft_tps_total_bucket histogram
-minecraft_tps_total_bucket_bucket{le="1"} 20
-minecraft_tps_total_bucket_bucket{le="5"} 20
-minecraft_tps_total_bucket_bucket{le="15"} 20
-minecraft_tps_total_bucket_bucket{le="+Inf"} 3
-minecraft_tps_total_bucket_sum 60
-minecraft_tps_total_bucket_count 3
+# HELP minecraft_tps_bucket The ticks per second histogram in PaperMC/PurpurMC
+# TYPE minecraft_tps_bucket histogram
+minecraft_tps_bucket_bucket{le="1"} 20
+minecraft_tps_bucket_bucket{le="5"} 20
+minecraft_tps_bucket_bucket{le="15"} 20
+minecraft_tps_bucket_bucket{le="+Inf"} 3
+minecraft_tps_bucket_sum 60
+minecraft_tps_bucket_count 3
 ```
 
 #### PurpurMC
@@ -518,15 +518,15 @@ details on how to do this.
 `minecraft-exporter` exports the TPS from the last 5s (here written in 0.08 minute), 1m, 5m, and 15m as histogram.
 
 ```bash
-# HELP minecraft_tps_total_bucket The number of ticks per second in PaperMC
-# TYPE minecraft_tps_total_bucket histogram
-minecraft_tps_total_bucket_bucket{le="0.08"} 20
-minecraft_tps_total_bucket_bucket{le="1"} 20
-minecraft_tps_total_bucket_bucket{le="5"} 20
-minecraft_tps_total_bucket_bucket{le="15"} 20
-minecraft_tps_total_bucket_bucket{le="+Inf"} 4
-minecraft_tps_total_bucket_sum 80
-minecraft_tps_total_bucket_count 4
+# HELP minecraft_tps_bucket The ticks per second histogram in PaperMC/PurpurMC
+# TYPE minecraft_tps_bucket histogram
+minecraft_tps_bucket_bucket{le="0.08"} 20
+minecraft_tps_bucket_bucket{le="1"} 20
+minecraft_tps_bucket_bucket{le="5"} 20
+minecraft_tps_bucket_bucket{le="15"} 20
+minecraft_tps_bucket_bucket{le="+Inf"} 4
+minecraft_tps_bucket_sum 80
+minecraft_tps_bucket_count 4
 ```
 
 ### Libraries & Tools 🔥
