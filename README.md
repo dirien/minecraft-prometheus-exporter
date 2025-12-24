@@ -188,7 +188,7 @@ file. You should use keys that used by Minecraft to store players' stats.
 
 ```yaml
 disabled-metrics:
-  minecraft:mined: true # Disable "minecraft_blocks_mined_total" metric
+  minecraft:bred_animals: true # Disable "minecraft_animals_bred_total" metric
   minecraft:creeper: true # Disable all metrics related with creepers
   minecraft:custom: false # "false" values will be ignored, so this line does nothing
 listen-address: ':9151' # Change address of web server. "--web.listen-address" will be ignored if this line is present here
@@ -206,12 +206,12 @@ and hide or change the default grouping of players, then `minecraft-exporter` wi
 The exporter collects a number of statistics from the server (with example of the labels):
 
 ```bash
-# HELP minecraft_animals_breded_total The number of times the player bred two mobs
-# TYPE minecraft_animals_breded_total counter
-minecraft_animals_breded_total{player="ediri"} 0
-# HELP minecraft_bells_ringed_total TThe number of times the player rang a bell
-# TYPE minecraft_bells_ringed_total counter
-minecraft_bells_ringed_total{player="ediri"} 0
+# HELP minecraft_animals_bred_total The number of times the player bred two mobs
+# TYPE minecraft_animals_bred_total counter
+minecraft_animals_bred_total{player="ediri"} 0
+# HELP minecraft_bells_rung_total The number of times the player rang a bell
+# TYPE minecraft_bells_rung_total counter
+minecraft_bells_rung_total{player="ediri"} 0
 # HELP minecraft_blocks_mined_total Statistic related to the number of blocks a player mined
 # TYPE minecraft_blocks_mined_total counter
 minecraft_blocks_mined_total{block="birch_log",namespace="minecraft",player="ediri"} 2
@@ -265,9 +265,9 @@ minecraft_exporter_build_info{branch="",goversion="go1.16.5",revision="",version
 # HELP minecraft_filled_cauldrons_total The number of times the player filled a cauldron with a water bucket
 # TYPE minecraft_filled_cauldrons_total counter
 minecraft_filled_cauldrons_total{player="ediri"} 0
-# HELP minecraft_fishs_caught_total The number of times the player caught fish
-# TYPE minecraft_fishs_caught_total counter
-minecraft_fishs_caught_total{player="ediri"} 0
+# HELP minecraft_fish_caught_total The number of times the player caught fish
+# TYPE minecraft_fish_caught_total counter
+minecraft_fish_caught_total{player="ediri"} 0
 # HELP minecraft_games_left_total The number of times the player clicked "Save and quit to title"
 # TYPE minecraft_games_left_total counter
 minecraft_games_left_total{player="ediri"} 12
@@ -340,7 +340,7 @@ minecraft_killed_by_total{entity="zombie",namespace="minecraft",player="ediri"} 
 # TYPE minecraft_mobs_killed_total counter
 minecraft_mobs_killed_total{player="ediri"} 2
 # HELP minecraft_movement_meters_total The total distance the player traveled by different methods (ladders, boats, swimming etc.)
-# TYPE minecraft_movement_meters_total untyped
+# TYPE minecraft_movement_meters_total counter
 minecraft_movement_meters_total{means="aviate",player="ediri"} 0
 minecraft_movement_meters_total{means="boat",player="ediri"} 0
 minecraft_movement_meters_total{means="climb",player="ediri"} 0.16
@@ -374,17 +374,17 @@ minecraft_opened_enderchests_total{player="ediri"} 0
 # HELP minecraft_play_time_ticks_total The number of ticks the player has played
 # TYPE minecraft_play_time_ticks_total counter
 minecraft_play_time_ticks_total{player="ediri"} 0
-# HELP minecraft_player_online_total Players currently online (1 if player is online)
-# TYPE minecraft_player_online_total counter
-minecraft_player_online_total{player="ediri"} 1
-# HELP minecraft_player_stat_total Statistic related to the player: xp, current_xp, food_level, health, score, advancements
-# TYPE minecraft_player_stat_total gauge
-minecraft_player_stat_total{player="ediri",stat="advancements"} 53
-minecraft_player_stat_total{player="ediri",stat="current_xp"} 0
-minecraft_player_stat_total{player="ediri",stat="food_level"} 20
-minecraft_player_stat_total{player="ediri",stat="health"} 20
-minecraft_player_stat_total{player="ediri",stat="score"} 1
-minecraft_player_stat_total{player="ediri",stat="xp"} 1
+# HELP minecraft_player_online Players currently online (1 if player is online)
+# TYPE minecraft_player_online gauge
+minecraft_player_online{player="ediri"} 1
+# HELP minecraft_player_stat Statistic related to the player: xp, current_xp, food_level, health, score, advancements
+# TYPE minecraft_player_stat gauge
+minecraft_player_stat{player="ediri",stat="advancements"} 53
+minecraft_player_stat{player="ediri",stat="current_xp"} 0
+minecraft_player_stat{player="ediri",stat="food_level"} 20
+minecraft_player_stat{player="ediri",stat="health"} 20
+minecraft_player_stat{player="ediri",stat="score"} 1
+minecraft_player_stat{player="ediri",stat="xp"} 1
 # HELP minecraft_players_killed_total The number of times the player killed a player
 # TYPE minecraft_players_killed_total counter
 minecraft_players_killed_total{player="ediri"} 0
@@ -418,9 +418,9 @@ minecraft_time_since_death_ticks_total{player="ediri"} 24217
 # HELP minecraft_time_since_rest_ticks_total The number of ticks since the player's last rest (used to spawn phantoms)
 # TYPE minecraft_time_since_rest_ticks_total counter
 minecraft_time_since_rest_ticks_total{player="ediri"} 24238
-# HELP minecraft_total_world_time_ticks_total The number of ticks the player has been in the world
-# TYPE minecraft_total_world_time_ticks_total counter
-minecraft_total_world_time_ticks_total{player="ediri"} 159695
+# HELP minecraft_world_time_ticks_total The number of ticks the player has been in the world
+# TYPE minecraft_world_time_ticks_total counter
+minecraft_world_time_ticks_total{player="ediri"} 159695
 # HELP minecraft_traded_with_villagers_total The number of times the player traded with a villager
 # TYPE minecraft_traded_with_villagers_total counter
 minecraft_traded_with_villagers_total{player="ediri"} 0
@@ -453,45 +453,45 @@ tick time.
 Additionally, you will get the total numbers of active entities on the server per dimension.
 
 ```bash
-# HELP minecraft_ticktime_total The overall mean tick time in the server
-# TYPE minecraft_ticktime_total counter
-minecraft_ticktime_total 0.38
-# HELP minecraft_tps_total The overall mean ticks per second in the server
-# TYPE minecraft_tps_total counter
-minecraft_tps_total 20
-# HELP minecraft_dimension_ticktime_total The mean tick time in a certain dimension
-# TYPE minecraft_dimension_ticktime_total counter
-minecraft_dimension_ticktime_total{dimension="overworld",namespace="minecraft"} 0.37
-minecraft_dimension_ticktime_total{dimension="the_end",namespace="minecraft"} 0.002
-minecraft_dimension_ticktime_total{dimension="the_nether",namespace="minecraft"} 0.004
-# HELP minecraft_dimension_tps_total The number of ticks per second in a certain dimension
-# TYPE minecraft_dimension_tps_total counter
-minecraft_dimension_tps_total{dimension="overworld",namespace="minecraft"} 20
-minecraft_dimension_tps_total{dimension="the_end",namespace="minecraft"} 20
-minecraft_dimension_tps_total{dimension="the_nether",namespace="minecraft"} 20
-# HELP minecraft_active_entity_total The number and type of an active entity on the server
-# TYPE minecraft_active_entity_total counter
-minecraft_active_entity_total{entity="bat",namespace="minecraft"} 15
-minecraft_active_entity_total{entity="bee",namespace="minecraft"} 7
-minecraft_active_entity_total{entity="chest_minecart",namespace="minecraft"} 15
-minecraft_active_entity_total{entity="chicken",namespace="minecraft"} 8
-minecraft_active_entity_total{entity="cod",namespace="minecraft"} 9
-minecraft_active_entity_total{entity="cow",namespace="minecraft"} 12
-minecraft_active_entity_total{entity="creeper",namespace="minecraft"} 12
-minecraft_active_entity_total{entity="dolphin",namespace="minecraft"} 1
-minecraft_active_entity_total{entity="drowned",namespace="minecraft"} 1
-minecraft_active_entity_total{entity="enderman",namespace="minecraft"} 6
-minecraft_active_entity_total{entity="falling_block",namespace="minecraft"} 1
-minecraft_active_entity_total{entity="item",namespace="minecraft"} 13
-minecraft_active_entity_total{entity="pig",namespace="minecraft"} 12
-minecraft_active_entity_total{entity="pufferfish",namespace="minecraft"} 6
-minecraft_active_entity_total{entity="rabbit",namespace="minecraft"} 1
-minecraft_active_entity_total{entity="sheep",namespace="minecraft"} 17
-minecraft_active_entity_total{entity="skeleton",namespace="minecraft"} 28
-minecraft_active_entity_total{entity="spider",namespace="minecraft"} 6
-minecraft_active_entity_total{entity="squid",namespace="minecraft"} 5
-minecraft_active_entity_total{entity="tropical_fish",namespace="minecraft"} 8
-minecraft_active_entity_total{entity="zombie",namespace="minecraft"} 19
+# HELP minecraft_ticktime_ms The overall mean tick time in the server (milliseconds)
+# TYPE minecraft_ticktime_ms gauge
+minecraft_ticktime_ms 0.38
+# HELP minecraft_tps The overall mean ticks per second in the server
+# TYPE minecraft_tps gauge
+minecraft_tps 20
+# HELP minecraft_dimension_ticktime_ms The mean tick time in a certain dimension (milliseconds)
+# TYPE minecraft_dimension_ticktime_ms gauge
+minecraft_dimension_ticktime_ms{dimension="overworld",namespace="minecraft"} 0.37
+minecraft_dimension_ticktime_ms{dimension="the_end",namespace="minecraft"} 0.002
+minecraft_dimension_ticktime_ms{dimension="the_nether",namespace="minecraft"} 0.004
+# HELP minecraft_dimension_tps The number of ticks per second in a certain dimension
+# TYPE minecraft_dimension_tps gauge
+minecraft_dimension_tps{dimension="overworld",namespace="minecraft"} 20
+minecraft_dimension_tps{dimension="the_end",namespace="minecraft"} 20
+minecraft_dimension_tps{dimension="the_nether",namespace="minecraft"} 20
+# HELP minecraft_active_entities The number and type of an active entity on the server
+# TYPE minecraft_active_entities gauge
+minecraft_active_entities{entity="bat",namespace="minecraft"} 15
+minecraft_active_entities{entity="bee",namespace="minecraft"} 7
+minecraft_active_entities{entity="chest_minecart",namespace="minecraft"} 15
+minecraft_active_entities{entity="chicken",namespace="minecraft"} 8
+minecraft_active_entities{entity="cod",namespace="minecraft"} 9
+minecraft_active_entities{entity="cow",namespace="minecraft"} 12
+minecraft_active_entities{entity="creeper",namespace="minecraft"} 12
+minecraft_active_entities{entity="dolphin",namespace="minecraft"} 1
+minecraft_active_entities{entity="drowned",namespace="minecraft"} 1
+minecraft_active_entities{entity="enderman",namespace="minecraft"} 6
+minecraft_active_entities{entity="falling_block",namespace="minecraft"} 1
+minecraft_active_entities{entity="item",namespace="minecraft"} 13
+minecraft_active_entities{entity="pig",namespace="minecraft"} 12
+minecraft_active_entities{entity="pufferfish",namespace="minecraft"} 6
+minecraft_active_entities{entity="rabbit",namespace="minecraft"} 1
+minecraft_active_entities{entity="sheep",namespace="minecraft"} 17
+minecraft_active_entities{entity="skeleton",namespace="minecraft"} 28
+minecraft_active_entities{entity="spider",namespace="minecraft"} 6
+minecraft_active_entities{entity="squid",namespace="minecraft"} 5
+minecraft_active_entities{entity="tropical_fish",namespace="minecraft"} 8
+minecraft_active_entities{entity="zombie",namespace="minecraft"} 19
 ```
 
 #### PaperMC

@@ -190,12 +190,12 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 		purpurMcTpsRegexp:  regexp.MustCompile(`§.TPS from last\s5s,\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
 		disabledMetrics:    disabledMetrics,
 		playerOnline: prometheus.NewDesc(
-			prometheus.BuildFQName(Namespace, "", "player_online_total"),
+			prometheus.BuildFQName(Namespace, "", "player_online"),
 			"Players currently online (1 if player is online)",
 			[]string{"player"},
 			nil,
 		),
-		playerStat: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_stat_total"),
+		playerStat: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_stat"),
 			"Statistic related to the player: xp, current_xp, food_level, health, score, advancements",
 			[]string{"player", "stat"},
 			nil,
@@ -220,7 +220,7 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 			[]string{"player", "namespace", "entity", "action"},
 			nil,
 		),
-		animalsBred: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "animals_breded_total"),
+		animalsBred: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "animals_bred_total"),
 			"The number of times the player bred two mobs",
 			[]string{"player"},
 			nil,
@@ -241,7 +241,7 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 			[]string{"player"},
 			nil,
 		),
-		bellRing: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "bells_ringed_total"),
+		bellRing: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "bells_rung_total"),
 			"The number of times the player rang a bell",
 			[]string{"player"},
 			nil,
@@ -288,7 +288,7 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 			[]string{"player"},
 			nil,
 		),
-		fishCaught: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "fishs_caught_total"),
+		fishCaught: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "fish_caught_total"),
 			"The number of times the player caught fish",
 			[]string{"player"},
 			nil,
@@ -403,12 +403,12 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 			[]string{"player"},
 			nil,
 		),
-		timesWorldOpen: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "total_world_time_ticks_total"),
+		timesWorldOpen: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "world_time_ticks_total"),
 			"The number of ticks the player has been in the world",
 			[]string{"player"},
 			nil,
 		),
-		timesSleptInBed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sleep_in_bed_ticks_total"),
+		timesSleptInBed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sleep_in_bed_total"),
 			"The number of times the player slept in a bed",
 			[]string{"player"},
 			nil,
@@ -429,35 +429,35 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 			nil,
 		),
 
-		dimTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_tps_total"),
-			"The number of ticks per second in a certain dimension",
+		dimTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_tps"),
+			"The ticks per second in a certain dimension",
 			[]string{"namespace", "dimension"},
 			nil,
 		),
 
-		dimTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_ticktime_total"),
-			"The mean tick time in a certain dimension",
+		dimTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_ticktime_ms"),
+			"The mean tick time in milliseconds in a certain dimension",
 			[]string{"namespace", "dimension"},
 			nil,
 		),
-		overallTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps_total"),
+		overallTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps"),
 			"The overall mean ticks per second in the server",
 			[]string{},
 			nil,
 		),
-		overallTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "ticktime_total"),
-			"The overall mean tick time in the server",
+		overallTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "ticktime_ms"),
+			"The overall mean tick time in milliseconds in the server",
 			[]string{},
 			nil,
 		),
-		entities: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "active_entity_total"),
+		entities: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "active_entities"),
 			"The number and type of an active entity on the server",
 			[]string{"namespace", "entity"},
 			nil,
 		),
 
-		tpsPaperMC: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps_total_bucket"),
-			"The number of ticks per second in PaperMC",
+		tpsPaperMC: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps_bucket"),
+			"The ticks per second histogram in PaperMC/PurpurMC",
 			[]string{},
 			nil,
 		),
@@ -692,7 +692,7 @@ func (e *Exporter) playerStatsCustomMovement(jsonParsed *gabs.Container, desc *p
 	if e.isEnabled(field) {
 		value, _ := jsonParsed.Path(field).Data().(float64)
 		value /= 100
-		ch <- prometheus.MustNewConstMetric(desc, prometheus.UntypedValue, value, playerName, movementType)
+		ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, value, playerName, movementType)
 	}
 }
 
@@ -805,7 +805,7 @@ func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
 					player = removeColorCodesFromWord(player)
 					player = strings.TrimSpace(player)
 					if player != "" {
-						ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, player)
+						ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.GaugeValue, 1, player)
 					}
 				}
 			}
@@ -837,15 +837,15 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				dimension := dimTps[2]
 				meanTickTimeDimension := parseFloat64FromString(dimTps[3])
 				meanTpsDimension := parseFloat64FromString(dimTps[4])
-				ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.CounterValue, meanTpsDimension, namespace, dimension)
-				ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.CounterValue, meanTickTimeDimension, namespace, dimension)
+				ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.GaugeValue, meanTpsDimension, namespace, dimension)
+				ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.GaugeValue, meanTickTimeDimension, namespace, dimension)
 			}
 			overall := e.overallRegexp.FindStringSubmatch(*resp)
 			if len(overall) == 3 {
 				meanTickTime := parseFloat64FromString(overall[1])
 				meanTps := parseFloat64FromString(overall[2])
-				ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.CounterValue, meanTps)
-				ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.CounterValue, meanTickTime)
+				ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.GaugeValue, meanTps)
+				ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.GaugeValue, meanTickTime)
 			}
 		}
 		resp, err = e.executeRCONCommand(rconForgeEntityListCommand)
@@ -858,7 +858,7 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				entityCounter := parseFloat64FromString(entity[1])
 				namespace := entity[2]
 				entityType := entity[3]
-				ch <- prometheus.MustNewConstMetric(e.entities, prometheus.CounterValue, entityCounter, namespace, entityType)
+				ch <- prometheus.MustNewConstMetric(e.entities, prometheus.GaugeValue, entityCounter, namespace, entityType)
 			}
 		}
 	case PaperMC, PurpurMC:
@@ -904,15 +904,15 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				dimension := dimTps[2]
 				meanTickTimeDimension := parseFloat64FromString(dimTps[3])
 				meanTpsDimension := parseFloat64FromString(dimTps[4])
-				ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.CounterValue, meanTpsDimension, namespace, dimension)
-				ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.CounterValue, meanTickTimeDimension, namespace, dimension)
+				ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.GaugeValue, meanTpsDimension, namespace, dimension)
+				ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.GaugeValue, meanTickTimeDimension, namespace, dimension)
 			}
 			overall := e.overallRegexp.FindStringSubmatch(*resp)
 			if len(overall) == 3 {
 				meanTickTime := parseFloat64FromString(overall[1])
 				meanTps := parseFloat64FromString(overall[2])
-				ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.CounterValue, meanTps)
-				ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.CounterValue, meanTickTime)
+				ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.GaugeValue, meanTps)
+				ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.GaugeValue, meanTickTime)
 			}
 		}
 	}
