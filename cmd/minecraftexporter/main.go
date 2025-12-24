@@ -24,9 +24,7 @@ import (
 
 func Run() {
 	config := config.NewConfg()
-	promlogConfig := &promslog.Config{
-		Level: &promslog.AllowedLevel{},
-	}
+	promlogConfig := &promslog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
 	kingpin.Version(version.Print("minecraft_exporter"))
 	kingpin.HelpFlag.Short('h')
