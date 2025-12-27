@@ -33,7 +33,7 @@ func NewConfg() *Config {
 		worldPath               = kingpin.Flag("mc.world", "Path the to world folder").Envar("MC_WORLD").Default("/minecraft/world").String()
 		rconAddress             = kingpin.Flag("mc.rcon-address", "Address of the Minecraft rcon.").Envar("MC_RCON_ADDRESS").Default(":25575").String()
 		rconPassword            = kingpin.Flag("mc.rcon-password", "Password of the Minecraft rcon.").Envar("MC_RCON_PASSWORD").String()
-		nameSource              = kingpin.Flag("mc.name-source", "How to retrieve names of players: offline, bukkit, mojang.").Envar("MC_NAME_SOURCE").Default("mojang").String()
+		nameSource              = kingpin.Flag("mc.name-source", "How to retrieve names of players: offline, cache, bukkit, mojang.").Envar("MC_NAME_SOURCE").Default("cache").String()
 		modServerStats          = kingpin.Flag("mc.mod-server-stats", "Set server for additional stats (papermc, purpurmc, forge, or fabric)").Envar("MC_MOD_SERVER_STATS").String()
 	)
 	return &Config{
