@@ -152,6 +152,8 @@ Flags:
       --mc.name-source="mojang"  How to retrieve names of players: offline, bukkit, mojang.
       --mc.mod-server-stats=MC.MOD-SERVER-STATS  
                                  Additional server stats for papermc, purpurmc, forge, or fabric.
+      --[no-]mc.old-stats-file-path   
+                                 Use old path of stats file instead of new (ex: /playerdata instead of /player/data).
       --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
       --version                  Show application version.

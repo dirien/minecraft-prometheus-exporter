@@ -36,18 +36,19 @@ const (
 // See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
 
 type Exporter struct {
-	rcon               *RCON
-	logger             *slog.Logger
-	world              string
-	source             string
-	serverStats        string
-	disabledMetrics    map[string]bool
-	playerOnlineRegexp *regexp.Regexp
-	overallRegexp      *regexp.Regexp
-	dimensionRegexp    *regexp.Regexp
-	entityListRegexp   *regexp.Regexp
-	paperMcTpsRegexp   *regexp.Regexp
-	purpurMcTpsRegexp  *regexp.Regexp
+	rcon                *RCON
+	logger              *slog.Logger
+	world               string
+	source              string
+	serverStats         string
+	disabledMetrics     map[string]bool
+	useOldStatsFilePath bool
+	playerOnlineRegexp  *regexp.Regexp
+	overallRegexp       *regexp.Regexp
+	dimensionRegexp     *regexp.Regexp
+	entityListRegexp    *regexp.Regexp
+	paperMcTpsRegexp    *regexp.Regexp
+	purpurMcTpsRegexp   *regexp.Regexp
 
 	// via advancements
 	// playerAdvancements *prometheus.Desc
@@ -174,21 +175,22 @@ func createRCONClient(server, password string, logger *slog.Logger) *RCON {
 	}
 }
 
-func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, logger *slog.Logger) (*Exporter, error) {
+func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, useOldStatsFilePath bool, logger *slog.Logger) (*Exporter, error) {
 	rcon := createRCONClient(server, password, logger)
 	return &Exporter{
-		rcon:               rcon,
-		logger:             logger,
-		world:              world,
-		source:             source,
-		serverStats:        serverStats,
-		playerOnlineRegexp: regexp.MustCompile(":(.*)"),
-		overallRegexp:      regexp.MustCompile(`Overall\s*:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
-		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
-		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
-		paperMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
-		purpurMcTpsRegexp:  regexp.MustCompile(`§.TPS from last\s5s,\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
-		disabledMetrics:    disabledMetrics,
+		rcon:                rcon,
+		logger:              logger,
+		world:               world,
+		source:              source,
+		serverStats:         serverStats,
+		playerOnlineRegexp:  regexp.MustCompile(":(.*)"),
+		overallRegexp:       regexp.MustCompile(`Overall\s*:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
+		dimensionRegexp:     regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
+		entityListRegexp:    regexp.MustCompile(`(\d+):\s(.*):(.*)`),
+		paperMcTpsRegexp:    regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
+		purpurMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s5s,\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
+		disabledMetrics:     disabledMetrics,
+		useOldStatsFilePath: useOldStatsFilePath,
 		playerOnline: prometheus.NewDesc(
 			prometheus.BuildFQName(Namespace, "", "player_online"),
 			"Players currently online (1 if player is online)",
@@ -465,14 +467,22 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 }
 
 func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
-	files, err := os.ReadDir(e.world + "/playerdata")
+	playerDataPath := e.world + "/playerdata"
+	statsDataPath := e.world + "/stats"
+
+	if !e.useOldStatsFilePath {
+		playerDataPath = e.world + "/player/data"
+		statsDataPath = e.world + "/player/stats"
+	}
+
+	files, err := os.ReadDir(playerDataPath)
 	if err != nil {
 		return err
 	}
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".dat" && !strings.Contains(file.Name(), "_cyclic") {
 			id := strings.TrimSuffix(file.Name(), ".dat")
-			f, err := os.Open(e.world + "/playerdata/" + file.Name())
+			f, err := os.Open(playerDataPath + "/" + file.Name())
 			if err != nil {
 				return err
 			}
@@ -565,7 +575,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 				return err
 			}
 
-			byteValue, err := os.ReadFile(e.world + "/stats/" + id + ".json")
+			byteValue, err := os.ReadFile(statsDataPath + "/" + id + ".json")
 			if err != nil {
 				e.logger.Error(fmt.Sprintf("Stats file for player %s does not exist", username))
 			} else {
@@ -731,8 +741,13 @@ func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc
 }
 
 func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerName string) error {
+	advencementsDataPath := e.world + "/advancements"
+	if !e.useOldStatsFilePath {
+		advencementsDataPath = e.world + "/player/advancements"
+	}
+
 	var payload map[string]interface{}
-	byteValue, err := os.ReadFile(e.world + "/advancements/" + id + ".json")
+	byteValue, err := os.ReadFile(advencementsDataPath + "/" + id + ".json")
 	if err != nil {
 		e.logger.Error(fmt.Sprintf("advancements file for player %s not exist", playerName))
 		return nil
