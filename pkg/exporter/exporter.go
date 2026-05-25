@@ -36,19 +36,18 @@ const (
 // See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
 
 type Exporter struct {
-	rcon                *RCON
-	logger              *slog.Logger
-	world               string
-	source              string
-	serverStats         string
-	disabledMetrics     map[string]bool
-	useOldStatsFilePath bool
-	playerOnlineRegexp  *regexp.Regexp
-	overallRegexp       *regexp.Regexp
-	dimensionRegexp     *regexp.Regexp
-	entityListRegexp    *regexp.Regexp
-	paperMcTpsRegexp    *regexp.Regexp
-	purpurMcTpsRegexp   *regexp.Regexp
+	rcon               *RCON
+	logger             *slog.Logger
+	world              string
+	source             string
+	serverStats        string
+	disabledMetrics    map[string]bool
+	playerOnlineRegexp *regexp.Regexp
+	overallRegexp      *regexp.Regexp
+	dimensionRegexp    *regexp.Regexp
+	entityListRegexp   *regexp.Regexp
+	paperMcTpsRegexp   *regexp.Regexp
+	purpurMcTpsRegexp  *regexp.Regexp
 
 	// via advancements
 	// playerAdvancements *prometheus.Desc
@@ -175,22 +174,21 @@ func createRCONClient(server, password string, logger *slog.Logger) *RCON {
 	}
 }
 
-func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, useOldStatsFilePath bool, logger *slog.Logger) (*Exporter, error) {
+func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, logger *slog.Logger) (*Exporter, error) {
 	rcon := createRCONClient(server, password, logger)
 	return &Exporter{
-		rcon:                rcon,
-		logger:              logger,
-		world:               world,
-		source:              source,
-		serverStats:         serverStats,
-		playerOnlineRegexp:  regexp.MustCompile(":(.*)"),
-		overallRegexp:       regexp.MustCompile(`Overall\s*:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
-		dimensionRegexp:     regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
-		entityListRegexp:    regexp.MustCompile(`(\d+):\s(.*):(.*)`),
-		paperMcTpsRegexp:    regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
-		purpurMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s5s,\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
-		disabledMetrics:     disabledMetrics,
-		useOldStatsFilePath: useOldStatsFilePath,
+		rcon:               rcon,
+		logger:             logger,
+		world:              world,
+		source:             source,
+		serverStats:        serverStats,
+		playerOnlineRegexp: regexp.MustCompile(":(.*)"),
+		overallRegexp:      regexp.MustCompile(`Overall\s*:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
+		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
+		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
+		paperMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
+		purpurMcTpsRegexp:  regexp.MustCompile(`§.TPS from last\s5s,\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
+		disabledMetrics:    disabledMetrics,
 		playerOnline: prometheus.NewDesc(
 			prometheus.BuildFQName(Namespace, "", "player_online"),
 			"Players currently online (1 if player is online)",
@@ -466,14 +464,23 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 	}, nil
 }
 
-func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
-	playerDataPath := e.world + "/playerdata"
-	statsDataPath := e.world + "/stats"
-
-	if !e.useOldStatsFilePath {
-		playerDataPath = e.world + "/player/data"
-		statsDataPath = e.world + "/player/stats"
+// resolveWorldDir returns the world subdirectory for player files, supporting
+// both the legacy layout (playerdata, stats, advancements) and the layout
+// introduced in Minecraft Java 26.1 (players/data, players/stats,
+// players/advancements). The new layout is preferred when present; otherwise it
+// falls back to the legacy path, keeping existing setups working without any
+// configuration. See https://github.com/dirien/minecraft-prometheus-exporter/issues/1269
+func (e *Exporter) resolveWorldDir(newRel, legacyRel string) string {
+	newPath := filepath.Join(e.world, newRel)
+	if _, err := os.Stat(newPath); err == nil {
+		return newPath
 	}
+	return filepath.Join(e.world, legacyRel)
+}
+
+func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
+	playerDataPath := e.resolveWorldDir("players/data", "playerdata")
+	statsDataPath := e.resolveWorldDir("players/stats", "stats")
 
 	files, err := os.ReadDir(playerDataPath)
 	if err != nil {
@@ -741,13 +748,10 @@ func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc
 }
 
 func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerName string) error {
-	advencementsDataPath := e.world + "/advancements"
-	if !e.useOldStatsFilePath {
-		advencementsDataPath = e.world + "/player/advancements"
-	}
+	advancementsDataPath := e.resolveWorldDir("players/advancements", "advancements")
 
 	var payload map[string]interface{}
-	byteValue, err := os.ReadFile(advencementsDataPath + "/" + id + ".json")
+	byteValue, err := os.ReadFile(advancementsDataPath + "/" + id + ".json")
 	if err != nil {
 		e.logger.Error(fmt.Sprintf("advancements file for player %s not exist", playerName))
 		return nil

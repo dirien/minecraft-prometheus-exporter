@@ -22,7 +22,6 @@ type Config struct {
 	DisableExporterMetrics *bool           `yaml:"disable-exporter-metrics"`
 	DisabledMetrics        map[string]bool `yaml:"disabled-metrics"`
 	ModServerStats         *string         `yaml:"mod-server-stats"`
-	OldStatsFilePath       *bool           `yaml:"old-stats-file-path"`
 }
 
 func NewConfg() *Config {
@@ -36,7 +35,6 @@ func NewConfg() *Config {
 		rconPassword            = kingpin.Flag("mc.rcon-password", "Password of the Minecraft rcon.").Envar("MC_RCON_PASSWORD").String()
 		nameSource              = kingpin.Flag("mc.name-source", "How to retrieve names of players: offline, bukkit, mojang.").Envar("MC_NAME_SOURCE").Default("mojang").String()
 		modServerStats          = kingpin.Flag("mc.mod-server-stats", "Set server for additional stats (papermc, purpurmc, forge, or fabric)").Envar("MC_MOD_SERVER_STATS").String()
-		oldStatsFilePath        = kingpin.Flag("mc.old-stats-file-path", "Use old path of stats file intead of new (ex: /playerdata instead  of /player/data).").Default("true").Envar("MC_OLD_STATS_FILE_PATH").Bool()
 	)
 	return &Config{
 		ConfigPath:             configPath,
@@ -48,7 +46,6 @@ func NewConfg() *Config {
 		WorldPath:              worldPath,
 		NameSource:             nameSource,
 		ModServerStats:         modServerStats,
-		OldStatsFilePath:       oldStatsFilePath,
 	}
 }
 
