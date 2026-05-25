@@ -464,15 +464,32 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 	}, nil
 }
 
+// resolveWorldDir returns the world subdirectory for player files, supporting
+// both the legacy layout (playerdata, stats, advancements) and the layout
+// introduced in Minecraft Java 26.1 (players/data, players/stats,
+// players/advancements). The new layout is preferred when present; otherwise it
+// falls back to the legacy path, keeping existing setups working without any
+// configuration. See https://github.com/dirien/minecraft-prometheus-exporter/issues/1269
+func (e *Exporter) resolveWorldDir(newRel, legacyRel string) string {
+	newPath := filepath.Join(e.world, newRel)
+	if _, err := os.Stat(newPath); err == nil {
+		return newPath
+	}
+	return filepath.Join(e.world, legacyRel)
+}
+
 func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
-	files, err := os.ReadDir(e.world + "/playerdata")
+	playerDataPath := e.resolveWorldDir("players/data", "playerdata")
+	statsDataPath := e.resolveWorldDir("players/stats", "stats")
+
+	files, err := os.ReadDir(playerDataPath)
 	if err != nil {
 		return err
 	}
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".dat" && !strings.Contains(file.Name(), "_cyclic") {
 			id := strings.TrimSuffix(file.Name(), ".dat")
-			f, err := os.Open(e.world + "/playerdata/" + file.Name())
+			f, err := os.Open(playerDataPath + "/" + file.Name())
 			if err != nil {
 				return err
 			}
@@ -565,7 +582,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 				return err
 			}
 
-			byteValue, err := os.ReadFile(e.world + "/stats/" + id + ".json")
+			byteValue, err := os.ReadFile(statsDataPath + "/" + id + ".json")
 			if err != nil {
 				e.logger.Error(fmt.Sprintf("Stats file for player %s does not exist", username))
 			} else {
@@ -731,8 +748,10 @@ func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc
 }
 
 func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerName string) error {
+	advancementsDataPath := e.resolveWorldDir("players/advancements", "advancements")
+
 	var payload map[string]interface{}
-	byteValue, err := os.ReadFile(e.world + "/advancements/" + id + ".json")
+	byteValue, err := os.ReadFile(advancementsDataPath + "/" + id + ".json")
 	if err != nil {
 		e.logger.Error(fmt.Sprintf("advancements file for player %s not exist", playerName))
 		return nil
