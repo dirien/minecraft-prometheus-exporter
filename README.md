@@ -14,7 +14,7 @@
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/minecraft-exporter&style=for-the-badge)](https://artifacthub.io/packages/search?repo=minecraft-exporter)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/minecraft-exporter-image&style=for-the-badge)](https://artifacthub.io/packages/search?repo=minecraft-exporter-image)
 
-![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/dirien/minecraft-prometheus-exporter/Build%20Binary/main?logo=github&style=for-the-badge)
+![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/dirien/minecraft-prometheus-exporter/ci.yaml?branch=main&logo=github&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/dirien/minecraft-prometheus-exporter?style=for-the-badge)
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/dirien/minecraft-prometheus-exporter?style=for-the-badge)
