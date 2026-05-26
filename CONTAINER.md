@@ -47,15 +47,15 @@ nerdctl container run -d -p 9150:9150 -v /folder/world:/minecraft/world ghcr.io/
 
 You could use the flags too, but I would not recommend it. I prefer to use the environment variables.
 
-| ENV variable                  | Description                                                |
-|-------------------------------|------------------------------------------------------------|
-| WEB_DISABLED_EXPORTER_METRICS | Disabling collection of exporter metrics (like go_*)       | 
-| MC_CONFIG_PATH                | Path to YAML file with config for the mc variables         |
-| MC_WORLD                      | Path to the world folder.                                  |
-| MC_RCON_ADDRESS               | Address for the Minecraft RCON.                            |
-| MC_RCON_PASSWORD              | Password for the Minecraft RCON.                           |
-| MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang. |
-| MC_MOD_SERVER_STATS           | Additional server stats for papermc, forge, and fabric     |
+| ENV variable                  | Description                                                      |
+|-------------------------------|------------------------------------------------------------------|
+| WEB_DISABLED_EXPORTER_METRICS | Disabling collection of exporter metrics (like go_*)             | 
+| MC_CONFIG_PATH                | Path to YAML file with config for the mc variables               |
+| MC_WORLD                      | Path to the world folder.                                        |
+| MC_RCON_ADDRESS               | Address for the Minecraft RCON.                                  |
+| MC_RCON_PASSWORD              | Password for the Minecraft RCON.                                 |
+| MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang.       |
+| MC_MOD_SERVER_STATS           | Additional server stats for papermc, forge, neoforge, and fabric |
 
 ### Legal Disclaimer 👮
 
