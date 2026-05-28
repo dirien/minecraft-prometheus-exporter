@@ -173,6 +173,8 @@ config file can be changed using `--config-path` CLI flag.
 | `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                                      |
 | `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang.            |
 | `mod-server-stats`         | `--mc.mod-server-stats`          | MC_MOD_SERVER_STATS           | Set server for additional stats (papermc, purpurmc, forge, or fabric) |
+| _(flag only)_              | `--log.level`                    | LOG_LEVEL                     | Log level. One of: `debug`, `info`, `warn`, `error`.                  |
+| _(flag only)_              | `--log.format`                   | LOG_FORMAT                    | Log format. One of: `logfmt`, `json`.                                 |
 
 #### Disable exporter metrics
 
@@ -532,7 +534,7 @@ minecraft_tps_bucket_count 4
 ### Libraries & Tools 🔥
 
 - https://github.com/Jeffail/gabs
-- https://github.com/alecthomas/kingpin
+- https://github.com/alecthomas/kong
 - https://github.com/Tnze/go-mc
 - https://github.com/prometheus/exporter-toolkit
 - https://github.com/goreleaser
