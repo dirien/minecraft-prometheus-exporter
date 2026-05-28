@@ -129,32 +129,52 @@ with no rate limiting and no need for client-side caching.
 
 ### Usage ⚙
 
+Every flag can also be set via the matching environment variable shown in parentheses.
+
 ```bash
-usage: minecraft-exporter [<flags>]
+Usage: minecraft_exporter [flags]
+
+Prometheus exporter for Minecraft Java Edition servers.
 
 Flags:
-  -h, --help                     Show context-sensitive help (also try --help-long and --help-man).
-      --web.config.file=""       [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication.
-      --web.telemetry-path="/metrics"  
-                                 Path under which to expose metrics.
-      --web.listen-address=":9150"  
-                                 Address to listen on for web interface and telemetry.
-      --web.disable-exporter-metrics  
-                                 Disabling collection of exporter metrics (like go_*)
-      --mc.config-path="config.yml"  
-                                 Path to YAML file with config.
-      --mc.world="/minecraft/world"  
-                                 Path the to world folder
-      --mc.rcon-address=":25575"  
-                                 Address of the Minecraft rcon.
-      --mc.rcon-password=MC.RCON-PASSWORD  
-                                 Password of the Minecraft rcon.
-      --mc.name-source="mojang"  How to retrieve names of players: offline, bukkit, mojang.
-      --mc.mod-server-stats=MC.MOD-SERVER-STATS  
-                                 Additional server stats for papermc, purpurmc, forge, or fabric.
-      --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
-      --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
-      --version                  Show application version.
+  -h, --help                       Show context-sensitive help.
+      --web.listen-address=:9150,...
+                                   Addresses on which to expose metrics and web
+                                   interface. Repeatable for multiple addresses
+                                   ($WEB_LISTEN_ADDRESS).
+      --web.config.file=""         Path to configuration file that can enable TLS
+                                   or authentication. See:
+                                   https://github.com/prometheus/exporter-toolkit/blob/master/docs/web-configuration.md
+                                   ($WEB_CONFIG_FILE)
+      --web.systemd-socket         Use systemd socket activation listeners
+                                   instead of port listeners (Linux only)
+                                   ($WEB_SYSTEMD_SOCKET).
+      --web.telemetry-path="/metrics"
+                                   Path under which to expose metrics
+                                   ($WEB_TELEMETRY_PATH).
+      --web.disable-exporter-metrics
+                                   Disable collection of exporter metrics (like
+                                   go_*) ($WEB_DISABLED_EXPORTER_METRICS).
+      --mc.config-path="config.yml"
+                                   Path to YAML file with config
+                                   ($MC_CONFIG_PATH).
+      --mc.world="/minecraft/world"
+                                   Path to the world folder ($MC_WORLD).
+      --mc.rcon-address=":25575"   Address of the Minecraft rcon
+                                   ($MC_RCON_ADDRESS).
+      --mc.rcon-password=STRING    Password of the Minecraft rcon
+                                   ($MC_RCON_PASSWORD).
+      --mc.name-source="mojang"    How to retrieve names of players: offline,
+                                   bukkit, mojang ($MC_NAME_SOURCE).
+      --mc.mod-server-stats=STRING
+                                   Set server for additional stats (papermc,
+                                   purpurmc, forge, or fabric)
+                                   ($MC_MOD_SERVER_STATS).
+      --log.level="info"           Log level. One of: [debug, info, warn, error]
+                                   ($LOG_LEVEL)
+      --log.format="logfmt"        Log format. One of: [logfmt, json]
+                                   ($LOG_FORMAT)
+  -V, --version                    Show version and exit.
 ```
 
 ### Config 🔧
