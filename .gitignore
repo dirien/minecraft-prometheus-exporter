@@ -21,4 +21,13 @@ cmd/exporter
 **/cosign-*.sig
 **/*-cosign.pub
 minecraft-exporter
-**/.claude/settings.local.json
+
+# Ignore the .claude/ workspace, but keep the test-minecraft-exporter skill
+# (the rest is per-developer state: settings, transcripts, worktrees).
+.claude/*
+!.claude/skills
+.claude/skills/*
+!.claude/skills/test-minecraft-exporter
+
+# Per-developer MCP server config
+.mcp.json

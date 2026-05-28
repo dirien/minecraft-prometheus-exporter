@@ -1,0 +1,51 @@
+services:
+  minecraft:
+    image: itzg/minecraft-server:latest
+    container_name: mc-exporter-test-server
+    environment:
+      EULA: "TRUE"
+      VERSION: "LATEST"
+      TYPE: "VANILLA"
+      ONLINE_MODE: "FALSE"
+      ENABLE_RCON: "TRUE"
+      RCON_PASSWORD: "testpass"
+      RCON_PORT: "25575"
+      MEMORY: "2G"
+      LEVEL: "world"
+    ports:
+      - "25565:25565"
+    volumes:
+      - mc-data:/data
+    healthcheck:
+      test: ["CMD", "mc-health"]
+      start_period: 90s
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    tty: true
+    stdin_open: true
+
+  exporter:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: mc-exporter-test-exporter
+    # Run as the itzg/minecraft-server UID so the read-only world mount is readable.
+    user: "1000:1000"
+    depends_on:
+      minecraft:
+        condition: service_healthy
+    environment:
+      MC_RCON_ADDRESS: "minecraft:25575"
+      MC_RCON_PASSWORD: "testpass"
+      MC_WORLD: "/mc/world"
+      MC_NAME_SOURCE: "offline"
+      WEB_LISTEN_ADDRESS: ":9150"
+      LOG_LEVEL: "debug"
+    ports:
+      - "9150:9150"
+    volumes:
+      - mc-data:/mc:ro
+
+volumes:
+  mc-data:

@@ -1,0 +1,10 @@
+FROM golang:1.26-alpine AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o /out/minecraft-exporter .
+
+FROM cgr.dev/chainguard/static:latest
+COPY --from=build /out/minecraft-exporter /usr/bin/minecraft-exporter
+ENTRYPOINT ["/usr/bin/minecraft-exporter"]

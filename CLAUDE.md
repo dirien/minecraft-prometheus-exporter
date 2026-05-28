@@ -32,7 +32,7 @@ This is a Prometheus exporter for Minecraft Java Edition servers. It collects me
 - `main.go` → Entry point, delegates to `cmd/minecraftexporter`
 - `cmd/minecraftexporter/main.go` → HTTP server setup, Prometheus registry, signal handling
 - `pkg/exporter/exporter.go` → Core exporter implementing Prometheus Collector interface (~1000 lines)
-- `pkg/config/config.go` → CLI flags (kingpin) and YAML config parsing
+- `pkg/config/config.go` → CLI flags (kong) and YAML config parsing
 - `pkg/template/template.go` → Landing page HTML template
 
 ### Metric Collection Flow
