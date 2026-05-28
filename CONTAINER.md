@@ -47,15 +47,21 @@ nerdctl container run -d -p 9150:9150 -v /folder/world:/minecraft/world ghcr.io/
 
 You could use the flags too, but I would not recommend it. I prefer to use the environment variables.
 
-| ENV variable                  | Description                                                |
-|-------------------------------|------------------------------------------------------------|
-| WEB_DISABLED_EXPORTER_METRICS | Disabling collection of exporter metrics (like go_*)       | 
-| MC_CONFIG_PATH                | Path to YAML file with config for the mc variables         |
-| MC_WORLD                      | Path to the world folder.                                  |
-| MC_RCON_ADDRESS               | Address for the Minecraft RCON.                            |
-| MC_RCON_PASSWORD              | Password for the Minecraft RCON.                           |
-| MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang. |
-| MC_MOD_SERVER_STATS           | Additional server stats for papermc, forge, and fabric     |
+| ENV variable                  | Description                                                              |
+|-------------------------------|--------------------------------------------------------------------------|
+| WEB_LISTEN_ADDRESS            | Address to listen on for web interface and telemetry (default `:9150`).  |
+| WEB_TELEMETRY_PATH            | Path under which to expose metrics (default `/metrics`).                 |
+| WEB_CONFIG_FILE               | Path to TLS/auth config file (see `exporter-toolkit` web-config docs).   |
+| WEB_SYSTEMD_SOCKET            | Use systemd socket activation listeners instead of port listeners (Linux only). |
+| WEB_DISABLED_EXPORTER_METRICS | Disable collection of exporter metrics (like `go_*`).                    |
+| MC_CONFIG_PATH                | Path to YAML file with config for the mc variables.                      |
+| MC_WORLD                      | Path to the world folder.                                                |
+| MC_RCON_ADDRESS               | Address for the Minecraft RCON.                                          |
+| MC_RCON_PASSWORD              | Password for the Minecraft RCON.                                         |
+| MC_NAME_SOURCE                | How to retrieve names of players: `offline`, `bukkit`, `mojang`.         |
+| MC_MOD_SERVER_STATS           | Additional server stats for `papermc`, `purpurmc`, `forge`, or `fabric`. |
+| LOG_LEVEL                     | Log level: `debug`, `info`, `warn`, `error` (default `info`).            |
+| LOG_FORMAT                    | Log format: `logfmt`, `json` (default `logfmt`).                         |
 
 ### Legal Disclaimer 👮
 
