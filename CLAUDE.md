@@ -42,7 +42,7 @@ The exporter implements `prometheus.Collector` with:
 - `Collect()` → Called on each scrape, executes:
   1. `getPlayerList()` → RCON `list` command → `minecraft_player_online` gauge
   2. `getPlayerStats()` → Reads NBT/JSON files → 50+ player stat metrics
-  3. `getServerStats()` → RCON commands for Forge/PaperMC/Fabric → TPS/ticktime gauges
+  3. `getServerStats()` → RCON commands for Forge/NeoForge/PaperMC/Fabric → TPS/ticktime gauges
 
 ### Player Name Resolution
 
@@ -55,6 +55,7 @@ The `--mc.name-source` flag controls how player UUIDs are mapped to usernames:
 
 Set `--mc.mod-server-stats` for additional metrics:
 - `forge`: TPS, ticktime per dimension, entity counts via `forge tps` and `forge entity list`
+- `neoforge`: TPS, ticktime per dimension, entity counts via `neoforge tps` and `neoforge entity list`
 - `papermc`: TPS histogram via `tps` command
 - `purpurmc`: Extended TPS histogram (5s, 1m, 5m, 15m buckets)
 - `fabric`: Similar to Forge (requires Fabric TPS mod)

@@ -28,7 +28,7 @@ type Config struct {
 	RconAddress    string `kong:"name='mc.rcon-address',env='MC_RCON_ADDRESS',default=':25575',help='Address of the Minecraft rcon.'" yaml:"rcon-address"`
 	RconPassword   string `kong:"name='mc.rcon-password',env='MC_RCON_PASSWORD',help='Password of the Minecraft rcon.'" yaml:"rcon-password"`
 	NameSource     string `kong:"name='mc.name-source',env='MC_NAME_SOURCE',default='mojang',help='How to retrieve names of players: offline, bukkit, mojang.'" yaml:"name-source"`
-	ModServerStats string `kong:"name='mc.mod-server-stats',env='MC_MOD_SERVER_STATS',help='Set server for additional stats (papermc, purpurmc, forge, or fabric).'" yaml:"mod-server-stats"`
+	ModServerStats string `kong:"name='mc.mod-server-stats',env='MC_MOD_SERVER_STATS',help='Set server for additional stats (papermc, purpurmc, forge, neoforge, or fabric).'" yaml:"mod-server-stats"`
 
 	LogLevel  string `kong:"name='log.level',env='LOG_LEVEL',default='info',help='Log level. One of: [debug, info, warn, error]'" yaml:"-"`
 	LogFormat string `kong:"name='log.format',env='LOG_FORMAT',default='logfmt',help='Log format. One of: [logfmt, json]'" yaml:"-"`

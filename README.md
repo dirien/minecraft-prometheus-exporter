@@ -168,7 +168,7 @@ Flags:
                                    bukkit, mojang ($MC_NAME_SOURCE).
       --mc.mod-server-stats=STRING
                                    Set server for additional stats (papermc,
-                                   purpurmc, forge, or fabric)
+                                   purpurmc, forge, neoforge, or fabric)
                                    ($MC_MOD_SERVER_STATS).
       --log.level="info"           Log level. One of: [debug, info, warn, error]
                                    ($LOG_LEVEL)
@@ -192,7 +192,7 @@ config file can be changed using `--config-path` CLI flag.
 | `rcon-address`             | `--mc.rcon-address`              | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                                       |
 | `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                                      |
 | `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang.            |
-| `mod-server-stats`         | `--mc.mod-server-stats`          | MC_MOD_SERVER_STATS           | Set server for additional stats (papermc, purpurmc, forge, or fabric) |
+| `mod-server-stats`         | `--mc.mod-server-stats`          | MC_MOD_SERVER_STATS           | Set server for additional stats (papermc, purpurmc, forge, neoforge, or fabric) |
 | _(flag only)_              | `--log.level`                    | LOG_LEVEL                     | Log level. One of: `debug`, `info`, `warn`, `error`.                  |
 | _(flag only)_              | `--log.format`                   | LOG_FORMAT                    | Log format. One of: `logfmt`, `json`.                                 |
 
@@ -462,7 +462,7 @@ minecraft_won_raids_total{player="ediri"} 0
 
 #### Metrics for specific mods
 
-To export the metrics for a specific mod, you can set the flag: `--mc.mod-server-stats=forge|papermc|fabric` or use the
+To export the metrics for a specific mod, you can set the flag: `--mc.mod-server-stats=forge|neoforge|papermc|fabric` or use the
 environment variable `MC_MOD_SERVER_STATS`.
 
 **Note:** Fabric requires the [Fabric TPS](https://modrinth.com/mod/fabric-tps) mod.

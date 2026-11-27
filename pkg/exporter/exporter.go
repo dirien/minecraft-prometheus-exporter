@@ -21,16 +21,19 @@ import (
 )
 
 const (
-	Namespace                  = "minecraft"
-	Forge                      = "forge"
-	PaperMC                    = "papermc"
-	Fabric                     = "fabric"
-	PurpurMC                   = "purpurmc"
-	rconListCommand            = "list"
-	rconForgeTpsCommand        = "forge tps"
-	rconForgeEntityListCommand = "forge entity list"
-	rconTpsCommand             = "tps"
-	rconFabricTpsCommand       = "fabric tps"
+	Namespace                     = "minecraft"
+	Forge                         = "forge"
+	NeoForge                      = "neoforge"
+	PaperMC                       = "papermc"
+	Fabric                        = "fabric"
+	PurpurMC                      = "purpurmc"
+	rconListCommand               = "list"
+	rconForgeTpsCommand           = "forge tps"
+	rconForgeEntityListCommand    = "forge entity list"
+	rconNeoForgeTpsCommand        = "neoforge tps"
+	rconNeoForgeEntityListCommand = "neoforge entity list"
+	rconTpsCommand                = "tps"
+	rconFabricTpsCommand          = "fabric tps"
 
 	labelPlayer    = "player"
 	labelNamespace = "namespace"
@@ -49,6 +52,7 @@ type Exporter struct {
 	playerOnlineRegexp *regexp.Regexp
 	overallRegexp      *regexp.Regexp
 	dimensionRegexp    *regexp.Regexp
+	neoForgeTpsRegexp  *regexp.Regexp
 	entityListRegexp   *regexp.Regexp
 	paperMcTpsRegexp   *regexp.Regexp
 	purpurMcTpsRegexp  *regexp.Regexp
@@ -190,6 +194,7 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 		overallRegexp:      regexp.MustCompile(`Overall\s*:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
+		neoForgeTpsRegexp:  regexp.MustCompile(`(.+):\s([\d.]*)\sTPS\s\(([\d.]*)\sms\/tick\)`),
 		paperMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
 		purpurMcTpsRegexp:  regexp.MustCompile(`§.TPS from last\s5s,\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
 		disabledMetrics:    disabledMetrics,
@@ -848,6 +853,43 @@ func parseFloat64FromString(value string) float64 {
 
 func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 	switch e.serverStats {
+	case NeoForge:
+		resp, err := e.executeRCONCommand(rconNeoForgeTpsCommand)
+		if err != nil {
+			return err
+		}
+		if resp != nil {
+			dimTpsList := e.neoForgeTpsRegexp.FindAllStringSubmatch(*resp, -1)
+			for _, dimTps := range dimTpsList {
+				dimension := dimTps[1]
+
+				tps, err1 := strconv.ParseFloat(dimTps[2], 64)
+				msTick, err2 := strconv.ParseFloat(dimTps[3], 64)
+				if err1 != nil || err2 != nil {
+					continue
+				}
+				if dimension == "Overall" {
+					ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.GaugeValue, tps)
+					ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.GaugeValue, msTick)
+				} else {
+					ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.GaugeValue, tps, "", dimension)
+					ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.GaugeValue, msTick, "", dimension)
+				}
+			}
+		}
+		resp, err = e.executeRCONCommand(rconNeoForgeEntityListCommand)
+		if err != nil {
+			return err
+		}
+		if resp != nil {
+			entityList := e.entityListRegexp.FindAllStringSubmatch(*resp, -1)
+			for _, entity := range entityList {
+				entityCounter := parseFloat64FromString(entity[1])
+				namespace := entity[2]
+				entityType := entity[3]
+				ch <- prometheus.MustNewConstMetric(e.entities, prometheus.GaugeValue, entityCounter, namespace, entityType)
+			}
+		}
 	case Forge:
 		resp, err := e.executeRCONCommand(rconForgeTpsCommand)
 		if err != nil {
