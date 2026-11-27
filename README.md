@@ -14,7 +14,7 @@
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/minecraft-exporter&style=for-the-badge)](https://artifacthub.io/packages/search?repo=minecraft-exporter)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/minecraft-exporter-image&style=for-the-badge)](https://artifacthub.io/packages/search?repo=minecraft-exporter-image)
 
-![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/dirien/minecraft-prometheus-exporter/Build%20Binary/main?logo=github&style=for-the-badge)
+![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/dirien/minecraft-prometheus-exporter/ci.yaml?branch=main&logo=github&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/dirien/minecraft-prometheus-exporter?style=for-the-badge)
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/dirien/minecraft-prometheus-exporter?style=for-the-badge)
@@ -129,32 +129,52 @@ with no rate limiting and no need for client-side caching.
 
 ### Usage ⚙
 
+Every flag can also be set via the matching environment variable shown in parentheses.
+
 ```bash
-usage: minecraft-exporter [<flags>]
+Usage: minecraft_exporter [flags]
+
+Prometheus exporter for Minecraft Java Edition servers.
 
 Flags:
-  -h, --help                     Show context-sensitive help (also try --help-long and --help-man).
-      --web.config.file=""       [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication.
-      --web.telemetry-path="/metrics"  
-                                 Path under which to expose metrics.
-      --web.listen-address=":9150"  
-                                 Address to listen on for web interface and telemetry.
-      --web.disable-exporter-metrics  
-                                 Disabling collection of exporter metrics (like go_*)
-      --mc.config-path="config.yml"  
-                                 Path to YAML file with config.
-      --mc.world="/minecraft/world"  
-                                 Path the to world folder
-      --mc.rcon-address=":25575"  
-                                 Address of the Minecraft rcon.
-      --mc.rcon-password=MC.RCON-PASSWORD  
-                                 Password of the Minecraft rcon.
-      --mc.name-source="mojang"  How to retrieve names of players: offline, bukkit, mojang.
-      --mc.mod-server-stats=MC.MOD-SERVER-STATS  
-                                 Additional server stats for papermc, purpurmc, forge, neoforge, or fabric.
-      --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
-      --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
-      --version                  Show application version.
+  -h, --help                       Show context-sensitive help.
+      --web.listen-address=:9150,...
+                                   Addresses on which to expose metrics and web
+                                   interface. Repeatable for multiple addresses
+                                   ($WEB_LISTEN_ADDRESS).
+      --web.config.file=""         Path to configuration file that can enable TLS
+                                   or authentication. See:
+                                   https://github.com/prometheus/exporter-toolkit/blob/master/docs/web-configuration.md
+                                   ($WEB_CONFIG_FILE)
+      --web.systemd-socket         Use systemd socket activation listeners
+                                   instead of port listeners (Linux only)
+                                   ($WEB_SYSTEMD_SOCKET).
+      --web.telemetry-path="/metrics"
+                                   Path under which to expose metrics
+                                   ($WEB_TELEMETRY_PATH).
+      --web.disable-exporter-metrics
+                                   Disable collection of exporter metrics (like
+                                   go_*) ($WEB_DISABLED_EXPORTER_METRICS).
+      --mc.config-path="config.yml"
+                                   Path to YAML file with config
+                                   ($MC_CONFIG_PATH).
+      --mc.world="/minecraft/world"
+                                   Path to the world folder ($MC_WORLD).
+      --mc.rcon-address=":25575"   Address of the Minecraft rcon
+                                   ($MC_RCON_ADDRESS).
+      --mc.rcon-password=STRING    Password of the Minecraft rcon
+                                   ($MC_RCON_PASSWORD).
+      --mc.name-source="mojang"    How to retrieve names of players: offline,
+                                   bukkit, mojang ($MC_NAME_SOURCE).
+      --mc.mod-server-stats=STRING
+                                   Set server for additional stats (papermc,
+                                   purpurmc, forge, neoforge, or fabric)
+                                   ($MC_MOD_SERVER_STATS).
+      --log.level="info"           Log level. One of: [debug, info, warn, error]
+                                   ($LOG_LEVEL)
+      --log.format="logfmt"        Log format. One of: [logfmt, json]
+                                   ($LOG_FORMAT)
+  -V, --version                    Show version and exit.
 ```
 
 ### Config 🔧
@@ -162,17 +182,19 @@ Flags:
 You can override CLI flags using config file. By default, `config.yml` located in the current directory is used. Path to
 config file can be changed using `--config-path` CLI flag.
 
-| Key in config file         | Equivalent CLI flag              | ENV variable                  | Description                                                                       |
-|----------------------------|----------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
-| `metrics-path`             | `--web.telemetry-path`           | WEB_TELEMETRY_PATH            | Path under which to expose metrics.                                               |
-| `listen-address`           | `--web.listen-address`           | WEB_LISTEN_ADDRESS            | Address to listen on for web interface and telemetry.                             |
-| `disable-exporter-metrics` | `--web.disable-exporter-metrics` | WEB_DISABLED_EXPORTER_METRICS | Disabling collection of exporter metrics (like go_*)                              |
-| `web-config`               | `--mc.config-path`               | MC_CONFIG_PATH                | Path to YAML file with config for the mc variables                                |
-| `world-path`               | `--mc.world`                     | MC_WORLD                      | Path to the world folder.                                                         |
-| `rcon-address`             | `--mc.rcon-address`              | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                                                   |
-| `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                                                  |
-| `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang.                        |
-| `mod-server-stats`         | `--mc.mod-server-stats`          | MC_MOD_SERVER_STATS           | Set server for additional stats (papermc, purpurmc, neoforge, forge, or fabric()) |
+| Key in config file         | Equivalent CLI flag              | ENV variable                  | Description                                                           |
+|----------------------------|----------------------------------|-------------------------------|-----------------------------------------------------------------------|
+| `metrics-path`             | `--web.telemetry-path`           | WEB_TELEMETRY_PATH            | Path under which to expose metrics.                                   |
+| `listen-address`           | `--web.listen-address`           | WEB_LISTEN_ADDRESS            | Address to listen on for web interface and telemetry.                 |
+| `disable-exporter-metrics` | `--web.disable-exporter-metrics` | WEB_DISABLED_EXPORTER_METRICS | Disabling collection of exporter metrics (like go_*)                  |
+| `web-config`               | `--mc.config-path`               | MC_CONFIG_PATH                | Path to YAML file with config for the mc variables                    |
+| `world-path`               | `--mc.world`                     | MC_WORLD                      | Path to the world folder.                                             |
+| `rcon-address`             | `--mc.rcon-address`              | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                                       |
+| `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                                      |
+| `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang.            |
+| `mod-server-stats`         | `--mc.mod-server-stats`          | MC_MOD_SERVER_STATS           | Set server for additional stats (papermc, purpurmc, forge, neoforge, or fabric) |
+| _(flag only)_              | `--log.level`                    | LOG_LEVEL                     | Log level. One of: `debug`, `info`, `warn`, `error`.                  |
+| _(flag only)_              | `--log.format`                   | LOG_FORMAT                    | Log format. One of: `logfmt`, `json`.                                 |
 
 #### Disable exporter metrics
 
@@ -188,7 +210,7 @@ file. You should use keys that used by Minecraft to store players' stats.
 
 ```yaml
 disabled-metrics:
-  minecraft:mined: true # Disable "minecraft_blocks_mined_total" metric
+  minecraft:bred_animals: true # Disable "minecraft_animals_bred_total" metric
   minecraft:creeper: true # Disable all metrics related with creepers
   minecraft:custom: false # "false" values will be ignored, so this line does nothing
 listen-address: ':9151' # Change address of web server. "--web.listen-address" will be ignored if this line is present here
@@ -206,12 +228,12 @@ and hide or change the default grouping of players, then `minecraft-exporter` wi
 The exporter collects a number of statistics from the server (with example of the labels):
 
 ```bash
-# HELP minecraft_animals_breded_total The number of times the player bred two mobs
-# TYPE minecraft_animals_breded_total counter
-minecraft_animals_breded_total{player="ediri"} 0
-# HELP minecraft_bells_ringed_total TThe number of times the player rang a bell
-# TYPE minecraft_bells_ringed_total counter
-minecraft_bells_ringed_total{player="ediri"} 0
+# HELP minecraft_animals_bred_total The number of times the player bred two mobs
+# TYPE minecraft_animals_bred_total counter
+minecraft_animals_bred_total{player="ediri"} 0
+# HELP minecraft_bells_rung_total The number of times the player rang a bell
+# TYPE minecraft_bells_rung_total counter
+minecraft_bells_rung_total{player="ediri"} 0
 # HELP minecraft_blocks_mined_total Statistic related to the number of blocks a player mined
 # TYPE minecraft_blocks_mined_total counter
 minecraft_blocks_mined_total{block="birch_log",namespace="minecraft",player="ediri"} 2
@@ -265,9 +287,9 @@ minecraft_exporter_build_info{branch="",goversion="go1.16.5",revision="",version
 # HELP minecraft_filled_cauldrons_total The number of times the player filled a cauldron with a water bucket
 # TYPE minecraft_filled_cauldrons_total counter
 minecraft_filled_cauldrons_total{player="ediri"} 0
-# HELP minecraft_fishs_caught_total The number of times the player caught fish
-# TYPE minecraft_fishs_caught_total counter
-minecraft_fishs_caught_total{player="ediri"} 0
+# HELP minecraft_fish_caught_total The number of times the player caught fish
+# TYPE minecraft_fish_caught_total counter
+minecraft_fish_caught_total{player="ediri"} 0
 # HELP minecraft_games_left_total The number of times the player clicked "Save and quit to title"
 # TYPE minecraft_games_left_total counter
 minecraft_games_left_total{player="ediri"} 12
@@ -340,7 +362,7 @@ minecraft_killed_by_total{entity="zombie",namespace="minecraft",player="ediri"} 
 # TYPE minecraft_mobs_killed_total counter
 minecraft_mobs_killed_total{player="ediri"} 2
 # HELP minecraft_movement_meters_total The total distance the player traveled by different methods (ladders, boats, swimming etc.)
-# TYPE minecraft_movement_meters_total untyped
+# TYPE minecraft_movement_meters_total counter
 minecraft_movement_meters_total{means="aviate",player="ediri"} 0
 minecraft_movement_meters_total{means="boat",player="ediri"} 0
 minecraft_movement_meters_total{means="climb",player="ediri"} 0.16
@@ -374,17 +396,17 @@ minecraft_opened_enderchests_total{player="ediri"} 0
 # HELP minecraft_play_time_ticks_total The number of ticks the player has played
 # TYPE minecraft_play_time_ticks_total counter
 minecraft_play_time_ticks_total{player="ediri"} 0
-# HELP minecraft_player_online_total Players currently online (1 if player is online)
-# TYPE minecraft_player_online_total counter
-minecraft_player_online_total{player="ediri"} 1
-# HELP minecraft_player_stat_total Statistic related to the player: xp, current_xp, food_level, health, score, advancements
-# TYPE minecraft_player_stat_total gauge
-minecraft_player_stat_total{player="ediri",stat="advancements"} 53
-minecraft_player_stat_total{player="ediri",stat="current_xp"} 0
-minecraft_player_stat_total{player="ediri",stat="food_level"} 20
-minecraft_player_stat_total{player="ediri",stat="health"} 20
-minecraft_player_stat_total{player="ediri",stat="score"} 1
-minecraft_player_stat_total{player="ediri",stat="xp"} 1
+# HELP minecraft_player_online Players currently online (1 if player is online)
+# TYPE minecraft_player_online gauge
+minecraft_player_online{player="ediri"} 1
+# HELP minecraft_player_stat Statistic related to the player: xp, current_xp, food_level, health, score, advancements
+# TYPE minecraft_player_stat gauge
+minecraft_player_stat{player="ediri",stat="advancements"} 53
+minecraft_player_stat{player="ediri",stat="current_xp"} 0
+minecraft_player_stat{player="ediri",stat="food_level"} 20
+minecraft_player_stat{player="ediri",stat="health"} 20
+minecraft_player_stat{player="ediri",stat="score"} 1
+minecraft_player_stat{player="ediri",stat="xp"} 1
 # HELP minecraft_players_killed_total The number of times the player killed a player
 # TYPE minecraft_players_killed_total counter
 minecraft_players_killed_total{player="ediri"} 0
@@ -400,9 +422,9 @@ minecraft_shulker_boxes_cleaned_total{player="ediri"} 0
 # HELP minecraft_shulker_boxes_opened_total The number of times the player opened a shulker box
 # TYPE minecraft_shulker_boxes_opened_total counter
 minecraft_shulker_boxes_opened_total{player="ediri"} 0
-# HELP minecraft_sleep_in_bed_ticks_total The number of times the player slept in a bed
-# TYPE minecraft_sleep_in_bed_ticks_total counter
-minecraft_sleep_in_bed_ticks_total{player="ediri"} 0
+# HELP minecraft_sleep_in_bed_total The number of times the player slept in a bed
+# TYPE minecraft_sleep_in_bed_total counter
+minecraft_sleep_in_bed_total{player="ediri"} 0
 # HELP minecraft_sneak_time_ticks_total The number of ticks the player has spent sneaking
 # TYPE minecraft_sneak_time_ticks_total counter
 minecraft_sneak_time_ticks_total{player="ediri"} 0
@@ -418,9 +440,9 @@ minecraft_time_since_death_ticks_total{player="ediri"} 24217
 # HELP minecraft_time_since_rest_ticks_total The number of ticks since the player's last rest (used to spawn phantoms)
 # TYPE minecraft_time_since_rest_ticks_total counter
 minecraft_time_since_rest_ticks_total{player="ediri"} 24238
-# HELP minecraft_total_world_time_ticks_total The number of ticks the player has been in the world
-# TYPE minecraft_total_world_time_ticks_total counter
-minecraft_total_world_time_ticks_total{player="ediri"} 159695
+# HELP minecraft_world_time_ticks_total The number of ticks the player has been in the world
+# TYPE minecraft_world_time_ticks_total counter
+minecraft_world_time_ticks_total{player="ediri"} 159695
 # HELP minecraft_traded_with_villagers_total The number of times the player traded with a villager
 # TYPE minecraft_traded_with_villagers_total counter
 minecraft_traded_with_villagers_total{player="ediri"} 0
@@ -453,45 +475,45 @@ tick time.
 Additionally, you will get the total numbers of active entities on the server per dimension.
 
 ```bash
-# HELP minecraft_ticktime_total The overall mean tick time in the server
-# TYPE minecraft_ticktime_total counter
-minecraft_ticktime_total 0.38
-# HELP minecraft_tps_total The overall mean ticks per second in the server
-# TYPE minecraft_tps_total counter
-minecraft_tps_total 20
-# HELP minecraft_dimension_ticktime_total The mean tick time in a certain dimension
-# TYPE minecraft_dimension_ticktime_total counter
-minecraft_dimension_ticktime_total{dimension="overworld",namespace="minecraft"} 0.37
-minecraft_dimension_ticktime_total{dimension="the_end",namespace="minecraft"} 0.002
-minecraft_dimension_ticktime_total{dimension="the_nether",namespace="minecraft"} 0.004
-# HELP minecraft_dimension_tps_total The number of ticks per second in a certain dimension
-# TYPE minecraft_dimension_tps_total counter
-minecraft_dimension_tps_total{dimension="overworld",namespace="minecraft"} 20
-minecraft_dimension_tps_total{dimension="the_end",namespace="minecraft"} 20
-minecraft_dimension_tps_total{dimension="the_nether",namespace="minecraft"} 20
-# HELP minecraft_active_entity_total The number and type of an active entity on the server
-# TYPE minecraft_active_entity_total counter
-minecraft_active_entity_total{entity="bat",namespace="minecraft"} 15
-minecraft_active_entity_total{entity="bee",namespace="minecraft"} 7
-minecraft_active_entity_total{entity="chest_minecart",namespace="minecraft"} 15
-minecraft_active_entity_total{entity="chicken",namespace="minecraft"} 8
-minecraft_active_entity_total{entity="cod",namespace="minecraft"} 9
-minecraft_active_entity_total{entity="cow",namespace="minecraft"} 12
-minecraft_active_entity_total{entity="creeper",namespace="minecraft"} 12
-minecraft_active_entity_total{entity="dolphin",namespace="minecraft"} 1
-minecraft_active_entity_total{entity="drowned",namespace="minecraft"} 1
-minecraft_active_entity_total{entity="enderman",namespace="minecraft"} 6
-minecraft_active_entity_total{entity="falling_block",namespace="minecraft"} 1
-minecraft_active_entity_total{entity="item",namespace="minecraft"} 13
-minecraft_active_entity_total{entity="pig",namespace="minecraft"} 12
-minecraft_active_entity_total{entity="pufferfish",namespace="minecraft"} 6
-minecraft_active_entity_total{entity="rabbit",namespace="minecraft"} 1
-minecraft_active_entity_total{entity="sheep",namespace="minecraft"} 17
-minecraft_active_entity_total{entity="skeleton",namespace="minecraft"} 28
-minecraft_active_entity_total{entity="spider",namespace="minecraft"} 6
-minecraft_active_entity_total{entity="squid",namespace="minecraft"} 5
-minecraft_active_entity_total{entity="tropical_fish",namespace="minecraft"} 8
-minecraft_active_entity_total{entity="zombie",namespace="minecraft"} 19
+# HELP minecraft_ticktime_ms The overall mean tick time in the server (milliseconds)
+# TYPE minecraft_ticktime_ms gauge
+minecraft_ticktime_ms 0.38
+# HELP minecraft_tps The overall mean ticks per second in the server
+# TYPE minecraft_tps gauge
+minecraft_tps 20
+# HELP minecraft_dimension_ticktime_ms The mean tick time in a certain dimension (milliseconds)
+# TYPE minecraft_dimension_ticktime_ms gauge
+minecraft_dimension_ticktime_ms{dimension="overworld",namespace="minecraft"} 0.37
+minecraft_dimension_ticktime_ms{dimension="the_end",namespace="minecraft"} 0.002
+minecraft_dimension_ticktime_ms{dimension="the_nether",namespace="minecraft"} 0.004
+# HELP minecraft_dimension_tps The number of ticks per second in a certain dimension
+# TYPE minecraft_dimension_tps gauge
+minecraft_dimension_tps{dimension="overworld",namespace="minecraft"} 20
+minecraft_dimension_tps{dimension="the_end",namespace="minecraft"} 20
+minecraft_dimension_tps{dimension="the_nether",namespace="minecraft"} 20
+# HELP minecraft_active_entities The number and type of an active entity on the server
+# TYPE minecraft_active_entities gauge
+minecraft_active_entities{entity="bat",namespace="minecraft"} 15
+minecraft_active_entities{entity="bee",namespace="minecraft"} 7
+minecraft_active_entities{entity="chest_minecart",namespace="minecraft"} 15
+minecraft_active_entities{entity="chicken",namespace="minecraft"} 8
+minecraft_active_entities{entity="cod",namespace="minecraft"} 9
+minecraft_active_entities{entity="cow",namespace="minecraft"} 12
+minecraft_active_entities{entity="creeper",namespace="minecraft"} 12
+minecraft_active_entities{entity="dolphin",namespace="minecraft"} 1
+minecraft_active_entities{entity="drowned",namespace="minecraft"} 1
+minecraft_active_entities{entity="enderman",namespace="minecraft"} 6
+minecraft_active_entities{entity="falling_block",namespace="minecraft"} 1
+minecraft_active_entities{entity="item",namespace="minecraft"} 13
+minecraft_active_entities{entity="pig",namespace="minecraft"} 12
+minecraft_active_entities{entity="pufferfish",namespace="minecraft"} 6
+minecraft_active_entities{entity="rabbit",namespace="minecraft"} 1
+minecraft_active_entities{entity="sheep",namespace="minecraft"} 17
+minecraft_active_entities{entity="skeleton",namespace="minecraft"} 28
+minecraft_active_entities{entity="spider",namespace="minecraft"} 6
+minecraft_active_entities{entity="squid",namespace="minecraft"} 5
+minecraft_active_entities{entity="tropical_fish",namespace="minecraft"} 8
+minecraft_active_entities{entity="zombie",namespace="minecraft"} 19
 ```
 
 #### PaperMC
@@ -499,14 +521,14 @@ minecraft_active_entity_total{entity="zombie",namespace="minecraft"} 19
 `minecraft-exporter` exports the TPS from the last 1m, 5m, and 15m as histogram.
 
 ```bash
-# HELP minecraft_tps_total_bucket The number of ticks per second in PaperMC
-# TYPE minecraft_tps_total_bucket histogram
-minecraft_tps_total_bucket_bucket{le="1"} 20
-minecraft_tps_total_bucket_bucket{le="5"} 20
-minecraft_tps_total_bucket_bucket{le="15"} 20
-minecraft_tps_total_bucket_bucket{le="+Inf"} 3
-minecraft_tps_total_bucket_sum 60
-minecraft_tps_total_bucket_count 3
+# HELP minecraft_tps_bucket The ticks per second histogram in PaperMC/PurpurMC
+# TYPE minecraft_tps_bucket histogram
+minecraft_tps_bucket_bucket{le="1"} 20
+minecraft_tps_bucket_bucket{le="5"} 20
+minecraft_tps_bucket_bucket{le="15"} 20
+minecraft_tps_bucket_bucket{le="+Inf"} 3
+minecraft_tps_bucket_sum 60
+minecraft_tps_bucket_count 3
 ```
 
 #### PurpurMC
@@ -518,21 +540,21 @@ details on how to do this.
 `minecraft-exporter` exports the TPS from the last 5s (here written in 0.08 minute), 1m, 5m, and 15m as histogram.
 
 ```bash
-# HELP minecraft_tps_total_bucket The number of ticks per second in PaperMC
-# TYPE minecraft_tps_total_bucket histogram
-minecraft_tps_total_bucket_bucket{le="0.08"} 20
-minecraft_tps_total_bucket_bucket{le="1"} 20
-minecraft_tps_total_bucket_bucket{le="5"} 20
-minecraft_tps_total_bucket_bucket{le="15"} 20
-minecraft_tps_total_bucket_bucket{le="+Inf"} 4
-minecraft_tps_total_bucket_sum 80
-minecraft_tps_total_bucket_count 4
+# HELP minecraft_tps_bucket The ticks per second histogram in PaperMC/PurpurMC
+# TYPE minecraft_tps_bucket histogram
+minecraft_tps_bucket_bucket{le="0.08"} 20
+minecraft_tps_bucket_bucket{le="1"} 20
+minecraft_tps_bucket_bucket{le="5"} 20
+minecraft_tps_bucket_bucket{le="15"} 20
+minecraft_tps_bucket_bucket{le="+Inf"} 4
+minecraft_tps_bucket_sum 80
+minecraft_tps_bucket_count 4
 ```
 
 ### Libraries & Tools 🔥
 
 - https://github.com/Jeffail/gabs
-- https://github.com/alecthomas/kingpin
+- https://github.com/alecthomas/kong
 - https://github.com/Tnze/go-mc
 - https://github.com/prometheus/exporter-toolkit
 - https://github.com/goreleaser

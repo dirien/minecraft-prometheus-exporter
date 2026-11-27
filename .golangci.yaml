@@ -1,31 +1,47 @@
+version: "2"
 linters:
   enable:
+    - forbidigo
+    - goconst
+    - gocritic
+    - gocyclo
+    - gosec
+    - nolintlint
+    - revive
+    - tagliatelle
     - thelper
-    - gofumpt
     - tparallel
     - unconvert
     - unparam
     - wastedassign
-    - revive
-    - forbidigo
-    - tagliatelle
-    - typecheck
-    - goconst
-    - gocritic
-    - gocyclo
-    - govet
-    - errcheck
-    - gosec
+  settings:
+    forbidigo:
+      forbid:
+        - pattern: ioutil\.*
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+          yaml: goKebab
+        use-field-name: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofumpt
     - goimports
-    - nolintlint
-
-linters-settings:
-  forbidigo:
-    forbid:
-      - 'ioutil\.*'
-  tagliatelle:
-    case:
-      use-field-name: false
-      rules:
-        yaml: goKebab
-        json: snake
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
