@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/Jeffail/gabs/v2 v2.7.0
 	github.com/Tnze/go-mc v1.20.2
-	github.com/alecthomas/kong v1.15.0
+	github.com/alecthomas/kong v1.16.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.67.5
 	github.com/prometheus/exporter-toolkit v0.16.0
