@@ -49,6 +49,7 @@ The exporter implements `prometheus.Collector` with:
 The `--mc.name-source` flag controls how player UUIDs are mapped to usernames:
 - `mojang` (default): Uses playerdb.co API (requires online-mode server)
 - `bukkit`: Reads from NBT `bukkit.lastKnownName` field
+- `local`: Reads the server's `usercache.json` (`usernamecache.json` on Forge) under `--mc.root`, falling back to the UUID
 - `offline`: Uses raw UUID as player label
 
 ### Modded Server Support

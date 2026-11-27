@@ -46,6 +46,7 @@ type Exporter struct {
 	rcon               *RCON
 	logger             *slog.Logger
 	world              string
+	root               string
 	source             string
 	serverStats        string
 	disabledMetrics    map[string]bool
@@ -182,12 +183,13 @@ func createRCONClient(server, password string, logger *slog.Logger) *RCON {
 	}
 }
 
-func New(server, password, world, source, serverStats string, disabledMetrics map[string]bool, logger *slog.Logger) (*Exporter, error) {
+func New(server, password, world, root, source, serverStats string, disabledMetrics map[string]bool, logger *slog.Logger) (*Exporter, error) {
 	rcon := createRCONClient(server, password, logger)
 	return &Exporter{
 		rcon:               rcon,
 		logger:             logger,
 		world:              world,
+		root:               root,
 		source:             source,
 		serverStats:        serverStats,
 		playerOnlineRegexp: regexp.MustCompile(":(.*)"),
@@ -473,6 +475,44 @@ func New(server, password, world, source, serverStats string, disabledMetrics ma
 	}, nil
 }
 
+func (e *Exporter) getLocalNames() (map[string]string, error) {
+	if e.root == "" {
+		return nil, fmt.Errorf("error retrieving player info from server cache: root folder unknown")
+	}
+	f := "usercache.json"
+	if e.serverStats == Forge {
+		f = "usernamecache.json"
+	}
+
+	byteValue, err := os.ReadFile(filepath.Join(e.root, f))
+	if err != nil {
+		e.logger.Error("Failed to open user cache file", "err", err)
+		return nil, err
+	}
+	playerJSON, err := gabs.ParseJSON(byteValue)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]string)
+	if e.serverStats == Forge {
+		for uuid, name := range playerJSON.ChildrenMap() {
+			if n, ok := name.Data().(string); ok {
+				out[uuid] = n
+			}
+		}
+	} else {
+		for _, p := range playerJSON.Children() {
+			uuid, okID := p.Path("uuid").Data().(string)
+			name, okName := p.Path("name").Data().(string)
+			if okID && okName {
+				out[uuid] = name
+			}
+		}
+	}
+	return out, nil
+}
+
 // resolveWorldDir returns the world subdirectory for player files, supporting
 // both the legacy layout (playerdata, stats, advancements) and the layout
 // introduced in Minecraft Java 26.1 (players/data, players/stats,
@@ -487,6 +527,75 @@ func (e *Exporter) resolveWorldDir(newRel, legacyRel string) string {
 	return filepath.Join(e.world, legacyRel)
 }
 
+func (e *Exporter) resolvePlayer(id string, data PlayerData, localNames map[string]string) (PlayerDB, error) {
+	var player PlayerDB
+	switch e.source {
+	case "mojang":
+		req, err := http.NewRequest("GET", fmt.Sprintf("https://playerdb.co/api/player/minecraft/%s", id), nil)
+		if err != nil {
+			e.logger.Error("Failed to create request", "err", err)
+			return player, err
+		}
+		req.Header.Set("User-Agent", "github.com/dirien/minecraft-prometheus-exporter")
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			e.logger.Error("Failed to connect to playerdb.co", "err", err)
+			return player, err
+		}
+
+		if resp.StatusCode == 200 {
+			if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
+				e.logger.Error("Failed to connect decode response", "err", err)
+				return player, err
+			}
+		} else {
+			return player, fmt.Errorf("error retrieving player info from playerdb.co: status code %d", resp.StatusCode)
+		}
+
+		err = resp.Body.Close()
+		if err != nil {
+			return player, err
+		}
+	case "bukkit":
+		if data.Bukkit.LastKnownName == "" {
+			return player, fmt.Errorf("error retrieving player info from nbt: bukkit name is unknown")
+		}
+
+		player = PlayerDB{
+			Data: Data{
+				Player: Player{
+					RawID:    id,
+					Username: data.Bukkit.LastKnownName,
+				},
+			},
+		}
+	case "local":
+		name := localNames[id]
+		if name == "" {
+			name = id
+		}
+		player = PlayerDB{
+			Data: Data{
+				Player: Player{
+					RawID:    id,
+					Username: name,
+				},
+			},
+		}
+	default:
+		player = PlayerDB{
+			Data: Data{
+				Player: Player{
+					RawID:    id,
+					Username: id,
+				},
+			},
+		}
+	}
+	return player, nil
+}
+
 func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 	playerDataPath := e.resolveWorldDir("players/data", "playerdata")
 	statsDataPath := e.resolveWorldDir("players/stats", "stats")
@@ -495,6 +604,15 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 	if err != nil {
 		return err
 	}
+
+	var localNames map[string]string
+	if e.source == "local" {
+		localNames, err = e.getLocalNames()
+		if err != nil {
+			return err
+		}
+	}
+
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".dat" && !strings.Contains(file.Name(), "_cyclic") {
 			id := strings.TrimSuffix(file.Name(), ".dat")
@@ -522,57 +640,9 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 				return err
 			}
 
-			var player PlayerDB
-			switch e.source {
-			case "mojang":
-				req, err := http.NewRequest("GET", fmt.Sprintf("https://playerdb.co/api/player/minecraft/%s", id), nil)
-				if err != nil {
-					e.logger.Error("Failed to create request", "err", err)
-					return err
-				}
-				req.Header.Set("User-Agent", "github.com/dirien/minecraft-prometheus-exporter")
-				client := &http.Client{}
-				resp, err := client.Do(req)
-				if err != nil {
-					e.logger.Error("Failed to connect to playerdb.co", "err", err)
-					return err
-				}
-
-				if resp.StatusCode == 200 {
-					if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
-						e.logger.Error("Failed to connect decode response", "err", err)
-						return err
-					}
-				} else {
-					return fmt.Errorf("error retrieving player info from playerdb.co: status code %d", resp.StatusCode)
-				}
-
-				err = resp.Body.Close()
-				if err != nil {
-					return err
-				}
-			case "bukkit":
-				if data.Bukkit.LastKnownName == "" {
-					return fmt.Errorf("error retrieving player info from nbt: bukkit name is unknown")
-				}
-
-				player = PlayerDB{
-					Data: Data{
-						Player: Player{
-							RawID:    id,
-							Username: data.Bukkit.LastKnownName,
-						},
-					},
-				}
-			default:
-				player = PlayerDB{
-					Data: Data{
-						Player: Player{
-							RawID:    id,
-							Username: id,
-						},
-					},
-				}
+			player, err := e.resolvePlayer(id, data, localNames)
+			if err != nil {
+				return err
 			}
 
 			username := player.Data.Player.Username

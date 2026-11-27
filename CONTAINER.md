@@ -56,9 +56,10 @@ You could use the flags too, but I would not recommend it. I prefer to use the e
 | WEB_DISABLED_EXPORTER_METRICS | Disable collection of exporter metrics (like `go_*`).                    |
 | MC_CONFIG_PATH                | Path to YAML file with config for the mc variables.                      |
 | MC_WORLD                      | Path to the world folder.                                                |
+| MC_ROOT                       | Path to the server root folder (default `/minecraft`).                   |
 | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                                          |
 | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                                         |
-| MC_NAME_SOURCE                | How to retrieve names of players: `offline`, `bukkit`, `mojang`.         |
+| MC_NAME_SOURCE                | How to retrieve names of players: `offline`, `local`, `bukkit`, `mojang`. |
 | MC_MOD_SERVER_STATS           | Additional server stats for `papermc`, `purpurmc`, `forge`, `neoforge`, or `fabric`. |
 | LOG_LEVEL                     | Log level: `debug`, `info`, `warn`, `error` (default `info`).            |
 | LOG_FORMAT                    | Log format: `logfmt`, `json` (default `logfmt`).                         |

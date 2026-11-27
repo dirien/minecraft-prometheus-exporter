@@ -160,12 +160,13 @@ Flags:
                                    ($MC_CONFIG_PATH).
       --mc.world="/minecraft/world"
                                    Path to the world folder ($MC_WORLD).
+      --mc.root="/minecraft"       Path to the server root folder ($MC_ROOT).
       --mc.rcon-address=":25575"   Address of the Minecraft rcon
                                    ($MC_RCON_ADDRESS).
       --mc.rcon-password=STRING    Password of the Minecraft rcon
                                    ($MC_RCON_PASSWORD).
       --mc.name-source="mojang"    How to retrieve names of players: offline,
-                                   bukkit, mojang ($MC_NAME_SOURCE).
+                                   local, bukkit, mojang ($MC_NAME_SOURCE).
       --mc.mod-server-stats=STRING
                                    Set server for additional stats (papermc,
                                    purpurmc, forge, neoforge, or fabric)
@@ -189,9 +190,10 @@ config file can be changed using `--config-path` CLI flag.
 | `disable-exporter-metrics` | `--web.disable-exporter-metrics` | WEB_DISABLED_EXPORTER_METRICS | Disabling collection of exporter metrics (like go_*)                  |
 | `web-config`               | `--mc.config-path`               | MC_CONFIG_PATH                | Path to YAML file with config for the mc variables                    |
 | `world-path`               | `--mc.world`                     | MC_WORLD                      | Path to the world folder.                                             |
+| `server-root`              | `--mc.root`                      | MC_ROOT                       | Path to the server root folder.                                       |
 | `rcon-address`             | `--mc.rcon-address`              | MC_RCON_ADDRESS               | Address for the Minecraft RCON.                                       |
 | `rcon-password`            | `--mc.rcon-password`             | MC_RCON_PASSWORD              | Password for the Minecraft RCON.                                      |
-| `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, bukkit, mojang.            |
+| `name-source`              | `--mc.name-source`               | MC_NAME_SOURCE                | How to retrieve names of players: offline, local, bukkit, mojang.     |
 | `mod-server-stats`         | `--mc.mod-server-stats`          | MC_MOD_SERVER_STATS           | Set server for additional stats (papermc, purpurmc, forge, neoforge, or fabric) |
 | _(flag only)_              | `--log.level`                    | LOG_LEVEL                     | Log level. One of: `debug`, `info`, `warn`, `error`.                  |
 | _(flag only)_              | `--log.format`                   | LOG_FORMAT                    | Log format. One of: `logfmt`, `json`.                                 |

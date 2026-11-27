@@ -55,7 +55,7 @@ func Run() {
 	logger.Info("Build context", "build", version.BuildContext())
 
 	prometheus.MustRegister(v2.NewCollector("minecraft_exporter"))
-	exp, err := exporter.New(cfg.RconAddress, cfg.RconPassword, cfg.WorldPath, cfg.NameSource, cfg.ModServerStats, cfg.DisabledMetrics, logger)
+	exp, err := exporter.New(cfg.RconAddress, cfg.RconPassword, cfg.WorldPath, cfg.ServerRoot, cfg.NameSource, cfg.ModServerStats, cfg.DisabledMetrics, logger)
 	if err != nil {
 		logger.Error("Failed to create exporter", "err", err)
 	}

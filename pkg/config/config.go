@@ -25,9 +25,10 @@ type Config struct {
 
 	ConfigPath     string `kong:"name='mc.config-path',env='MC_CONFIG_PATH',default='config.yml',help='Path to YAML file with config.'" yaml:"-"`
 	WorldPath      string `kong:"name='mc.world',env='MC_WORLD',default='/minecraft/world',help='Path to the world folder.'" yaml:"world-path"`
+	ServerRoot     string `kong:"name='mc.root',env='MC_ROOT',default='/minecraft',help='Path to the server root folder.'" yaml:"server-root"`
 	RconAddress    string `kong:"name='mc.rcon-address',env='MC_RCON_ADDRESS',default=':25575',help='Address of the Minecraft rcon.'" yaml:"rcon-address"`
 	RconPassword   string `kong:"name='mc.rcon-password',env='MC_RCON_PASSWORD',help='Password of the Minecraft rcon.'" yaml:"rcon-password"`
-	NameSource     string `kong:"name='mc.name-source',env='MC_NAME_SOURCE',default='mojang',help='How to retrieve names of players: offline, bukkit, mojang.'" yaml:"name-source"`
+	NameSource     string `kong:"name='mc.name-source',env='MC_NAME_SOURCE',default='mojang',help='How to retrieve names of players: offline, local, bukkit, mojang.'" yaml:"name-source"`
 	ModServerStats string `kong:"name='mc.mod-server-stats',env='MC_MOD_SERVER_STATS',help='Set server for additional stats (papermc, purpurmc, forge, neoforge, or fabric).'" yaml:"mod-server-stats"`
 
 	LogLevel  string `kong:"name='log.level',env='LOG_LEVEL',default='info',help='Log level. One of: [debug, info, warn, error]'" yaml:"-"`
