@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,27 +17,34 @@ import (
 	"github.com/Jeffail/gabs/v2"
 	"github.com/Tnze/go-mc/nbt"
 	mcnet "github.com/Tnze/go-mc/net"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	Namespace                  = "minecraft"
-	Forge                      = "forge"
-	PaperMC                    = "papermc"
-	PurpurMC                   = "purpurmc"
-	rconListCommand            = "list"
-	rconForgeTpsCommand        = "forge tps"
-	rconForgeEntityListCommand = "forge entity list"
-	rconTpsCommand             = "tps"
+	Namespace                     = "minecraft"
+	Forge                         = "forge"
+	NeoForge                      = "neoforge"
+	PaperMC                       = "papermc"
+	Fabric                        = "fabric"
+	PurpurMC                      = "purpurmc"
+	rconListCommand               = "list"
+	rconForgeTpsCommand           = "forge tps"
+	rconForgeEntityListCommand    = "forge entity list"
+	rconNeoForgeTpsCommand        = "neoforge tps"
+	rconNeoForgeEntityListCommand = "neoforge entity list"
+	rconTpsCommand                = "tps"
+	rconFabricTpsCommand          = "fabric tps"
+
+	labelPlayer    = "player"
+	labelNamespace = "namespace"
+	labelEntity    = "entity"
 )
 
 // See for all details on the statistics of Minecraft https://minecraft.fandom.com/wiki/Statistics
 
 type Exporter struct {
 	rcon               *RCON
-	logger             log.Logger
+	logger             *slog.Logger
 	world              string
 	root               string
 	source             string
@@ -45,9 +53,11 @@ type Exporter struct {
 	playerOnlineRegexp *regexp.Regexp
 	overallRegexp      *regexp.Regexp
 	dimensionRegexp    *regexp.Regexp
+	neoForgeTpsRegexp  *regexp.Regexp
 	entityListRegexp   *regexp.Regexp
 	paperMcTpsRegexp   *regexp.Regexp
 	purpurMcTpsRegexp  *regexp.Regexp
+
 	// via advancements
 	// playerAdvancements *prometheus.Desc
 
@@ -110,9 +120,33 @@ type Exporter struct {
 	waterTakenFromCauldron *prometheus.Desc
 }
 
+// PlayerDB represents the structure of a player
+type PlayerDB struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Data    Data   `json:"data"`
+	Success bool   `json:"success"`
+}
+type Meta struct {
+	CachedAt int `json:"cached_at"`
+}
+type Properties struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Signature string `json:"signature"`
+}
 type Player struct {
-	ID   string `json:"uuid"`
-	Name string `json:"username"`
+	Meta        Meta         `json:"meta"`
+	Username    string       `json:"username"`
+	ID          string       `json:"id"`
+	RawID       string       `json:"raw_id"`
+	Avatar      string       `json:"avatar"`
+	SkinTexture string       `json:"skin_texture"`
+	Properties  []Properties `json:"properties"`
+	NameHistory []any        `json:"name_history"`
+}
+type Data struct {
+	Player Player `json:"player"`
 }
 
 type PlayerData struct {
@@ -132,13 +166,13 @@ type RCON struct {
 	rconPassword string
 }
 
-func createRCONClient(server, password string, logger log.Logger) *RCON {
+func createRCONClient(server, password string, logger *slog.Logger) *RCON {
 	var rconClient mcnet.RCONClientConn
 	if len(password) > 0 {
 		var err error
 		rconClient, err = mcnet.DialRCON(server, password)
 		if err != nil {
-			level.Error(logger).Log("msg", "failed to connect to RCON", "err", err) //nolint:errcheck
+			logger.Error("failed to connect to RCON", "err", err)
 			rconClient = nil
 		}
 	}
@@ -149,7 +183,7 @@ func createRCONClient(server, password string, logger log.Logger) *RCON {
 	}
 }
 
-func New(server, password, world, root, source, serverStats string, disabledMetrics map[string]bool, logger log.Logger) (*Exporter, error) {
+func New(server, password, world, root, source, serverStats string, disabledMetrics map[string]bool, logger *slog.Logger) (*Exporter, error) {
 	rcon := createRCONClient(server, password, logger)
 	return &Exporter{
 		rcon:               rcon,
@@ -162,278 +196,279 @@ func New(server, password, world, root, source, serverStats string, disabledMetr
 		overallRegexp:      regexp.MustCompile(`Overall\s*:\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		dimensionRegexp:    regexp.MustCompile(`Dim\s(.*):(.*)\s\(.*\):\sMean tick time:\s(\d*.\d*)\sms\.\sMean\sTPS:\s(\d*.\d*)`),
 		entityListRegexp:   regexp.MustCompile(`(\d+):\s(.*):(.*)`),
+		neoForgeTpsRegexp:  regexp.MustCompile(`(.+):\s([\d.]*)\sTPS\s\(([\d.]*)\sms\/tick\)`),
 		paperMcTpsRegexp:   regexp.MustCompile(`§.TPS from last\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
 		purpurMcTpsRegexp:  regexp.MustCompile(`§.TPS from last\s5s,\s1m,\s5m,\s15m:\s§.(\d.*),\s§.(\d.*),\s§.(\d.*),\s§.(\d.*)`),
 		disabledMetrics:    disabledMetrics,
 		playerOnline: prometheus.NewDesc(
-			prometheus.BuildFQName(Namespace, "", "player_online_total"),
+			prometheus.BuildFQName(Namespace, "", "player_online"),
 			"Players currently online (1 if player is online)",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
-		playerStat: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_stat_total"),
+		playerStat: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "player_stat"),
 			"Statistic related to the player: xp, current_xp, food_level, health, score, advancements",
-			[]string{"player", "stat"},
+			[]string{labelPlayer, "stat"},
 			nil,
 		),
 		blocksMined: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "blocks_mined_total"),
 			"Statistic related to the number of blocks a player mined",
-			[]string{"player", "namespace", "block"},
+			[]string{labelPlayer, labelNamespace, "block"},
 			nil,
 		),
 		entitiesKilled: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "entities_killed_total"),
 			"Statistics related to the number of entities a player killed",
-			[]string{"player", "namespace", "entity"},
+			[]string{labelPlayer, labelNamespace, labelEntity},
 			nil,
 		),
 		playerKilledBy: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "killed_by_total"),
 			"Statistics related to the number of times a player was killed by entities",
-			[]string{"player", "namespace", "entity"},
+			[]string{labelPlayer, labelNamespace, labelEntity},
 			nil,
 		),
 		item: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "item_actions_total"),
 			"Statistics related to items and the number of times they were used, picked up, dropped or broken",
-			[]string{"player", "namespace", "entity", "action"},
+			[]string{labelPlayer, labelNamespace, labelEntity, "action"},
 			nil,
 		),
-		animalsBred: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "animals_breded_total"),
+		animalsBred: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "animals_bred_total"),
 			"The number of times the player bred two mobs",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		cleanArmor: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "cleaned_armors_total"),
 			"The number of times the player washed dyed leather armor with a cauldron",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		//------
 		cleanBanner: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "cleaned_banner_total"),
 			"The number of times the player washed a banner with a cauldron",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		openBarrel: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "opened_barrels_total"),
 			"The number of times the player opened a barrel",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
-		bellRing: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "bells_ringed_total"),
+		bellRing: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "bells_rung_total"),
 			"The number of times the player rang a bell",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		eatCakeSlice: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "cake_slices_eaten_total"),
 			"The number of times the player ate cake",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		fillCauldron: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "filled_cauldrons_total"),
 			"The number of times the player filled a cauldron with a water bucket",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		openChest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "opened_chests_total"),
 			"The number of times the player opened a chest",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		damageDealt: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_dealt_total"),
 			"The amount of damage the player has dealt of different types (in tenths of 1♥)",
-			[]string{"player", "type"},
+			[]string{labelPlayer, "type"},
 			nil,
 		),
 
 		damageReceived: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "damage_received_total"),
 			"The amount of damage the player has taken of different types (in tenths of 1♥)",
-			[]string{"player", "type"},
+			[]string{labelPlayer, "type"},
 			nil,
 		),
 
 		minecraftMovement: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "movement_meters_total"),
 			"The total distance the player traveled by different methods (ladders, boats, swimming etc.)",
-			[]string{"player", "means"},
+			[]string{labelPlayer, "means"},
 			nil,
 		),
 		inspected: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "inspected_total"),
 			"The number of times the player inspected a dispenser, hopper or dropper",
-			[]string{"player", "entity"},
+			[]string{labelPlayer, labelEntity},
 			nil,
 		),
 		openEnderChest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "opened_enderchests_total"),
 			"The number of times the player opened an ender chest",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
-		fishCaught: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "fishs_caught_total"),
+		fishCaught: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "fish_caught_total"),
 			"The number of times the player caught fish",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		leaveGame: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "games_left_total"),
 			"The number of times the player clicked \"Save and quit to title\"",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		interaction: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "interactions_total"),
 			"The number of times the player interacted with different entities",
-			[]string{"player", "entity"},
+			[]string{labelPlayer, labelEntity},
 			nil,
 		),
 		itemsDropped: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "items_dropped_total"),
 			"The number of items the player dropped",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		itemsEntchanted: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "items_enchanted_total"),
 			"The number of items the player enchanted",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		jump: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "jumps_total"),
 			"The number of times the player jumped",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		mobKills: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "mobs_killed_total"),
 			"The number of mobs the player killed",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		musicDiscsPlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "records_played_total"),
 			"The number of times the player played a music disc on a jukebox",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		noteBlocksPlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "noteblocks_played_total"),
 			"The number of times the player hit a note block",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		noteBlocksTuned: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "noteblocks_tuned_total"),
 			"The number of times the player tuned a note block",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		numberOfDeaths: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "deaths_total"),
 			"The number of times the player died",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		plantsPotted: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "pots_flowered_total"),
 			"The number of times the player planted a plant in a flower pot",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		playerKills: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "players_killed_total"),
 			"The number of times the player killed a player",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		raidsTriggered: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "triggered_raids_total"),
 			"The number of times the player triggered a raid",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		raidsWon: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "won_raids_total"),
 			"The number of times the player won a raid",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		shulkerBoxCleaned: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "shulker_boxes_cleaned_total"),
 			"The number of times the player washed a shulker box with a cauldron",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		shulkerBoxesOpened: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "shulker_boxes_opened_total"),
 			"The number of times the player opened a shulker box",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		sneakTime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sneak_time_ticks_total"),
 			"The number of ticks the player has spent sneaking",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		talkedToVillager: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "talked_to_villagers_total"),
 			"The number of times the player spoke with a villager (opened the trading GUI)",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		targetsHit: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "targets_hit_total"),
 			"The number of times the player shot a target block",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		timePlayed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "play_time_ticks_total"),
 			"The number of ticks the player has played",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		timeSinceDeath: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "time_since_death_ticks_total"),
 			"The number of ticks since the player's last death",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		timeSinceLastRest: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "time_since_rest_ticks_total"),
 			"The number of ticks since the player's last rest (this is used to spawn phantoms)",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
-		timesWorldOpen: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "total_world_time_ticks_total"),
+		timesWorldOpen: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "world_time_ticks_total"),
 			"The number of ticks the player has been in the world",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
-		timesSleptInBed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sleep_in_bed_ticks_total"),
+		timesSleptInBed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "sleep_in_bed_total"),
 			"The number of times the player slept in a bed",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		tradedWithVillagers: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "traded_with_villagers_total"),
 			"The number of times the player traded with a villager",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		trappedChestsTriggered: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "triggered_trapped_chests_total"),
 			"The number of times the player opened a trapped chest",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 		waterTakenFromCauldron: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "used_cauldrons_total"),
 			"The number of times the player took water from cauldrons with glass bottles",
-			[]string{"player"},
+			[]string{labelPlayer},
 			nil,
 		),
 
-		dimTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_tps_total"),
-			"The number of ticks per second in a certain dimension",
-			[]string{"namespace", "dimension"},
+		dimTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_tps"),
+			"The ticks per second in a certain dimension",
+			[]string{labelNamespace, "dimension"},
 			nil,
 		),
 
-		dimTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_ticktime_total"),
-			"The mean tick time in a certain dimension",
-			[]string{"namespace", "dimension"},
+		dimTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "dimension_ticktime_ms"),
+			"The mean tick time in milliseconds in a certain dimension",
+			[]string{labelNamespace, "dimension"},
 			nil,
 		),
-		overallTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps_total"),
+		overallTps: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps"),
 			"The overall mean ticks per second in the server",
 			[]string{},
 			nil,
 		),
-		overallTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "ticktime_total"),
-			"The overall mean tick time in the server",
+		overallTicktime: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "ticktime_ms"),
+			"The overall mean tick time in milliseconds in the server",
 			[]string{},
 			nil,
 		),
-		entities: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "active_entity_total"),
+		entities: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "active_entities"),
 			"The number and type of an active entity on the server",
-			[]string{"namespace", "entity"},
+			[]string{labelNamespace, labelEntity},
 			nil,
 		),
 
-		tpsPaperMC: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps_total_bucket"),
-			"The number of ticks per second in PaperMC",
+		tpsPaperMC: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "", "tps_bucket"),
+			"The ticks per second histogram in PaperMC/PurpurMC",
 			[]string{},
 			nil,
 		),
@@ -444,16 +479,15 @@ func (e *Exporter) getLocalNames() (map[string]string, error) {
 	if e.root == "" {
 		return nil, fmt.Errorf("error retrieving player info from server cache: root folder unknown")
 	}
-	var f string
+	f := "usercache.json"
 	if e.serverStats == Forge {
-		f = "/usernamecache.json"
-	} else {
-		f = "/usercache.json"
+		f = "usernamecache.json"
 	}
 
-	byteValue, err := os.ReadFile(e.root + f)
+	byteValue, err := os.ReadFile(filepath.Join(e.root, f))
 	if err != nil {
-		return nil, level.Error(e.logger).Log("msg", "Failed to open user cache file", "err", err)
+		e.logger.Error("Failed to open user cache file", "err", err)
+		return nil, err
 	}
 	playerJSON, err := gabs.ParseJSON(byteValue)
 	if err != nil {
@@ -463,19 +497,110 @@ func (e *Exporter) getLocalNames() (map[string]string, error) {
 	out := make(map[string]string)
 	if e.serverStats == Forge {
 		for uuid, name := range playerJSON.ChildrenMap() {
-			out[uuid] = name.Data().(string)
+			if n, ok := name.Data().(string); ok {
+				out[uuid] = n
+			}
 		}
 	} else {
 		for _, p := range playerJSON.Children() {
-			u := p.ChildrenMap()
-			out[u["uuid"].Data().(string)] = u["name"].Data().(string)
+			uuid, okID := p.Path("uuid").Data().(string)
+			name, okName := p.Path("name").Data().(string)
+			if okID && okName {
+				out[uuid] = name
+			}
 		}
 	}
 	return out, nil
 }
 
+// resolveWorldDir returns the world subdirectory for player files, supporting
+// both the legacy layout (playerdata, stats, advancements) and the layout
+// introduced in Minecraft Java 26.1 (players/data, players/stats,
+// players/advancements). The new layout is preferred when present; otherwise it
+// falls back to the legacy path, keeping existing setups working without any
+// configuration. See https://github.com/dirien/minecraft-prometheus-exporter/issues/1269
+func (e *Exporter) resolveWorldDir(newRel, legacyRel string) string {
+	newPath := filepath.Join(e.world, newRel)
+	if _, err := os.Stat(newPath); err == nil {
+		return newPath
+	}
+	return filepath.Join(e.world, legacyRel)
+}
+
+func (e *Exporter) resolvePlayer(id string, data PlayerData, localNames map[string]string) (PlayerDB, error) {
+	var player PlayerDB
+	switch e.source {
+	case "mojang":
+		req, err := http.NewRequest("GET", fmt.Sprintf("https://playerdb.co/api/player/minecraft/%s", id), nil)
+		if err != nil {
+			e.logger.Error("Failed to create request", "err", err)
+			return player, err
+		}
+		req.Header.Set("User-Agent", "github.com/dirien/minecraft-prometheus-exporter")
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			e.logger.Error("Failed to connect to playerdb.co", "err", err)
+			return player, err
+		}
+
+		if resp.StatusCode == 200 {
+			if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
+				e.logger.Error("Failed to connect decode response", "err", err)
+				return player, err
+			}
+		} else {
+			return player, fmt.Errorf("error retrieving player info from playerdb.co: status code %d", resp.StatusCode)
+		}
+
+		err = resp.Body.Close()
+		if err != nil {
+			return player, err
+		}
+	case "bukkit":
+		if data.Bukkit.LastKnownName == "" {
+			return player, fmt.Errorf("error retrieving player info from nbt: bukkit name is unknown")
+		}
+
+		player = PlayerDB{
+			Data: Data{
+				Player: Player{
+					RawID:    id,
+					Username: data.Bukkit.LastKnownName,
+				},
+			},
+		}
+	case "local":
+		name := localNames[id]
+		if name == "" {
+			name = id
+		}
+		player = PlayerDB{
+			Data: Data{
+				Player: Player{
+					RawID:    id,
+					Username: name,
+				},
+			},
+		}
+	default:
+		player = PlayerDB{
+			Data: Data{
+				Player: Player{
+					RawID:    id,
+					Username: id,
+				},
+			},
+		}
+	}
+	return player, nil
+}
+
 func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
-	files, err := os.ReadDir(e.world + "/playerdata")
+	playerDataPath := e.resolveWorldDir("players/data", "playerdata")
+	statsDataPath := e.resolveWorldDir("players/stats", "stats")
+
+	files, err := os.ReadDir(playerDataPath)
 	if err != nil {
 		return err
 	}
@@ -491,7 +616,7 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".dat" && !strings.Contains(file.Name(), "_cyclic") {
 			id := strings.TrimSuffix(file.Name(), ".dat")
-			f, err := os.Open(e.world + "/playerdata/" + file.Name())
+			f, err := os.Open(playerDataPath + "/" + file.Name())
 			if err != nil {
 				return err
 			}
@@ -515,105 +640,66 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 				return err
 			}
 
-			var player Player
-			switch e.source {
-			case "mojang":
-				resp, err := http.Get(fmt.Sprintf("https://api.ashcon.app/mojang/v2/user/%s", id))
-				if err != nil {
-					return level.Error(e.logger).Log("msg", "Failed to connect to api.ashcon.app", "err", err)
-				}
-
-				if resp.StatusCode == 200 {
-					if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
-						return level.Error(e.logger).Log("msg", "Failed to connect decode response", "err", err)
-					}
-				} else {
-					return fmt.Errorf("error retrieving player info from api.ashcon.app: %w", fmt.Errorf(fmt.Sprintf("Status Code: %d", resp.StatusCode)))
-				}
-
-				err = resp.Body.Close()
-				if err != nil {
-					return err
-				}
-			case "bukkit":
-				if data.Bukkit.LastKnownName == "" {
-					return fmt.Errorf("error retrieving player info from nbt: bukkit name is unknown")
-				}
-
-				player = Player{
-					ID:   id,
-					Name: data.Bukkit.LastKnownName,
-				}
-			case "local":
-				name := localNames[id]
-				if name == "" {
-					name = id
-				}
-				player = Player{
-					ID:   id,
-					Name: name,
-				}
-			default:
-				player = Player{
-					ID:   id,
-					Name: id,
-				}
+			player, err := e.resolvePlayer(id, data, localNames)
+			if err != nil {
+				return err
 			}
 
-			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpTotal), player.Name, "xp")
-			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpLevel), player.Name, "current_xp")
-			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.Score), player.Name, "score")
-			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.FoodLevel), player.Name, "food_level")
+			username := player.Data.Player.Username
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpTotal), username, "xp")
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.XpLevel), username, "current_xp")
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.Score), username, "score")
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, float64(data.FoodLevel), username, "food_level")
 			health, err := strconv.ParseFloat(fmt.Sprint(data.Health), 64)
 			if err != nil {
 				return err
 			}
-			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, health, player.Name, "health")
+			ch <- prometheus.MustNewConstMetric(e.playerStat, prometheus.GaugeValue, health, username, "health")
 
-			err = e.advancements(id, ch, player.Name)
+			err = e.advancements(id, ch, username)
 			if err != nil {
 				return err
 			}
 
-			byteValue, err := os.ReadFile(e.world + "/stats/" + id + ".json")
+			byteValue, err := os.ReadFile(statsDataPath + "/" + id + ".json")
 			if err != nil {
-				level.Debug(e.logger).Log("msg", fmt.Sprintf("Stats file for player %s not exist", player.Name)) //nolint:errcheck
+				e.logger.Error(fmt.Sprintf("Stats file for player %s does not exist", username))
 			} else {
 				jsonParsed, err := gabs.ParseJSON(byteValue)
 				if err != nil {
 					return err
 				}
 
-				e.playerStats(jsonParsed, e.blocksMined, "minecraft:mined", ch, player.Name, "")
-				e.playerStats(jsonParsed, e.entitiesKilled, "minecraft:killed", ch, player.Name, "")
-				e.playerStats(jsonParsed, e.playerKilledBy, "minecraft:killed_by", ch, player.Name, "")
+				e.playerStats(jsonParsed, e.blocksMined, "minecraft:mined", ch, username, "")
+				e.playerStats(jsonParsed, e.entitiesKilled, "minecraft:killed", ch, username, "")
+				e.playerStats(jsonParsed, e.playerKilledBy, "minecraft:killed_by", ch, username, "")
 
 				actionTypes := []string{"crafted", "used", "picked_up", "dropped", "broken"}
 				for _, actionType := range actionTypes {
 					field := fmt.Sprintf("minecraft:%s", actionType)
-					e.playerStats(jsonParsed, e.item, field, ch, player.Name, actionType)
+					e.playerStats(jsonParsed, e.item, field, ch, username, actionType)
 				}
 
-				e.playerStatsCustom(jsonParsed, e.animalsBred, "stats.minecraft:custom.minecraft:animals_bred", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.cleanArmor, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.cleanBanner, "stats.minecraft:custom.minecraft:clean_armor", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.animalsBred, "stats.minecraft:custom.minecraft:animals_bred", ch, username)
+				e.playerStatsCustom(jsonParsed, e.cleanArmor, "stats.minecraft:custom.minecraft:clean_armor", ch, username)
+				e.playerStatsCustom(jsonParsed, e.cleanBanner, "stats.minecraft:custom.minecraft:clean_banner", ch, username)
 
-				e.playerStatsCustom(jsonParsed, e.openBarrel, "stats.minecraft:custom.minecraft:open_barrel", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.bellRing, "stats.minecraft:custom.minecraft:bell_ring", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.eatCakeSlice, "stats.minecraft:custom.minecraft:eat_cake_slice", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.fillCauldron, "stats.minecraft:custom.minecraft:fill_cauldron", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.openChest, "stats.minecraft:custom.minecraft:open_chest", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.openBarrel, "stats.minecraft:custom.minecraft:open_barrel", ch, username)
+				e.playerStatsCustom(jsonParsed, e.bellRing, "stats.minecraft:custom.minecraft:bell_ring", ch, username)
+				e.playerStatsCustom(jsonParsed, e.eatCakeSlice, "stats.minecraft:custom.minecraft:eat_cake_slice", ch, username)
+				e.playerStatsCustom(jsonParsed, e.fillCauldron, "stats.minecraft:custom.minecraft:fill_cauldron", ch, username)
+				e.playerStatsCustom(jsonParsed, e.openChest, "stats.minecraft:custom.minecraft:open_chest", ch, username)
 
 				damageReceivedTypes := []string{"absorbed", "blocked_by_shield", "resisted", "taken"}
 				for _, damageReceivedType := range damageReceivedTypes {
 					field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", damageReceivedType)
-					e.playerStatsCustomWithType(jsonParsed, e.damageReceived, field, ch, player.Name, damageReceivedType)
+					e.playerStatsCustomWithType(jsonParsed, e.damageReceived, field, ch, username, damageReceivedType)
 				}
 
 				damageDealtTypes := map[string]string{"dealt": "hit", "dealt_absorbed": "absorbed", "dealt_resisted": "resisted"}
 				for key, damageDealtType := range damageDealtTypes {
 					field := fmt.Sprintf("stats.minecraft:custom.minecraft:damage_%s", key)
-					e.playerStatsCustomWithType(jsonParsed, e.damageDealt, field, ch, player.Name, damageDealtType)
+					e.playerStatsCustomWithType(jsonParsed, e.damageDealt, field, ch, username, damageDealtType)
 				}
 
 				movementTypes := []string{
@@ -622,18 +708,18 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 				}
 				for _, movementType := range movementTypes {
 					field := fmt.Sprintf("stats.minecraft:custom.minecraft:%s_one_cm", movementType)
-					e.playerStatsCustomMovement(jsonParsed, e.minecraftMovement, field, ch, player.Name, movementType)
+					e.playerStatsCustomMovement(jsonParsed, e.minecraftMovement, field, ch, username, movementType)
 				}
 
 				inspectionTypes := []string{"dispenser", "dropper", "hopper"}
 				for _, inspectionType := range inspectionTypes {
 					field := fmt.Sprintf("stats.minecraft:custom.minecraft:inspect_%s", inspectionType)
-					e.playerStatsCustomWithType(jsonParsed, e.inspected, field, ch, player.Name, inspectionType)
+					e.playerStatsCustomWithType(jsonParsed, e.inspected, field, ch, username, inspectionType)
 				}
 
-				e.playerStatsCustom(jsonParsed, e.openEnderChest, "stats.minecraft:custom.minecraft:open_enderchest", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.fishCaught, "stats.minecraft:custom.minecraft:fish_caught", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.leaveGame, "stats.minecraft:custom.minecraft:leave_game", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.openEnderChest, "stats.minecraft:custom.minecraft:open_enderchest", ch, username)
+				e.playerStatsCustom(jsonParsed, e.fishCaught, "stats.minecraft:custom.minecraft:fish_caught", ch, username)
+				e.playerStatsCustom(jsonParsed, e.leaveGame, "stats.minecraft:custom.minecraft:leave_game", ch, username)
 
 				interactionTypes := []string{
 					"anvil", "beacon", "blast_furnace", "brewingstand", "campfire", "cartography_table",
@@ -641,40 +727,40 @@ func (e *Exporter) getPlayerStats(ch chan<- prometheus.Metric) error {
 				}
 				for _, interactionType := range interactionTypes {
 					field := fmt.Sprintf("stats.minecraft:custom.minecraft:interact_with_%s", interactionType)
-					e.playerStatsCustomWithType(jsonParsed, e.interaction, field, ch, player.Name, interactionType)
+					e.playerStatsCustomWithType(jsonParsed, e.interaction, field, ch, username, interactionType)
 				}
 
-				e.playerStatsCustom(jsonParsed, e.itemsDropped, "stats.minecraft:custom.minecraft:drop", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.itemsEntchanted, "stats.minecraft:custom.minecraft:enchant_item", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.jump, "stats.minecraft:custom.minecraft:jump", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.mobKills, "stats.minecraft:custom.minecraft:mob_kills", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.musicDiscsPlayed, "stats.minecraft:custom.minecraft:play_record", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.noteBlocksPlayed, "stats.minecraft:custom.minecraft:play_noteblockr", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.noteBlocksTuned, "stats.minecraft:custom.minecraft:tune_noteblock", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.numberOfDeaths, "stats.minecraft:custom.minecraft:deaths", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.plantsPotted, "stats.minecraft:custom.minecraft:pot_flower", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.playerKills, "stats.minecraft:custom.minecraft:player_kills", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.raidsTriggered, "stats.minecraft:custom.minecraft:raid_trigger", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.raidsWon, "stats.minecraft:custom.minecraft:raid_win", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.shulkerBoxCleaned, "stats.minecraft:custom.minecraft:clean_shulker_box", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.shulkerBoxesOpened, "stats.minecraft:custom.minecraft:open_shulker_box", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.sneakTime, "stats.minecraft:custom.minecraft:sneak_time", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.talkedToVillager, "stats.minecraft:custom.minecraft:talked_to_villager", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.targetsHit, "stats.minecraft:custom.minecraft:target_hit", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.itemsDropped, "stats.minecraft:custom.minecraft:drop", ch, username)
+				e.playerStatsCustom(jsonParsed, e.itemsEntchanted, "stats.minecraft:custom.minecraft:enchant_item", ch, username)
+				e.playerStatsCustom(jsonParsed, e.jump, "stats.minecraft:custom.minecraft:jump", ch, username)
+				e.playerStatsCustom(jsonParsed, e.mobKills, "stats.minecraft:custom.minecraft:mob_kills", ch, username)
+				e.playerStatsCustom(jsonParsed, e.musicDiscsPlayed, "stats.minecraft:custom.minecraft:play_record", ch, username)
+				e.playerStatsCustom(jsonParsed, e.noteBlocksPlayed, "stats.minecraft:custom.minecraft:play_noteblockr", ch, username)
+				e.playerStatsCustom(jsonParsed, e.noteBlocksTuned, "stats.minecraft:custom.minecraft:tune_noteblock", ch, username)
+				e.playerStatsCustom(jsonParsed, e.numberOfDeaths, "stats.minecraft:custom.minecraft:deaths", ch, username)
+				e.playerStatsCustom(jsonParsed, e.plantsPotted, "stats.minecraft:custom.minecraft:pot_flower", ch, username)
+				e.playerStatsCustom(jsonParsed, e.playerKills, "stats.minecraft:custom.minecraft:player_kills", ch, username)
+				e.playerStatsCustom(jsonParsed, e.raidsTriggered, "stats.minecraft:custom.minecraft:raid_trigger", ch, username)
+				e.playerStatsCustom(jsonParsed, e.raidsWon, "stats.minecraft:custom.minecraft:raid_win", ch, username)
+				e.playerStatsCustom(jsonParsed, e.shulkerBoxCleaned, "stats.minecraft:custom.minecraft:clean_shulker_box", ch, username)
+				e.playerStatsCustom(jsonParsed, e.shulkerBoxesOpened, "stats.minecraft:custom.minecraft:open_shulker_box", ch, username)
+				e.playerStatsCustom(jsonParsed, e.sneakTime, "stats.minecraft:custom.minecraft:sneak_time", ch, username)
+				e.playerStatsCustom(jsonParsed, e.talkedToVillager, "stats.minecraft:custom.minecraft:talked_to_villager", ch, username)
+				e.playerStatsCustom(jsonParsed, e.targetsHit, "stats.minecraft:custom.minecraft:target_hit", ch, username)
 
 				if pre1_17(jsonParsed, "stats.minecraft:custom.minecraft:play_one_minute") {
-					e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_one_minute", ch, player.Name)
+					e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_one_minute", ch, username)
 				} else {
-					e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_time", ch, player.Name)
+					e.playerStatsCustom(jsonParsed, e.timePlayed, "stats.minecraft:custom.minecraft:play_time", ch, username)
 				}
 
-				e.playerStatsCustom(jsonParsed, e.timeSinceDeath, "stats.minecraft:custom.minecraft:time_since_death", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.timeSinceLastRest, "stats.minecraft:custom.minecraft:time_since_rest", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.timesWorldOpen, "stats.minecraft:custom.minecraft:total_world_time", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.timesSleptInBed, "stats.minecraft:custom.minecraft:sleep_in_bed", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.tradedWithVillagers, "stats.minecraft:custom.minecraft:traded_with_villager", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.trappedChestsTriggered, "stats.minecraft:custom.minecraft:trigger_trapped_chest", ch, player.Name)
-				e.playerStatsCustom(jsonParsed, e.waterTakenFromCauldron, "stats.minecraft:custom.minecraft:use_cauldron", ch, player.Name)
+				e.playerStatsCustom(jsonParsed, e.timeSinceDeath, "stats.minecraft:custom.minecraft:time_since_death", ch, username)
+				e.playerStatsCustom(jsonParsed, e.timeSinceLastRest, "stats.minecraft:custom.minecraft:time_since_rest", ch, username)
+				e.playerStatsCustom(jsonParsed, e.timesWorldOpen, "stats.minecraft:custom.minecraft:total_world_time", ch, username)
+				e.playerStatsCustom(jsonParsed, e.timesSleptInBed, "stats.minecraft:custom.minecraft:sleep_in_bed", ch, username)
+				e.playerStatsCustom(jsonParsed, e.tradedWithVillagers, "stats.minecraft:custom.minecraft:traded_with_villager", ch, username)
+				e.playerStatsCustom(jsonParsed, e.trappedChestsTriggered, "stats.minecraft:custom.minecraft:trigger_trapped_chest", ch, username)
+				e.playerStatsCustom(jsonParsed, e.waterTakenFromCauldron, "stats.minecraft:custom.minecraft:use_cauldron", ch, username)
 			}
 		}
 	}
@@ -702,7 +788,7 @@ func (e *Exporter) playerStatsCustomMovement(jsonParsed *gabs.Container, desc *p
 	if e.isEnabled(field) {
 		value, _ := jsonParsed.Path(field).Data().(float64)
 		value /= 100
-		ch <- prometheus.MustNewConstMetric(desc, prometheus.UntypedValue, value, playerName, movementType)
+		ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, value, playerName, movementType)
 	}
 }
 
@@ -741,10 +827,12 @@ func (e *Exporter) playerStats(jsonParsed *gabs.Container, desc *prometheus.Desc
 }
 
 func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerName string) error {
+	advancementsDataPath := e.resolveWorldDir("players/advancements", "advancements")
+
 	var payload map[string]interface{}
-	byteValue, err := os.ReadFile(e.world + "/advancements/" + id + ".json")
+	byteValue, err := os.ReadFile(advancementsDataPath + "/" + id + ".json")
 	if err != nil {
-		level.Debug(e.logger).Log("msg", fmt.Sprintf("advancements file for player %s not exist", playerName)) //nolint:errcheck
+		e.logger.Error(fmt.Sprintf("advancements file for player %s not exist", playerName))
 		return nil
 	}
 	err = json.Unmarshal(byteValue, &payload)
@@ -768,14 +856,14 @@ func (e *Exporter) advancements(id string, ch chan<- prometheus.Metric, playerNa
 
 func (e *Exporter) executeRCONCommand(cmd string) (*string, error) {
 	if len(e.rcon.rconPassword) > 0 && e.rcon.rconClient == nil {
-		level.Warn(e.logger).Log("msg", "Trying to reconnect to RCON") //nolint:errcheck
+		e.logger.Warn("RCON is not connected, trying to reconnect")
 		e.rcon = createRCONClient(e.rcon.rconServer, e.rcon.rconPassword, e.logger)
 	}
 	if e.rcon.rconClient != nil {
 		err := e.rcon.rconClient.Cmd(cmd)
 		if err != nil {
 			if errors.Is(err, syscall.EPIPE) {
-				level.Warn(e.logger).Log("This is broken pipe error, trying to reconnect") //nolint:errcheck
+				e.logger.Warn("This is broken pipe error, trying to reconnect")
 				e.rcon = createRCONClient(e.rcon.rconServer, e.rcon.rconPassword, e.logger)
 			}
 			return nil, fmt.Errorf("send rcon command error: %w", err)
@@ -808,10 +896,16 @@ func (e *Exporter) getPlayerList(ch chan<- prometheus.Metric) (retErr error) {
 	if resp != nil {
 		players := e.playerOnlineRegexp.FindStringSubmatch(*resp)
 		if len(players) > 1 {
-			playersList := players[1]
-			for _, player := range strings.Fields(strings.ReplaceAll(playersList, ",", " ")) {
-				player = removeColorCodesFromWord(player)
-				ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.CounterValue, 1, strings.TrimSpace(player))
+			playersList := strings.TrimSpace(players[1])
+			if playersList != "" {
+				list := strings.Split(playersList, ",")
+				for _, player := range list {
+					player = removeColorCodesFromWord(player)
+					player = strings.TrimSpace(player)
+					if player != "" {
+						ch <- prometheus.MustNewConstMetric(e.playerOnline, prometheus.GaugeValue, 1, player)
+					}
+				}
 			}
 		}
 	}
@@ -828,7 +922,45 @@ func parseFloat64FromString(value string) float64 {
 }
 
 func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
-	if e.serverStats == Forge {
+	switch e.serverStats {
+	case NeoForge:
+		resp, err := e.executeRCONCommand(rconNeoForgeTpsCommand)
+		if err != nil {
+			return err
+		}
+		if resp != nil {
+			dimTpsList := e.neoForgeTpsRegexp.FindAllStringSubmatch(*resp, -1)
+			for _, dimTps := range dimTpsList {
+				dimension := dimTps[1]
+
+				tps, err1 := strconv.ParseFloat(dimTps[2], 64)
+				msTick, err2 := strconv.ParseFloat(dimTps[3], 64)
+				if err1 != nil || err2 != nil {
+					continue
+				}
+				if dimension == "Overall" {
+					ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.GaugeValue, tps)
+					ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.GaugeValue, msTick)
+				} else {
+					ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.GaugeValue, tps, "", dimension)
+					ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.GaugeValue, msTick, "", dimension)
+				}
+			}
+		}
+		resp, err = e.executeRCONCommand(rconNeoForgeEntityListCommand)
+		if err != nil {
+			return err
+		}
+		if resp != nil {
+			entityList := e.entityListRegexp.FindAllStringSubmatch(*resp, -1)
+			for _, entity := range entityList {
+				entityCounter := parseFloat64FromString(entity[1])
+				namespace := entity[2]
+				entityType := entity[3]
+				ch <- prometheus.MustNewConstMetric(e.entities, prometheus.GaugeValue, entityCounter, namespace, entityType)
+			}
+		}
+	case Forge:
 		resp, err := e.executeRCONCommand(rconForgeTpsCommand)
 		if err != nil {
 			return err
@@ -840,15 +972,15 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				dimension := dimTps[2]
 				meanTickTimeDimension := parseFloat64FromString(dimTps[3])
 				meanTpsDimension := parseFloat64FromString(dimTps[4])
-				ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.CounterValue, meanTpsDimension, namespace, dimension)
-				ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.CounterValue, meanTickTimeDimension, namespace, dimension)
+				ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.GaugeValue, meanTpsDimension, namespace, dimension)
+				ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.GaugeValue, meanTickTimeDimension, namespace, dimension)
 			}
 			overall := e.overallRegexp.FindStringSubmatch(*resp)
 			if len(overall) == 3 {
 				meanTickTime := parseFloat64FromString(overall[1])
 				meanTps := parseFloat64FromString(overall[2])
-				ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.CounterValue, meanTps)
-				ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.CounterValue, meanTickTime)
+				ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.GaugeValue, meanTps)
+				ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.GaugeValue, meanTickTime)
 			}
 		}
 		resp, err = e.executeRCONCommand(rconForgeEntityListCommand)
@@ -861,11 +993,10 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 				entityCounter := parseFloat64FromString(entity[1])
 				namespace := entity[2]
 				entityType := entity[3]
-				ch <- prometheus.MustNewConstMetric(e.entities, prometheus.CounterValue, entityCounter, namespace, entityType)
+				ch <- prometheus.MustNewConstMetric(e.entities, prometheus.GaugeValue, entityCounter, namespace, entityType)
 			}
 		}
-
-	} else if e.serverStats == PaperMC || e.serverStats == PurpurMC {
+	case PaperMC, PurpurMC:
 		resp, err := e.executeRCONCommand(rconTpsCommand)
 		if resp != nil {
 			if err != nil {
@@ -894,6 +1025,29 @@ func (e *Exporter) getServerStats(ch chan<- prometheus.Metric) (retErr error) {
 					sum := tps[0.08] + tps[1] + tps[5] + tps[15]
 					ch <- prometheus.MustNewConstHistogram(e.tpsPaperMC, uint64(len(tps)), float64(sum), tps)
 				}
+			}
+		}
+	case Fabric:
+		resp, err := e.executeRCONCommand(rconFabricTpsCommand)
+		if err != nil {
+			return err
+		}
+		if resp != nil {
+			dimTpsList := e.dimensionRegexp.FindAllStringSubmatch(*resp, -1)
+			for _, dimTps := range dimTpsList {
+				namespace := dimTps[1]
+				dimension := dimTps[2]
+				meanTickTimeDimension := parseFloat64FromString(dimTps[3])
+				meanTpsDimension := parseFloat64FromString(dimTps[4])
+				ch <- prometheus.MustNewConstMetric(e.dimTps, prometheus.GaugeValue, meanTpsDimension, namespace, dimension)
+				ch <- prometheus.MustNewConstMetric(e.dimTicktime, prometheus.GaugeValue, meanTickTimeDimension, namespace, dimension)
+			}
+			overall := e.overallRegexp.FindStringSubmatch(*resp)
+			if len(overall) == 3 {
+				meanTickTime := parseFloat64FromString(overall[1])
+				meanTps := parseFloat64FromString(overall[2])
+				ch <- prometheus.MustNewConstMetric(e.overallTps, prometheus.GaugeValue, meanTps)
+				ch <- prometheus.MustNewConstMetric(e.overallTicktime, prometheus.GaugeValue, meanTickTime)
 			}
 		}
 	}
@@ -953,25 +1107,24 @@ func (e *Exporter) Describe(descs chan<- *prometheus.Desc) {
 func (e *Exporter) Collect(metrics chan<- prometheus.Metric) {
 	err := e.getPlayerList(metrics)
 	if err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get player online list", "err", err) //nolint: errcheck
+		e.logger.Error("Failed to get player online list", "err", err)
 	}
 
 	if err := e.getPlayerStats(metrics); err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get player stats", "err", err) //nolint: errcheck
+		e.logger.Error("Failed to get player stats", "err", err)
 	}
 
 	if err := e.getServerStats(metrics); err != nil {
-		level.Error(e.logger).Log("msg", "Failed to get server stats", "err", err) //nolint: errcheck
+		e.logger.Error("Failed to get server stats", "err", err)
 	}
 }
 
 func (e *Exporter) StopRCON() {
 	if e.rcon.rconClient != nil {
-		level.Info(e.logger).Log("msg", "Stopping RCON") //nolint: errcheck
+		e.logger.Info("Stopping RCON")
 		err := e.rcon.rconClient.Close()
 		if err != nil {
-			level.Error(e.logger).Log("msg", "error closing RCON connection", "err", err) //nolint: errcheck
-			return
+			e.logger.Error("Failed to close RCON connection", "err", err)
 		}
 	}
 }

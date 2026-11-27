@@ -8,8 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alecthomas/kingpin/v2"
-	"github.com/go-kit/log/level"
+	"github.com/alecthomas/kong"
 	"github.com/minecraft-exporter/pkg/config"
 	"github.com/minecraft-exporter/pkg/exporter"
 	"github.com/minecraft-exporter/pkg/template"
@@ -17,77 +16,87 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	v2 "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/promlog"
-	"github.com/prometheus/common/promlog/flag"
+	"github.com/prometheus/common/promslog"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
 )
 
 func Run() {
-	config := config.NewConfg()
-	promlogConfig := &promlog.Config{
-		Level: &promlog.AllowedLevel{},
+	cfg := &config.Config{}
+	kong.Parse(cfg,
+		kong.Name("minecraft_exporter"),
+		kong.Description("Prometheus exporter for Minecraft Java Edition servers."),
+		kong.UsageOnError(),
+		kong.Vars{"version": version.Print("minecraft_exporter")},
+	)
+
+	cfg.LoadFile()
+
+	promlogConfig := &promslog.Config{
+		Level:  promslog.NewLevel(),
+		Format: promslog.NewFormat(),
 	}
-	flag.AddFlags(kingpin.CommandLine, promlogConfig)
-	kingpin.Version(version.Print("minecraft_exporter"))
-	kingpin.HelpFlag.Short('h')
-	kingpin.Parse()
-	logger := promlog.New(promlogConfig)
+	if err := promlogConfig.Level.Set(cfg.LogLevel); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid --log.level %q: %v\n", cfg.LogLevel, err)
+		os.Exit(2)
+	}
+	if err := promlogConfig.Format.Set(cfg.LogFormat); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid --log.format %q: %v\n", cfg.LogFormat, err)
+		os.Exit(2)
+	}
+	logger := promslog.New(promlogConfig)
 
-	config.LoadFile()
-
-	fmt.Print(`_  _ _ _  _ ____ ____ ____ ____ ____ ___    ____ _  _ ___  ____ ____ ___ ____ ____ 
-|\/| | |\ | |___ |    |__/ |__| |___  |  __ |___  \/  |__] |  | |__/  |  |___ |__/ 
-|  | | | \| |___ |___ |  \ |  | |     |     |___ _/\_ |    |__| |  \  |  |___ |  \ 
+	fmt.Print(`_  _ _ _  _ ____ ____ ____ ____ ____ ___    ____ _  _ ___  ____ ____ ___ ____ ____
+|\/| | |\ | |___ |    |__/ |__| |___  |  __ |___  \/  |__] |  | |__/  |  |___ |__/
+|  | | | \| |___ |___ |  \ |  | |     |     |___ _/\_ |    |__| |  \  |  |___ |  \
 `)
 
-	level.Info(logger).Log("msg", "Starting minecraft_exporter", "version", version.Info()) //nolint:errcheck
-	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())         //nolint:errcheck
+	logger.Info("Starting minecraft_exporter", "version", version.Info())
+	logger.Info("Build context", "build", version.BuildContext())
 
-	prometheus.MustRegister(v2.NewCollector(("minecraft_exporter")))
-	exporter, err := exporter.New(*config.RconAddress, *config.RconPassword, *config.WorldPath, *config.NameSource, *config.ModServerStats, config.DisabledMetrics, logger)
-
+	prometheus.MustRegister(v2.NewCollector("minecraft_exporter"))
+	exp, err := exporter.New(cfg.RconAddress, cfg.RconPassword, cfg.WorldPath, cfg.ServerRoot, cfg.NameSource, cfg.ModServerStats, cfg.DisabledMetrics, logger)
 	if err != nil {
-		level.Error(logger).Log("msg", "Failed to create exporter", "err", err) //nolint:errcheck
+		logger.Error("Failed to create exporter", "err", err)
 	}
-	prometheus.MustRegister(exporter)
+	prometheus.MustRegister(exp)
 
-	level.Info(logger).Log("msg", "Disabling collection of exporter metrics (like go_*)", "value", config.DisableExporterMetrics) //nolint:errcheck
-	if *config.DisableExporterMetrics {
+	logger.Info("Disabling collection of exporter metrics (like go_*)", "value", cfg.DisableExporterMetrics)
+	if cfg.DisableExporterMetrics {
 		prometheus.Unregister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 		prometheus.Unregister(collectors.NewGoCollector())
 	}
 
-	http.Handle(*config.MetricsPath, promhttp.Handler())
-	template := template.NewIndexTemplate()
+	http.Handle(cfg.MetricsPath, promhttp.Handler())
+	tpl := template.NewIndexTemplate()
 	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		err := template.Execute(w, config)
-		if err != nil {
-			level.Error(logger).Log("msg", "Error executing template", "err", err) //nolint:errcheck
+		if err := tpl.Execute(w, cfg); err != nil {
+			logger.Error("Error executing template", "err", err)
 		}
 	})
 
+	flagConfig := cfg.WebFlagConfig()
 	go func() {
-		level.Info(logger).Log("msg", "Listening on address", "address", (*config.FlagConfig.WebListenAddresses)[0]) //nolint:errcheck
+		logger.Info("Listening on address", "address", (*flagConfig.WebListenAddresses)[0])
 		srv := &http.Server{
-			Addr:              (*config.FlagConfig.WebListenAddresses)[0],
+			Addr:              (*flagConfig.WebListenAddresses)[0],
 			ReadHeaderTimeout: 60 * time.Second,
 		}
-		if err := web.ListenAndServe(srv, config.FlagConfig, logger); err != nil {
-			level.Error(logger).Log("msg", "Error running HTTP server", "err", err) //nolint:errcheck
+		if err := web.ListenAndServe(srv, flagConfig, logger); err != nil {
+			logger.Error("Error running HTTP server", "err", err)
 			os.Exit(1)
 		}
 	}()
 	done := make(chan struct{})
 	go func() {
-		level.Info(logger).Log("msg", "Listening signals...") //nolint:errcheck
+		logger.Info("Listening signals...")
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		<-c
-		exporter.StopRCON()
+		exp.StopRCON()
 		close(done)
 	}()
 
 	<-done
-	level.Info(logger).Log("msg", "Shutting down...") //nolint:errcheck
+	logger.Info("Shutting down...")
 }

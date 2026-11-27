@@ -24,6 +24,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ template "minecraft-exporter.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.initContainers }}
       initContainers: {{ toYaml . | nindent 8 }}
       {{- end }}
@@ -80,5 +84,3 @@ spec:
     {{- with .Values.extraVolumes }}
       volumes: {{ toYaml . | nindent 8 }}
     {{- end }}
-      securityContext:
-    {{- .Values.podSecurityContext | toYaml | nindent 8 }}
